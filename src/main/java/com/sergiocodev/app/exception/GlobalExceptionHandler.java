@@ -16,109 +16,165 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Maneja excepciones de usuario no encontrado
-     */
-    @ExceptionHandler(UsuarioNoEncontradoException.class)
-    public ResponseEntity<ErrorResponse> manejarUsuarioNoEncontrado(
-            UsuarioNoEncontradoException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
+        /**
+         * Maneja excepciones de usuario no encontrado
+         */
+        @ExceptionHandler(UsuarioNoEncontradoException.class)
+        public ResponseEntity<ErrorResponse> manejarUsuarioNoEncontrado(
+                        UsuarioNoEncontradoException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.NOT_FOUND.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
 
-    /**
-     * Maneja excepciones de usuario duplicado
-     */
-    @ExceptionHandler(UsuarioDuplicadoException.class)
-    public ResponseEntity<ErrorResponse> manejarUsuarioDuplicado(
-            UsuarioDuplicadoException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
+        /**
+         * Maneja excepciones de usuario duplicado
+         */
+        @ExceptionHandler(UsuarioDuplicadoException.class)
+        public ResponseEntity<ErrorResponse> manejarUsuarioDuplicado(
+                        UsuarioDuplicadoException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
 
-    /**
-     * Maneja excepciones de credenciales incorrectas
-     */
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> manejarCredencialesIncorrectas(
-            BadCredentialsException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Usuario o contraseña incorrectos",
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
+        /**
+         * Maneja excepciones de credenciales incorrectas
+         */
+        @ExceptionHandler(BadCredentialsException.class)
+        public ResponseEntity<ErrorResponse> manejarCredencialesIncorrectas(
+                        BadCredentialsException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.UNAUTHORIZED.value(),
+                                "Usuario o contraseña incorrectos",
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
 
-    /**
-     * Maneja excepciones de cliente no encontrado
-     */
-    @ExceptionHandler(ClienteNotFoundException.class)
-    public ResponseEntity<ErrorResponse> manejarClienteNoEncontrado(
-            ClienteNotFoundException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
+        /**
+         * Maneja excepciones de cliente no encontrado
+         */
+        @ExceptionHandler(ClienteNotFoundException.class)
+        public ResponseEntity<ErrorResponse> manejarClienteNoEncontrado(
+                        ClienteNotFoundException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.NOT_FOUND.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
 
-    /**
-     * Maneja excepciones de DNI duplicado
-     */
-    @ExceptionHandler(DniDuplicadoException.class)
-    public ResponseEntity<ErrorResponse> manejarDniDuplicado(
-            DniDuplicadoException ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
+        /**
+         * Maneja excepciones de DNI duplicado
+         */
+        @ExceptionHandler(DniDuplicadoException.class)
+        public ResponseEntity<ErrorResponse> manejarDniDuplicado(
+                        DniDuplicadoException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
 
-    /**
-     * Maneja errores de validación de Bean Validation
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> manejarValidacion(
-            MethodArgumentNotValidException ex) {
-        Map<String, Object> respuesta = new HashMap<>();
-        Map<String, String> errores = new HashMap<>();
+        /**
+         * Maneja excepciones de marca no encontrada
+         */
+        @ExceptionHandler(MarcaNotFoundException.class)
+        public ResponseEntity<ErrorResponse> manejarMarcaNoEncontrada(
+                        MarcaNotFoundException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.NOT_FOUND.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
 
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String campo = ((FieldError) error).getField();
-            String mensaje = error.getDefaultMessage();
-            errores.put(campo, mensaje);
-        });
+        /**
+         * Maneja excepciones de nombre de marca duplicado
+         */
+        @ExceptionHandler(NombreMarcaDuplicadoException.class)
+        public ResponseEntity<ErrorResponse> manejarNombreMarcaDuplicado(
+                        NombreMarcaDuplicadoException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
 
-        respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-        respuesta.put("errores", errores);
-        respuesta.put("timestamp", LocalDateTime.now());
+        /**
+         * Maneja excepciones de categoría no encontrada
+         */
+        @ExceptionHandler(CategoriaNotFoundException.class)
+        public ResponseEntity<ErrorResponse> manejarCategoriaNoEncontrada(
+                        CategoriaNotFoundException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.NOT_FOUND.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
 
-        return ResponseEntity.badRequest().body(respuesta);
-    }
+        /**
+         * Maneja excepciones de nombre de categoría duplicado
+         */
+        @ExceptionHandler(NombreCategoriaDuplicadoException.class)
+        public ResponseEntity<ErrorResponse> manejarNombreCategoriaDuplicado(
+                        NombreCategoriaDuplicadoException ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
 
-    /**
-     * Maneja excepciones generales
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> manejarExcepcionGeneral(
-            Exception ex, WebRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Error interno del servidor: " + ex.getMessage(),
-                LocalDateTime.now(),
-                request.getDescription(false).replace("uri=", ""));
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
+        /**
+         * Maneja errores de validación de Bean Validation
+         */
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<Map<String, Object>> manejarValidacion(
+                        MethodArgumentNotValidException ex) {
+                Map<String, Object> respuesta = new HashMap<>();
+                Map<String, String> errores = new HashMap<>();
+
+                ex.getBindingResult().getAllErrors().forEach(error -> {
+                        String campo = ((FieldError) error).getField();
+                        String mensaje = error.getDefaultMessage();
+                        errores.put(campo, mensaje);
+                });
+
+                respuesta.put("status", HttpStatus.BAD_REQUEST.value());
+                respuesta.put("errores", errores);
+                respuesta.put("timestamp", LocalDateTime.now());
+
+                return ResponseEntity.badRequest().body(respuesta);
+        }
+
+        /**
+         * Maneja excepciones generales
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ErrorResponse> manejarExcepcionGeneral(
+                        Exception ex, WebRequest request) {
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                "Error interno del servidor: " + ex.getMessage(),
+                                LocalDateTime.now(),
+                                request.getDescription(false).replace("uri=", ""));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
 }
