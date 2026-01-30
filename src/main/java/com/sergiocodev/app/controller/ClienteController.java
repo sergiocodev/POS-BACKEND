@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/api/customers")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Clientes", description = "Endpoints para gestión de clientes")
+@Tag(name = "Customers", description = "Endpoints para gestión de clientes")
 @SecurityRequirement(name = "bearerAuth")
 public class ClienteController {
 

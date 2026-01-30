@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface MarcaRepository extends JpaRepository<Marca, Long> {
 
-    Optional<Marca> findByNombreMarca(String nombreMarca);
+    Optional<Marca> findByName(String name);
 
-    boolean existsByNombreMarca(String nombreMarca);
+    boolean existsByName(String name);
 }

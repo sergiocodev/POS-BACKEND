@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/marcas")
+@RequestMapping("/api/brands")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Marcas", description = "Endpoints para gestión de marcas")
+@Tag(name = "Brands", description = "Endpoints para gestión de marcas")
 @SecurityRequirement(name = "bearerAuth")
 public class MarcaController {
 

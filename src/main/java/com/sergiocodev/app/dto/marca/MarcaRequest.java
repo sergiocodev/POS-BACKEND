@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 public class MarcaRequest {
 
     @NotBlank(message = "El nombre de la marca es obligatorio")
-    @Size(min = 2, max = 100, message = "El nombre de la marca debe tener entre 2 y 100 caracteres")
-    private String nombreMarca;
+    @Size(min = 2, max = 150, message = "El nombre de la marca debe tener entre 2 y 150 caracteres")
+    private String name;
+
+    private Boolean active = true;
 }

@@ -22,12 +22,15 @@ public class MarcaServiceImpl implements MarcaService {
     @Override
     @Transactional
     public MarcaResponse crear(MarcaRequest request) {
-        if (marcaRepository.existsByNombreMarca(request.getNombreMarca())) {
-            throw new NombreMarcaDuplicadoException(request.getNombreMarca());
+        if (marcaRepository.existsByName(request.getName())) {
+            throw new NombreMarcaDuplicadoException(request.getName());
         }
 
         Marca marca = new Marca();
-        marca.setNombreMarca(request.getNombreMarca());
+        marca.setName(request.getName());
+        if (request.getActive() != null) {
+            marca.setActive(request.getActive());
+        }
 
         Marca marcaGuardada = marcaRepository.save(marca);
         return new MarcaResponse(marcaGuardada);
@@ -56,12 +59,15 @@ public class MarcaServiceImpl implements MarcaService {
         Marca marca = marcaRepository.findById(id)
                 .orElseThrow(() -> new MarcaNotFoundException(id));
 
-        if (!marca.getNombreMarca().equals(request.getNombreMarca()) &&
-                marcaRepository.existsByNombreMarca(request.getNombreMarca())) {
-            throw new NombreMarcaDuplicadoException(request.getNombreMarca());
+        if (!marca.getName().equals(request.getName()) &&
+                marcaRepository.existsByName(request.getName())) {
+            throw new NombreMarcaDuplicadoException(request.getName());
         }
 
-        marca.setNombreMarca(request.getNombreMarca());
+        marca.setName(request.getName());
+        if (request.getActive() != null) {
+            marca.setActive(request.getActive());
+        }
 
         Marca marcaActualizada = marcaRepository.save(marca);
         return new MarcaResponse(marcaActualizada);

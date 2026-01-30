@@ -11,10 +11,16 @@ import lombok.NoArgsConstructor;
 public class CategoriaResponse {
 
     private Long id;
-    private String nombreCategoria;
+    private String name;
+    private boolean active;
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime updatedAt;
 
     public CategoriaResponse(Categoria categoria) {
         this.id = categoria.getId();
-        this.nombreCategoria = categoria.getNombreCategoria();
+        this.name = categoria.getName();
+        this.active = categoria.isActive();
+        this.createdAt = categoria.getCreatedAt();
+        this.updatedAt = categoria.getUpdatedAt();
     }
 }

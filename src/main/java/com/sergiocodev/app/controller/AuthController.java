@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*") // Permitir CORS para desarrollo
-@Tag(name = "Autenticación", description = "Endpoints para autenticación y registro de usuarios")
+@Tag(name = "Authentication", description = "Endpoints para autenticación y registro de usuarios")
 public class AuthController {
 
     private final AuthService authService;
@@ -39,16 +39,10 @@ public class AuthController {
             @ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos o usuario ya existe")
     })
-    @PostMapping("/registro")
+    @PostMapping("/register")
     public ResponseEntity<LoginResponse> registrar(@Valid @RequestBody RegistroRequest request) {
         LoginResponse response = authService.registrar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "Probar autenticación", description = "Endpoint de prueba para verificar que la autenticación funciona")
-    @ApiResponse(responseCode = "200", description = "Autenticación funcionando")
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("Autenticación funcionando correctamente");
-    }
 }

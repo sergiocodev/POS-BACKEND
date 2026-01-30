@@ -11,10 +11,16 @@ import lombok.NoArgsConstructor;
 public class MarcaResponse {
 
     private Long id;
-    private String nombreMarca;
+    private String name;
+    private boolean active;
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime updatedAt;
 
     public MarcaResponse(Marca marca) {
         this.id = marca.getId();
-        this.nombreMarca = marca.getNombreMarca();
+        this.name = marca.getName();
+        this.active = marca.isActive();
+        this.createdAt = marca.getCreatedAt();
+        this.updatedAt = marca.getUpdatedAt();
     }
 }

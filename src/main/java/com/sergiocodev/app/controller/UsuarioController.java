@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Usuarios", description = "Endpoints para gestión de usuarios")
+@Tag(name = "Users", description = "Endpoints para gestión de usuarios")
 @SecurityRequirement(name = "bearerAuth")
 public class UsuarioController {
 
@@ -40,7 +40,7 @@ public class UsuarioController {
             @ApiResponse(responseCode = "200", description = "Perfil obtenido exitosamente"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
-    @GetMapping("/perfil")
+    @GetMapping("/profile")
     public ResponseEntity<Usuario> obtenerPerfil() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();

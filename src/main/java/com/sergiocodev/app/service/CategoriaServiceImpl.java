@@ -22,12 +22,15 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Override
     @Transactional
     public CategoriaResponse crear(CategoriaRequest request) {
-        if (categoriaRepository.existsByNombreCategoria(request.getNombreCategoria())) {
-            throw new NombreCategoriaDuplicadoException(request.getNombreCategoria());
+        if (categoriaRepository.existsByName(request.getName())) {
+            throw new NombreCategoriaDuplicadoException(request.getName());
         }
 
         Categoria categoria = new Categoria();
-        categoria.setNombreCategoria(request.getNombreCategoria());
+        categoria.setName(request.getName());
+        if (request.getActive() != null) {
+            categoria.setActive(request.getActive());
+        }
 
         Categoria categoriaGuardada = categoriaRepository.save(categoria);
         return new CategoriaResponse(categoriaGuardada);
@@ -56,12 +59,15 @@ public class CategoriaServiceImpl implements CategoriaService {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new CategoriaNotFoundException(id));
 
-        if (!categoria.getNombreCategoria().equals(request.getNombreCategoria()) &&
-                categoriaRepository.existsByNombreCategoria(request.getNombreCategoria())) {
-            throw new NombreCategoriaDuplicadoException(request.getNombreCategoria());
+        if (!categoria.getName().equals(request.getName()) &&
+                categoriaRepository.existsByName(request.getName())) {
+            throw new NombreCategoriaDuplicadoException(request.getName());
         }
 
-        categoria.setNombreCategoria(request.getNombreCategoria());
+        categoria.setName(request.getName());
+        if (request.getActive() != null) {
+            categoria.setActive(request.getActive());
+        }
 
         Categoria categoriaActualizada = categoriaRepository.save(categoria);
         return new CategoriaResponse(categoriaActualizada);

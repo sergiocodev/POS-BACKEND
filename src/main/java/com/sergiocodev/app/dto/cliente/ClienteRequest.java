@@ -12,20 +12,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ClienteRequest {
 
-    @NotBlank(message = "El DNI es obligatorio")
     @Size(max = 20, message = "El DNI no puede exceder 20 caracteres")
-    @Pattern(regexp = "^[0-9]+$", message = "El DNI debe contener solo números")
+    @Pattern(regexp = "^[0-9]*$", message = "El DNI debe contener solo números")
     private String dni;
 
-    @NotBlank(message = "Los nombres son obligatorios")
-    @Size(min = 3, max = 100, message = "Los nombres deben tener entre 3 y 100 caracteres")
-    private String nombre;
+    @Size(max = 20, message = "El RUC no puede exceder 20 caracteres")
+    @Pattern(regexp = "^[0-9]*$", message = "El RUC debe contener solo números")
+    private String ruc;
 
-    @NotBlank(message = "El teléfono es obligatorio")
-    @Size(max = 20, message = "El teléfono no puede exceder 20 caracteres")
-    private String telefono;
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
+    private String firstName;
 
-    @NotBlank(message = "La dirección es obligatoria")
-    @Size(max = 255, message = "La dirección no puede exceder 255 caracteres")
-    private String direccion;
+    @Size(max = 100, message = "El apellido no puede exceder 100 caracteres")
+    private String lastName;
+
+    @Size(max = 30, message = "El teléfono no puede exceder 30 caracteres")
+    private String phone;
+
+    @jakarta.validation.constraints.Email(message = "El email debe ser válido")
+    @Size(max = 255, message = "El email no puede exceder 255 caracteres")
+    private String email;
+
+    private String address;
 }

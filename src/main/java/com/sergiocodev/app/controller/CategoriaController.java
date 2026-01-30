@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/categorias")
+@RequestMapping("/api/categories")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Categorias", description = "Endpoints para gestión de categorías")
+@Tag(name = "Categories", description = "Endpoints para gestión de categorías")
 @SecurityRequirement(name = "bearerAuth")
 public class CategoriaController {
 
