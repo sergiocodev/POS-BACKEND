@@ -11,17 +11,26 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     /**
      * Busca un usuario por su nombre de usuario
-     * 
-     * @param usuario nombre de usuario
-     * @return Optional con el usuario si existe
      */
-    Optional<Usuario> findByUsuario(String usuario);
+    Optional<Usuario> findByUsername(String username);
+
+    /**
+     * Busca un usuario por su email
+     */
+    Optional<Usuario> findByEmail(String email);
+
+    /**
+     * Busca un usuario por su username o email
+     */
+    Optional<Usuario> findByUsernameOrEmail(String username, String email);
 
     /**
      * Verifica si existe un usuario con el nombre de usuario dado
-     * 
-     * @param usuario nombre de usuario
-     * @return true si existe, false si no
      */
-    boolean existsByUsuario(String usuario);
+    boolean existsByUsername(String username);
+
+    /**
+     * Verifica si existe un usuario con el email dado
+     */
+    boolean existsByEmail(String email);
 }

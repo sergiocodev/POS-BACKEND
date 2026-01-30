@@ -13,15 +13,15 @@ public class RegistroRequest {
 
     @NotBlank(message = "El usuario es obligatorio")
     @Size(min = 3, max = 50, message = "El usuario debe tener entre 3 y 50 caracteres")
-    private String usuario;
+    private String username;
+
+    @NotBlank(message = "El email es obligatorio")
+    @jakarta.validation.constraints.Email(message = "El email debe ser válido")
+    private String email;
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
-    private String nombre;
-
-    @NotBlank(message = "El teléfono es obligatorio")
-    @Size(max = 20, message = "El teléfono no puede exceder 20 caracteres")
-    private String telefono;
+    private String fullName;
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")

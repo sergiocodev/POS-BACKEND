@@ -31,7 +31,7 @@ public class UsuarioController {
     public ResponseEntity<List<Usuario>> obtenerTodos() {
         List<Usuario> usuarios = usuarioRepository.findAll();
         // Ocultar contraseñas
-        usuarios.forEach(u -> u.setPassword("***"));
+        usuarios.forEach(u -> u.setPasswordHash("***"));
         return ResponseEntity.ok(usuarios);
     }
 
@@ -45,11 +45,11 @@ public class UsuarioController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
-        Usuario usuario = usuarioRepository.findByUsuario(username)
+        Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Ocultar contraseña
-        usuario.setPassword("***");
+        usuario.setPasswordHash("***");
 
         return ResponseEntity.ok(usuario);
     }
@@ -65,7 +65,7 @@ public class UsuarioController {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Ocultar contraseña
-        usuario.setPassword("***");
+        usuario.setPasswordHash("***");
 
         return ResponseEntity.ok(usuario);
     }
