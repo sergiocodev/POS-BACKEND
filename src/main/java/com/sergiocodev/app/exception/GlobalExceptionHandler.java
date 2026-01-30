@@ -59,6 +59,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja excepciones de cliente no encontrado
+     */
+    @ExceptionHandler(ClienteNotFoundException.class)
+    public ResponseEntity<ErrorResponse> manejarClienteNoEncontrado(
+            ClienteNotFoundException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now(),
+                request.getDescription(false).replace("uri=", ""));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Maneja excepciones de DNI duplicado
+     */
+    @ExceptionHandler(DniDuplicadoException.class)
+    public ResponseEntity<ErrorResponse> manejarDniDuplicado(
+            DniDuplicadoException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                LocalDateTime.now(),
+                request.getDescription(false).replace("uri=", ""));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * Maneja errores de validación de Bean Validation
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
