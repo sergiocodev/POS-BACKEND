@@ -1,6 +1,6 @@
-# POS YuFarm - Sistema de Gestión
+# POS Farmacia - Sistema Punto de Venta
 
-Sistema integral de gestión para farmacia desarrollado con Spring Boot, que proporciona funcionalidades completas para la administración de productos, categorías, clientes y usuarios con autenticación segura mediante JWT.
+Sistema integral de gestión para farmacias desarrollado con Spring Boot, que incorpora autenticación segura mediante JWT y control de acceso basado en roles y permisos (RBAC). La solución incluye módulos para la gestión de catálogos farmacéuticos (ingredientes activos, marcas, categorías, laboratorios y presentaciones), un maestro de productos con sus relaciones (código, registro DIGEMID, marca, categoría, laboratorio, presentación, tipo de unidad, factor de compra y etiquetas de fraccionamiento), y la asociación de ingredientes mediante. Dispone de un inventario detallado por lotes y establecimientos, control de caja y sesiones, así como módulos de compras y ventas que soportan la creación automática de lotes, el registro de ítems, métodos de pago y la integración con la facturación electrónica.
 
 ## Tecnologías Utilizadas
 
