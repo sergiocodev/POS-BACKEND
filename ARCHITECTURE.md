@@ -126,16 +126,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 - **Inversión de Control:** Spring Boot controla el ciclo de vida de los beans
 - **DRY (Don't Repeat Yourself):** Código reutilizable en servicios y utilidades
 
-## 🚀 Próximos Pasos
-
-1. Configurar `application.properties` con datos de MySQL
-2. Crear entidades en `model/`
-3. Crear repositorios en `repository/`
-4. Implementar servicios en `service/`
-5. Crear controladores en `controller/`
-6. Definir DTOs en `dto/`
-7. Agregar manejo de excepciones en `exception/`
-
 ## 📚 Recursos
 
 - [Spring Boot Documentation](https://spring.io/projects/spring-boot)

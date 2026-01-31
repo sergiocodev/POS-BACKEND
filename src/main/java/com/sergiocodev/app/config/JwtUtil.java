@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -17,28 +16,28 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.expiration}")
-    private Long expiration;
+    public JwtUtil(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     /**
-     * Extrae el nombre de usuario del token
+     * Extracts the username from the token
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     /**
-     * Extrae la fecha de expiración del token
+     * Extracts the expiration date from the token
      */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
     /**
-     * Extrae un claim específico del token
+     * Extracts a specific claim from the token
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -46,7 +45,7 @@ public class JwtUtil {
     }
 
     /**
-     * Extrae todos los claims del token
+     * Extracts all claims from the token
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
@@ -57,14 +56,14 @@ public class JwtUtil {
     }
 
     /**
-     * Verifica si el token ha expirado
+     * Checks if the token has expired
      */
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     /**
-     * Valida el token
+     * Validates the token
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
@@ -72,7 +71,7 @@ public class JwtUtil {
     }
 
     /**
-     * Genera un token para el usuario
+     * Generates a token for the user
      */
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
@@ -80,23 +79,24 @@ public class JwtUtil {
     }
 
     /**
-     * Crea el token JWT
+     * Creates the JWT token
      */
     private String createToken(Map<String, Object> claims, String subject) {
+        long expMillis = jwtProperties.getExpiration() != null ? jwtProperties.getExpiration() : 86400000;
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .expiration(new Date(System.currentTimeMillis() + expMillis))
                 .signWith(getSignKey())
                 .compact();
     }
 
     /**
-     * Obtiene la clave de firma
+     * Gets the signing key
      */
     private SecretKey getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

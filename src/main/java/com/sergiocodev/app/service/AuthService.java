@@ -1,13 +1,13 @@
 package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.config.JwtUtil;
-import com.sergiocodev.app.dto.usuario.LoginRequest;
-import com.sergiocodev.app.dto.usuario.LoginResponse;
-import com.sergiocodev.app.dto.usuario.RegistroRequest;
-import com.sergiocodev.app.exception.UsuarioDuplicadoException;
-import com.sergiocodev.app.exception.UsuarioNoEncontradoException;
-import com.sergiocodev.app.model.Usuario;
-import com.sergiocodev.app.repository.UsuarioRepository;
+import com.sergiocodev.app.dto.user.LoginRequest;
+import com.sergiocodev.app.dto.user.LoginResponse;
+import com.sergiocodev.app.dto.user.RegisterRequest;
+import com.sergiocodev.app.exception.UserAlreadyExistsException;
+import com.sergiocodev.app.exception.UserNotFoundException;
+import com.sergiocodev.app.model.User;
+import com.sergiocodev.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,110 +15,113 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-        private final UsuarioRepository usuarioRepository;
+        private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtUtil jwtUtil;
         private final AuthenticationManager authenticationManager;
 
         /**
-         * Autentica un usuario y genera un token JWT
+         * Authenticates a user and generates a JWT token
          */
         @Transactional
         public LoginResponse login(LoginRequest request) {
-                // El request ahora tiene usernameOrEmail
                 String usernameOrEmail = request.getUsernameOrEmail();
 
-                // Buscar el usuario primero
-                Usuario usuario = usuarioRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
-                                .orElseThrow(() -> new UsuarioNoEncontradoException(
-                                                "Usuario no encontrado: " + usernameOrEmail));
+                // Find user by username or email
+                User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
+                                .orElseThrow(() -> new UserNotFoundException(
+                                                "User not found: " + usernameOrEmail));
 
-                // Verificar si está activo
-                if (!usuario.isActive()) {
-                        throw new RuntimeException("El usuario está inactivo");
+                // Check if user is active
+                if (!user.isActive()) {
+                        throw new RuntimeException("User is inactive");
                 }
 
-                // Autenticar con Spring Security (usamos el username real del usuario
-                // encontrado)
+                // Authenticate with Spring Security
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
-                                                usuario.getUsername(),
+                                                user.getUsername(),
                                                 request.getPassword()));
 
-                // Actualizar último login
-                usuario.setLastLogin(java.time.LocalDateTime.now());
-                usuarioRepository.save(usuario);
+                // Update last login
+                user.setLastLogin(LocalDateTime.now());
+                userRepository.save(user);
 
-                // Generar token JWT
-                String token = jwtUtil.generateToken(usuario.getUsername());
+                // Generate JWT token
+                String token = jwtUtil.generateToken(user.getUsername());
 
-                // Obtener nombres de roles y permisos
-                java.util.Set<String> rolesNames = usuario.getRoles().stream()
+                // Get role names and permissions
+                Set<String> rolesNames = user.getRoles().stream()
                                 .map(role -> "ROLE_" + role.getName())
-                                .collect(java.util.stream.Collectors.toSet());
+                                .collect(Collectors.toSet());
 
-                java.util.Set<String> permissionNames = usuario.getRoles().stream()
+                Set<String> permissionNames = user.getRoles().stream()
                                 .flatMap(role -> role.getPermissions().stream())
-                                .map(com.sergiocodev.app.model.Permiso::getName)
-                                .collect(java.util.stream.Collectors.toSet());
+                                .map(com.sergiocodev.app.model.Permission::getName)
+                                .collect(Collectors.toSet());
 
-                // Retornar respuesta con token y datos del usuario
+                // Return token and user data
                 return new LoginResponse(
                                 token,
-                                usuario.getId(),
-                                usuario.getUsername(),
-                                usuario.getEmail(),
-                                usuario.getFullName(),
+                                user.getId(),
+                                user.getUsername(),
+                                user.getEmail(),
+                                user.getFullName(),
                                 rolesNames,
                                 permissionNames);
         }
 
         /**
-         * Registra un nuevo usuario
+         * Registers a new user
          */
         @Transactional
-        public LoginResponse registrar(RegistroRequest request) {
-                // Verificar si el usuario ya existe
-                if (usuarioRepository.existsByUsername(request.getUsername())) {
-                        throw new UsuarioDuplicadoException(
-                                        "El usuario '" + request.getUsername() + "' ya existe");
+        public LoginResponse register(RegisterRequest request) {
+                // Check if username already exists
+                if (userRepository.existsByUsername(request.getUsername())) {
+                        throw new UserAlreadyExistsException(
+                                        "Username '" + request.getUsername() + "' already exists");
                 }
 
-                // Verificar si el email ya existe
-                if (usuarioRepository.existsByEmail(request.getEmail())) {
-                        throw new UsuarioDuplicadoException(
-                                        "El email '" + request.getEmail() + "' ya está registrado");
+                // Check if email already exists
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new UserAlreadyExistsException(
+                                        "Email '" + request.getEmail() + "' is already registered");
                 }
 
-                // Crear nuevo usuario
-                Usuario nuevoUsuario = new Usuario();
-                nuevoUsuario.setUsername(request.getUsername());
-                nuevoUsuario.setEmail(request.getEmail());
-                nuevoUsuario.setFullName(request.getFullName());
-                nuevoUsuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-                nuevoUsuario.setActive(true);
+                // Create new user
+                User newUser = new User();
+                newUser.setUsername(request.getUsername());
+                newUser.setEmail(request.getEmail());
+                newUser.setFullName(request.getFullName());
+                newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                newUser.setActive(true);
 
-                // Guardar en la base de datos
-                Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
+                // Save to database
+                User savedUser = userRepository.save(newUser);
 
-                // Generar token JWT
-                String token = jwtUtil.generateToken(usuarioGuardado.getUsername());
+                // Generate JWT token
+                String token = jwtUtil.generateToken(savedUser.getUsername());
 
-                // Roles vacíos por defecto (en un sistema real se asignaría uno)
-                java.util.Set<String> roles = java.util.Collections.emptySet();
-                java.util.Set<String> permissions = java.util.Collections.emptySet();
+                // Empty roles by default
+                Set<String> roles = Collections.emptySet();
+                Set<String> permissions = Collections.emptySet();
 
-                // Retornar respuesta con token y datos del usuario
+                // Return token and user data
                 return new LoginResponse(
                                 token,
-                                usuarioGuardado.getId(),
-                                usuarioGuardado.getUsername(),
-                                usuarioGuardado.getEmail(),
-                                usuarioGuardado.getFullName(),
+                                savedUser.getId(),
+                                savedUser.getUsername(),
+                                savedUser.getEmail(),
+                                savedUser.getFullName(),
                                 roles,
                                 permissions);
         }

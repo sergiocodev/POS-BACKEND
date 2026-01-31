@@ -1,8 +1,8 @@
 package com.sergiocodev.app.controller;
 
-import com.sergiocodev.app.dto.usuario.LoginRequest;
-import com.sergiocodev.app.dto.usuario.LoginResponse;
-import com.sergiocodev.app.dto.usuario.RegistroRequest;
+import com.sergiocodev.app.dto.user.LoginRequest;
+import com.sergiocodev.app.dto.user.LoginResponse;
+import com.sergiocodev.app.dto.user.RegisterRequest;
 import com.sergiocodev.app.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,16 +17,16 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Permitir CORS para desarrollo
-@Tag(name = "Authentication", description = "Endpoints para autenticación y registro de usuarios")
+@CrossOrigin(origins = "*")
+@Tag(name = "Authentication", description = "Endpoints para la autenticación y registro de usuarios")
 public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y devuelve un token JWT")
+    @Operation(summary = "Iniciar sesión", description = "Autentica a un usuario y devuelve un token JWT")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login exitoso"),
-            @ApiResponse(responseCode = "401", description = "Credenciales inválidas")
+            @ApiResponse(responseCode = "200", description = "Successful login"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -36,12 +36,12 @@ public class AuthController {
 
     @Operation(summary = "Registrar usuario", description = "Registra un nuevo usuario en el sistema")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos o usuario ya existe")
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data or user already exists")
     })
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> registrar(@Valid @RequestBody RegistroRequest request) {
-        LoginResponse response = authService.registrar(request);
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        LoginResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
