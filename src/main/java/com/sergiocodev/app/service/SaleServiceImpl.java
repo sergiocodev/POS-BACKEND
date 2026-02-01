@@ -78,12 +78,13 @@ public class SaleServiceImpl implements SaleService {
                 // Stock Movement
                 StockMovement movement = new StockMovement();
                 movement.setEstablishment(entity.getEstablishment());
-                movement.setProduct(product);
                 movement.setLot(lot);
-                movement.setType(StockMovement.MovementType.SALIDA);
-                movement.setQuantity(ir.getQuantity());
-                movement.setReason("VENTA: " + entity.getSeries() + "-" + entity.getNumber());
-                movement.setReferenceType(StockMovement.ReferenceType.VENTA);
+                movement.setType(StockMovement.MovementType.SALE);
+                movement.setQuantity(ir.getQuantity().negate()); // Negative for sale
+                movement.setBalanceAfter(inventory.getQuantity());
+                movement.setReferenceTable("sales");
+                movement.setReferenceId(entity.getId());
+                movement.setUser(entity.getUser());
                 movementRepository.save(movement);
             }
         }

@@ -20,6 +20,11 @@ public class SaleRequest {
     @NotNull(message = "Document type is required")
     private Sale.SaleDocumentType documentType;
 
+    // Campos opcionales para Notas de Crédito/Débito
+    private Long relatedSaleId;
+    private String noteCode;
+    private String noteReason;
+
     @NotNull(message = "Items are required")
     private List<SaleItemRequest> items;
 

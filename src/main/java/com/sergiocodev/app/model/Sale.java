@@ -40,6 +40,17 @@ public class Sale {
     @Column(name = "document_type", nullable = false, length = 20)
     private SaleDocumentType documentType = SaleDocumentType.BOLETA;
 
+    // Campos para Notas de Crédito/Débito
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "related_sale_id")
+    private Sale relatedSale;
+
+    @Column(name = "note_code", length = 5)
+    private String noteCode;
+
+    @Column(name = "note_reason", columnDefinition = "TEXT")
+    private String noteReason;
+
     @Column(nullable = false, length = 10)
     private String series;
 
@@ -79,6 +90,19 @@ public class Sale {
     @Column(name = "pdf_url", columnDefinition = "TEXT")
     private String pdfUrl;
 
+    @Column(name = "cdr_url", columnDefinition = "TEXT")
+    private String cdrUrl;
+
+    // Campos de invalidación/baja
+    @Column(name = "is_voided", nullable = false)
+    private boolean isVoided = false;
+
+    @Column(name = "voided_at")
+    private LocalDateTime voidedAt;
+
+    @Column(name = "void_reason", length = 255)
+    private String voidReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -97,7 +121,7 @@ public class Sale {
     private List<SalePayment> payments = new ArrayList<>();
 
     public enum SaleDocumentType {
-        TICKET, BOLETA, FACTURA, NOTA_CREDITO
+        TICKET, BOLETA, FACTURA, NOTA_CREDITO, NOTA_DEBITO
     }
 
     public enum SaleStatus {

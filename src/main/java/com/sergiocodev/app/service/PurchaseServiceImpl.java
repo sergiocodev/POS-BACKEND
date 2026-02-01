@@ -91,12 +91,13 @@ public class PurchaseServiceImpl implements PurchaseService {
             // Stock Movement
             StockMovement movement = new StockMovement();
             movement.setEstablishment(entity.getEstablishment());
-            movement.setProduct(product);
             movement.setLot(lot);
-            movement.setType(StockMovement.MovementType.ENTRADA);
+            movement.setType(StockMovement.MovementType.PURCHASE);
             movement.setQuantity(new BigDecimal(ir.getQuantity() + ir.getBonusQuantity()));
-            movement.setReason("COMPRA: " + entity.getSeries() + "-" + entity.getNumber());
-            movement.setReferenceType(StockMovement.ReferenceType.COMPRA);
+            movement.setBalanceAfter(newQty);
+            movement.setReferenceTable("purchases");
+            movement.setReferenceId(entity.getId());
+            movement.setUser(entity.getUser());
             movementRepository.save(movement);
         }
 

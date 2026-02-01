@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
-    List<StockMovement> findByProductIdOrderByCreatedAtDesc(Long productId);
+    List<StockMovement> findByLotProductIdOrderByCreatedAtDesc(Long productId);
 
     List<StockMovement> findByEstablishmentIdOrderByCreatedAtDesc(Long establishmentId);
 }

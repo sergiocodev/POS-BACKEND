@@ -85,6 +85,6 @@ public class Product {
     }
 
     public enum UnitType {
-        UNI, ML, GR, AMPOLLA
+        UNI, ML, GR, AMPOLLA, TABLETA
     }
 }

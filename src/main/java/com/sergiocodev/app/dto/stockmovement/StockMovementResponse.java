@@ -18,21 +18,25 @@ public class StockMovementResponse {
     private String lotCode;
     private StockMovement.MovementType type;
     private BigDecimal quantity;
-    private String reason;
+    private BigDecimal balanceAfter;
+    private String referenceTable;
     private Long referenceId;
-    private StockMovement.ReferenceType referenceType;
+    private String userName;
     private LocalDateTime createdAt;
 
     public StockMovementResponse(StockMovement sm) {
         this.id = sm.getId();
         this.establishmentName = sm.getEstablishment().getName();
-        this.productName = sm.getProduct().getName();
+        this.productName = sm.getLot() != null && sm.getLot().getProduct() != null
+                ? sm.getLot().getProduct().getName()
+                : null;
         this.lotCode = sm.getLot() != null ? sm.getLot().getLotCode() : null;
         this.type = sm.getType();
         this.quantity = sm.getQuantity();
-        this.reason = sm.getReason();
+        this.balanceAfter = sm.getBalanceAfter();
+        this.referenceTable = sm.getReferenceTable();
         this.referenceId = sm.getReferenceId();
-        this.referenceType = sm.getReferenceType();
+        this.userName = sm.getUser() != null ? sm.getUser().getUsername() : null;
         this.createdAt = sm.getCreatedAt();
     }
 }

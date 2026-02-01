@@ -16,23 +16,23 @@ public class StockMovementServiceImpl implements StockMovementService {
 
     private final StockMovementRepository repository;
     private final EstablishmentRepository establishmentRepository;
-    private final ProductRepository productRepository;
     private final ProductLotRepository lotRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public StockMovementResponse create(StockMovementRequest request) {
         StockMovement entity = new StockMovement();
         entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId()).orElse(null));
-        entity.setProduct(productRepository.findById(request.getProductId()).orElse(null));
-        if (request.getLotId() != null) {
-            entity.setLot(lotRepository.findById(request.getLotId()).orElse(null));
-        }
+        entity.setLot(lotRepository.findById(request.getLotId()).orElse(null));
         entity.setType(request.getType());
         entity.setQuantity(request.getQuantity());
-        entity.setReason(request.getReason());
+        entity.setBalanceAfter(request.getBalanceAfter());
+        entity.setReferenceTable(request.getReferenceTable());
         entity.setReferenceId(request.getReferenceId());
-        entity.setReferenceType(request.getReferenceType());
+        if (request.getUserId() != null) {
+            entity.setUser(userRepository.findById(request.getUserId()).orElse(null));
+        }
 
         return new StockMovementResponse(repository.save(entity));
     }
@@ -48,7 +48,7 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Override
     @Transactional(readOnly = true)
     public List<StockMovementResponse> getByProduct(Long productId) {
-        return repository.findByProductIdOrderByCreatedAtDesc(productId).stream()
+        return repository.findByLotProductIdOrderByCreatedAtDesc(productId).stream()
                 .map(StockMovementResponse::new)
                 .collect(Collectors.toList());
     }

@@ -28,6 +28,18 @@ public class SaleResponse {
     private Sale.SaleStatus status;
     private Sale.SunatStatus sunatStatus;
     private String pdfUrl;
+    private String cdrUrl;
+
+    // Campos de NC/ND
+    private Long relatedSaleId;
+    private String noteCode;
+    private String noteReason;
+
+    // Campos de anulación
+    private boolean isVoided;
+    private LocalDateTime voidedAt;
+    private String voidReason;
+
     private List<SaleItemResponse> items;
     private List<SalePaymentResponse> payments;
 
@@ -46,6 +58,13 @@ public class SaleResponse {
         this.status = sale.getStatus();
         this.sunatStatus = sale.getSunatStatus();
         this.pdfUrl = sale.getPdfUrl();
+        this.cdrUrl = sale.getCdrUrl();
+        this.relatedSaleId = sale.getRelatedSale() != null ? sale.getRelatedSale().getId() : null;
+        this.noteCode = sale.getNoteCode();
+        this.noteReason = sale.getNoteReason();
+        this.isVoided = sale.isVoided();
+        this.voidedAt = sale.getVoidedAt();
+        this.voidReason = sale.getVoidReason();
         this.items = sale.getItems().stream().map(SaleItemResponse::new).collect(Collectors.toList());
         this.payments = sale.getPayments().stream().map(SalePaymentResponse::new).collect(Collectors.toList());
     }

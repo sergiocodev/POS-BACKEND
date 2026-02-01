@@ -1,50 +1,33 @@
-# POS Farmacia - Sistema Punto de Venta
+# Pharmacy POS - Backend (Spring Boot)
 
-Sistema integral de gestión para farmacias desarrollado con Spring Boot, que incorpora autenticación segura mediante JWT y control de acceso basado en roles y permisos (RBAC). La solución incluye módulos para la gestión de catálogos farmacéuticos (ingredientes activos, marcas, categorías, laboratorios y presentaciones), un maestro de productos con sus relaciones (código, registro DIGEMID, marca, categoría, laboratorio, presentación, tipo de unidad, factor de compra y etiquetas de fraccionamiento), y la asociación de ingredientes mediante. Dispone de un inventario detallado por lotes y establecimientos, control de caja y sesiones, así como módulos de compras y ventas que soportan la creación automática de lotes, el registro de ítems, métodos de pago y la integración con la facturación electrónica.
+Core operativo y API RESTful para el sistema de gestión farmacéutica.
 
-## Tecnologías Utilizadas
+## 🛠️ Tecnologías y Arquitectura
+- **Spring Boot 3.4.2**: Base del ecosistema.
+- **Spring Security & JWT**: Protección robusta de endpoints y manejo de sesiones sin estado.
+- **MySQL & JPA/Hibernate**: Modelo relacional optimizado para catálogos farmacéuticos complejos.
+- **Swagger/OpenAPI**: Documentación interactiva disponible en `/swagger-ui.html`.
 
-- **Framework Backend**: Spring Boot 4.0.2
-- **Base de Datos**: MySQL 8.0+
-- **Seguridad**: Spring Security con autenticación JWT
-- **Documentación API**: Swagger/OpenAPI 3.0
-- **Persistencia**: JPA/Hibernate
-- **Herramienta de Construcción**: Apache Maven
+## ⚙️ Configuración del Entorno
 
-## Requisitos del Sistema
+1. **Requisitos**: JDK 25 y Maven 3.6+.
+2. **Variables de Entorno**: Configure las siguientes variables o use un archivo `.env` (basado en `.env.example`):
+   - `DB_URL`: URL de conexión JDBC.
+   - `DB_USERNAME` / `DB_PASSWORD`: Credenciales de MySQL.
+   - `JWT_SECRET`: Llave de firma para los tokens (mínimo 64 caracteres).
 
-- Java Development Kit (JDK) 25 o superior
-- MySQL Server 8.0 o superior
-- Apache Maven 3.6 o superior
+3. **Ejecución**:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-## Estructura del Proyecto
+## 📂 Estructura del Código
+- `config/`: Configuración de CORS, Bean definition y auditoría.
+- `controller/`: Endpoints REST organizados por recursos.
+- `dto/`: Objetos de transferencia desacoplados de las entidades.
+- `security/`: Implementación de filtros y utilidades JWT.
+- `service/`: Capa de lógica de negocio y transacciones.
 
-```
-src/main/java/com/sergiocodev/app/
-├── config/          # Configuraciones de seguridad y beans
-├── controller/      # Controladores REST
-├── dto/            # Objetos de transferencia de datos
-├── exception/      # Excepciones personalizadas y manejadores
-├── model/          # Entidades del modelo de datos
-├── repository/     # Interfaces de repositorio JPA
-├── security/       # Componentes de seguridad y filtros JWT
-└── service/        # Capa de lógica de negocio
-```
-
-## Licencia
-
-Este proyecto está protegido por derechos de autor. Consulte el archivo `LICENSE` para más información sobre los términos de uso.
-
-## Autor
-
-Sergio Sabino Vasquez
-
-## Contribuciones
-
-Para contribuir al proyecto:
-
-1. Realice un fork del repositorio
-2. Cree una rama para su funcionalidad (`git checkout -b feature/nueva-funcionalidad`)
-3. Realice commit de sus cambios (`git commit -m 'Descripción de los cambios'`)
-4. Envíe los cambios a su fork (`git push origin feature/nueva-funcionalidad`)
-5. Abra un Pull Request para revisión
+## 👤 Autor
+**Sergio Sabino Vasquez**
+- Licencia: Privada / Derechos Reservados.

@@ -15,9 +15,7 @@ public class StockMovementRequest {
     @NotNull(message = "Establishment ID is required")
     private Long establishmentId;
 
-    @NotNull(message = "Product ID is required")
-    private Long productId;
-
+    @NotNull(message = "Lot ID is required")
     private Long lotId;
 
     @NotNull(message = "Movement type is required")
@@ -26,7 +24,10 @@ public class StockMovementRequest {
     @NotNull(message = "Quantity is required")
     private BigDecimal quantity;
 
-    private String reason;
+    @NotNull(message = "Balance after is required")
+    private BigDecimal balanceAfter;
+
+    private String referenceTable;
     private Long referenceId;
-    private StockMovement.ReferenceType referenceType;
+    private Long userId;
 }
