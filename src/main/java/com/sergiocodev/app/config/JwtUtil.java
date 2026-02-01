@@ -75,14 +75,24 @@ public class JwtUtil {
      */
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        return createToken(claims, username, jwtProperties.getExpiration());
+    }
+
+    /**
+     * Generates a refresh token for the user
+     */
+    public String generateRefreshToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        // Refresh token expiration: 7 days (604800000 ms) or default 1 day
+        long refreshExpiration = 604800000;
+        return createToken(claims, username, refreshExpiration);
     }
 
     /**
      * Creates the JWT token
      */
-    private String createToken(Map<String, Object> claims, String subject) {
-        long expMillis = jwtProperties.getExpiration() != null ? jwtProperties.getExpiration() : 86400000;
+    private String createToken(Map<String, Object> claims, String subject, Long expiration) {
+        long expMillis = expiration != null ? expiration : 86400000;
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)

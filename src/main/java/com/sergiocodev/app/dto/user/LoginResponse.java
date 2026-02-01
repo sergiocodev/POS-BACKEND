@@ -11,6 +11,7 @@ import java.util.Set;
 public class LoginResponse {
 
     private String token;
+    private String refreshToken;
     private String type = "Bearer";
     private Long id;
     private String username;
@@ -19,9 +20,10 @@ public class LoginResponse {
     private Set<String> roles;
     private Set<String> permissions;
 
-    public LoginResponse(String token, Long id, String username, String email, String fullName,
+    public LoginResponse(String token, String refreshToken, Long id, String username, String email, String fullName,
             Set<String> roles, Set<String> permissions) {
         this.token = token;
+        this.refreshToken = refreshToken;
         this.id = id;
         this.username = username;
         this.email = email;
