@@ -155,4 +155,115 @@ public class SaleServiceImpl implements SaleService {
         // Return URL or Content
         return "<cdr>Placeholder for Sale " + id + "</cdr>";
     }
+
+    @Override
+    @Transactional
+    public SaleResponse createCreditNote(Long id, String reason, Long userId) {
+        Sale original = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sale not found"));
+
+        if (original.getStatus() == Sale.SaleStatus.CANCELED || original.isVoided()) {
+            throw new RuntimeException("Cannot create credit note for a canceled or voided sale");
+        }
+
+        Sale note = new Sale();
+        note.setEstablishment(original.getEstablishment());
+        note.setCustomer(original.getCustomer());
+        note.setUser(userRepository.findById(userId).orElse(original.getUser()));
+        note.setDocumentType(Sale.SaleDocumentType.NOTA_CREDITO);
+        note.setRelatedSale(original);
+        note.setNoteReason(reason);
+        note.setSeries("FC01");
+        note.setNumber("000001"); // Dummy
+        note.setDate(LocalDateTime.now());
+        note.setSubTotal(original.getSubTotal().negate());
+        note.setTax(original.getTax().negate());
+        note.setTotal(original.getTotal().negate());
+        note.setStatus(Sale.SaleStatus.COMPLETED);
+
+        // Update Inventory & log StockMovement for each item
+        for (SaleItem originalItem : original.getItems()) {
+            if (originalItem.getLot() != null) {
+                Inventory inventory = inventoryRepository
+                        .findByEstablishmentIdAndLotId(original.getEstablishment().getId(),
+                                originalItem.getLot().getId())
+                        .orElseThrow(() -> new RuntimeException("Inventory not found for lot"));
+
+                inventory.setQuantity(inventory.getQuantity().add(originalItem.getQuantity()));
+                inventory.setLastMovement(LocalDateTime.now());
+                inventoryRepository.save(inventory);
+
+                StockMovement movement = new StockMovement();
+                movement.setLot(originalItem.getLot());
+                movement.setEstablishment(original.getEstablishment());
+                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN); // RETURN/CREDIT_NOTE type would be better
+                movement.setQuantity(originalItem.getQuantity());
+                movement.setBalanceAfter(inventory.getQuantity());
+                movement.setReferenceTable("sales");
+                movement.setReferenceId(note.getId());
+                movement.setUser(note.getUser());
+                movement.setCreatedAt(LocalDateTime.now());
+                stockMovementRepository.save(movement);
+            }
+        }
+
+        // Update Cash Session if applicable
+        CashSession session = original.getCashSession();
+        if (session != null && session.getStatus() == CashSession.SessionStatus.OPEN) {
+            BigDecimal refundAmount = original.getPayments().stream()
+                    .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
+                    .map(SalePayment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            session.setCalculatedBalance(session.getCalculatedBalance().subtract(refundAmount));
+            cashSessionRepository.save(session);
+        }
+
+        return new SaleResponse(repository.save(note));
+    }
+
+    @Override
+    @Transactional
+    public SaleResponse createDebitNote(Long id, String reason, Long userId) {
+        // Implementation similar to credit note but with positive amounts and inverse
+        // inventory if applicable
+        // For simplicity in this step, throwing exception or placeholder
+        throw new UnsupportedOperationException("Debit notes not yet implemented");
+    }
+
+    @Override
+    @Transactional
+    public void invalidate(Long id, String reason, Long userId) {
+        Sale sale = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sale not found"));
+
+        sale.setVoided(true);
+        sale.setVoidedAt(LocalDateTime.now());
+        sale.setVoidReason(reason);
+        repository.save(sale);
+
+        // Logical reverse of inventory or wait for batch? usually invalidate requires
+        // manual stock check or automatic return.
+        // Assuming automatic return for now.
+        for (SaleItem item : sale.getItems()) {
+            if (item.getLot() != null) {
+                Inventory inventory = inventoryRepository
+                        .findByEstablishmentIdAndLotId(sale.getEstablishment().getId(), item.getLot().getId())
+                        .orElseThrow(() -> new RuntimeException("Inventory not found"));
+                inventory.setQuantity(inventory.getQuantity().add(item.getQuantity()));
+                inventoryRepository.save(inventory);
+
+                StockMovement movement = new StockMovement();
+                movement.setLot(item.getLot());
+                movement.setEstablishment(sale.getEstablishment());
+                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
+                movement.setQuantity(item.getQuantity());
+                movement.setBalanceAfter(inventory.getQuantity());
+                movement.setReferenceTable("voids");
+                movement.setReferenceId(sale.getId());
+                movement.setCreatedAt(LocalDateTime.now());
+                stockMovementRepository.save(movement);
+            }
+        }
+    }
 }

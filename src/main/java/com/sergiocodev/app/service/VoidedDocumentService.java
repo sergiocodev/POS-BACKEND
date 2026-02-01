@@ -17,4 +17,6 @@ public interface VoidedDocumentService {
     VoidedDocumentResponse updateSunatStatus(Long id, VoidedDocument.VoidedSunatStatus status, String description);
 
     List<VoidedDocumentResponse> getByEstablishment(Long establishmentId);
+
+    void processDailyVoids(Long establishmentId);
 }

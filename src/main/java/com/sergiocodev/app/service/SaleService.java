@@ -18,4 +18,10 @@ public interface SaleService {
     String getXml(Long id);
 
     String getCdr(Long id);
+
+    SaleResponse createCreditNote(Long id, String reason, Long userId);
+
+    SaleResponse createDebitNote(Long id, String reason, Long userId);
+
+    void invalidate(Long id, String reason, Long userId);
 }

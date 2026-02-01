@@ -58,4 +58,11 @@ public class VoidedDocumentController {
             @RequestParam(required = false) String description) {
         return ResponseEntity.ok(service.updateSunatStatus(id, status, description));
     }
+
+    @PostMapping("/process")
+    @Operation(summary = "Proceso Batch: Enviar bajas del día a SUNAT")
+    public ResponseEntity<Void> processDailyVoids(@RequestParam Long establishmentId) {
+        service.processDailyVoids(establishmentId);
+        return ResponseEntity.noContent().build();
+    }
 }

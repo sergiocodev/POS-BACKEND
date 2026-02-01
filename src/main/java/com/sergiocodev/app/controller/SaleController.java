@@ -72,4 +72,32 @@ public class SaleController {
                 .header("Content-Disposition", "attachment; filename=sale-" + id + "-cdr.xml")
                 .body(service.getCdr(id));
     }
+
+    @PostMapping("/{id}/credit-note")
+    @Operation(summary = "Emitir Nota de Crédito")
+    public ResponseEntity<SaleResponse> createCreditNote(
+            @PathVariable Long id,
+            @RequestParam String reason,
+            @RequestParam Long userId) {
+        return ResponseEntity.ok(service.createCreditNote(id, reason, userId));
+    }
+
+    @PostMapping("/{id}/debit-note")
+    @Operation(summary = "Emitir Nota de Débito")
+    public ResponseEntity<SaleResponse> createDebitNote(
+            @PathVariable Long id,
+            @RequestParam String reason,
+            @RequestParam Long userId) {
+        return ResponseEntity.ok(service.createDebitNote(id, reason, userId));
+    }
+
+    @PostMapping("/{id}/invalidate")
+    @Operation(summary = "Invalidar/Baja de documento")
+    public ResponseEntity<Void> invalidate(
+            @PathVariable Long id,
+            @RequestParam String reason,
+            @RequestParam Long userId) {
+        service.invalidate(id, reason, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
