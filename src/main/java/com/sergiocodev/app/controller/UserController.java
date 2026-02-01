@@ -1,13 +1,16 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.user.UserRequest;
 import com.sergiocodev.app.model.User;
-import com.sergiocodev.app.repository.UserRepository;
+import com.sergiocodev.app.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,13 +26,13 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
     @GetMapping
     public ResponseEntity<List<User>> getAll() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userService.getAll();
         // Hide passwords
         users.forEach(u -> u.setPasswordHash("***"));
         return ResponseEntity.ok(users);
@@ -45,8 +48,7 @@ public class UserController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userService.getByUsername(username);
 
         // Hide password
         user.setPasswordHash("***");
@@ -61,12 +63,32 @@ public class UserController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<User> getById(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userService.getById(id);
 
         // Hide password
         user.setPasswordHash("***");
 
         return ResponseEntity.ok(user);
+    }
+
+    @Operation(summary = "Crear usuario", description = "Crea un nuevo usuario (ADMIN)")
+    @PostMapping
+    public ResponseEntity<User> create(@Valid @RequestBody UserRequest request) {
+        User user = userService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+
+    @Operation(summary = "Actualizar usuario", description = "Actualiza un usuario existente")
+    @PutMapping("/{id}")
+    public ResponseEntity<User> update(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+        User user = userService.update(id, request);
+        return ResponseEntity.ok(user);
+    }
+
+    @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -44,6 +44,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 // Public endpoints - NO authentication required
                                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                                // Roles and Users are protected by default .authenticated()
                                                 .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
                                                                 "/v3/api-docs/**",
