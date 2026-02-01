@@ -1,12 +1,9 @@
 package com.sergiocodev.app.controller;
 
-import com.sergiocodev.app.dto.report.DailySalesReport;
-import com.sergiocodev.app.dto.report.ProfitabilityReport;
-import com.sergiocodev.app.dto.report.SunatStatusReport;
+import com.sergiocodev.app.dto.report.*;
 import com.sergiocodev.app.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +13,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reports")
-@RequiredArgsConstructor
 @Tag(name = "Reports", description = "API para generación de reportes de negocio")
 public class ReportController {
 
     private final ReportService service;
+
+    public ReportController(ReportService service) {
+        this.service = service;
+    }
 
     @GetMapping("/sales-daily")
     @Operation(summary = "Reporte de ventas del día")
@@ -43,5 +43,51 @@ public class ReportController {
     @Operation(summary = "Estado de comprobantes SUNAT")
     public ResponseEntity<List<SunatStatusReport>> getSunatStatus(@RequestParam Long establishmentId) {
         return ResponseEntity.ok(service.getSunatStatus(establishmentId));
+    }
+
+    @GetMapping("/top-products")
+    @Operation(summary = "Ranking de Productos (Pareto)")
+    public ResponseEntity<List<TopProductReport>> getTopProducts(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId,
+            @RequestParam(defaultValue = "amount") String sortBy,
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(service.getTopProducts(start, end, establishmentId, sortBy, limit));
+    }
+
+    @GetMapping("/sales-by-category")
+    @Operation(summary = "Ventas por Familia/Categoría")
+    public ResponseEntity<List<CategorySalesReport>> getSalesByCategory(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getSalesByCategory(start, end, establishmentId));
+    }
+
+    @GetMapping("/sales-by-employee")
+    @Operation(summary = "Rendimiento de Vendedores")
+    public ResponseEntity<List<EmployeeSalesReport>> getSalesByEmployee(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getSalesByEmployee(start, end, establishmentId));
+    }
+
+    @GetMapping("/hourly-heat")
+    @Operation(summary = "Mapa de Calor por Horas")
+    public ResponseEntity<List<HourlyHeatReport>> getHourlyHeat(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getHourlyHeat(start, end, establishmentId));
+    }
+
+    @GetMapping("/low-rotation")
+    @Operation(summary = "Productos de Baja Rotación (Huesos)")
+    public ResponseEntity<List<LowRotationReport>> getLowRotation(
+            @RequestParam(defaultValue = "90") int days,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getLowRotation(days, establishmentId));
     }
 }
