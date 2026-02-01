@@ -15,4 +15,10 @@ public interface CashSessionService {
     CashSessionResponse getById(Long id);
 
     CashSessionResponse getActiveSession(Long userId);
+
+    CashSessionResponse getStatus(Long userId);
+
+    CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance);
+
+    List<CashSessionResponse> getHistory(Long userId);
 }

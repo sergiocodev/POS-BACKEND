@@ -67,11 +67,44 @@ public class CashSessionServiceImpl implements CashSessionService {
     @Override
     @Transactional(readOnly = true)
     public CashSessionResponse getActiveSession(Long userId) {
-        // This would need a repo method findByUserIdAndStatus(userId, OPEN)
-        return repository.findAll().stream()
-                .filter(s -> s.getUser().getId().equals(userId) && s.getStatus() == CashSession.SessionStatus.OPEN)
-                .findFirst()
+        return repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .map(CashSessionResponse::new)
                 .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashSessionResponse getStatus(Long userId) {
+        // Alias for getActiveSession for now, but could include more calculated data
+        return getActiveSession(userId);
+    }
+
+    @Override
+    @Transactional
+    public CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance) {
+        CashSession entity = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                .orElseThrow(() -> new RuntimeException("No active session found for user"));
+
+        entity.setClosingBalance(closingBalance);
+        entity.setClosedAt(LocalDateTime.now());
+        entity.setStatus(CashSession.SessionStatus.CLOSED);
+
+        // Calculate diff: closingBalance - calculatedBalance
+        // Assuming calculatedBalance is updated by sales (not implemented yet, but
+        // field exists)
+        if (entity.getCalculatedBalance() != null) {
+            BigDecimal diff = closingBalance.subtract(entity.getCalculatedBalance());
+            entity.setDiffAmount(diff);
+        }
+
+        return new CashSessionResponse(repository.save(entity));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CashSessionResponse> getHistory(Long userId) {
+        return repository.findByUserIdAndStatusOrderByOpenedAtDesc(userId, CashSession.SessionStatus.CLOSED).stream()
+                .map(CashSessionResponse::new)
+                .collect(Collectors.toList());
     }
 }

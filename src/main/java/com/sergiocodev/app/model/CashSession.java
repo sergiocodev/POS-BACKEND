@@ -35,7 +35,7 @@ public class CashSession {
     @Column(name = "calculated_balance", precision = 12, scale = 2)
     private BigDecimal calculatedBalance;
 
-    @Column(name = "diff_amount", precision = 12, scale = 2, insertable = false, updatable = false)
+    @Column(name = "diff_amount", precision = 12, scale = 2)
     private BigDecimal diffAmount;
 
     @Column(name = "opened_at", nullable = false)

@@ -54,4 +54,23 @@ public class CashSessionController {
     public ResponseEntity<CashSessionResponse> getActiveSession(@RequestParam Long userId) {
         return ResponseEntity.ok(service.getActiveSession(userId));
     }
+
+    @GetMapping("/status")
+    @Operation(summary = "Ver montos actuales del turno", description = "Muestra el estado de la caja y montos acumulados")
+    public ResponseEntity<CashSessionResponse> getStatus(@RequestParam Long userId) {
+        return ResponseEntity.ok(service.getStatus(userId));
+    }
+
+    @PostMapping("/close")
+    @Operation(summary = "Arqueo y cierre de caja", description = "Cierra la sesión activa del usuario")
+    public ResponseEntity<CashSessionResponse> closeActiveSession(@RequestParam Long userId,
+            @RequestParam BigDecimal closingBalance) {
+        return ResponseEntity.ok(service.closeActiveSession(userId, closingBalance));
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Historial de cierres", description = "Listado de sesiones cerradas del usuario")
+    public ResponseEntity<List<CashSessionResponse>> getHistory(@RequestParam Long userId) {
+        return ResponseEntity.ok(service.getHistory(userId));
+    }
 }
