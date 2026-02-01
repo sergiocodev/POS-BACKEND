@@ -3,9 +3,11 @@ package com.sergiocodev.app.service;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
 import com.sergiocodev.app.model.Inventory;
+import com.sergiocodev.app.model.StockMovement;
 import com.sergiocodev.app.repository.EstablishmentRepository;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.ProductLotRepository;
+import com.sergiocodev.app.repository.StockMovementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository repository;
     private final EstablishmentRepository establishmentRepository;
     private final ProductLotRepository lotRepository;
-    private final com.sergiocodev.app.repository.KardexRepository kardexRepository;
+    private final StockMovementRepository stockMovementRepository;
 
     @Override
     @Transactional
@@ -47,40 +49,34 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory saved = repository.save(entity);
 
-        // Log to Kardex
+        // Stock Movement
         // Determine movement type and quantity difference
         java.math.BigDecimal diff = newQuantity.subtract(oldQuantity);
         if (diff.compareTo(java.math.BigDecimal.ZERO) != 0) {
-            com.sergiocodev.app.model.Kardex kardex = new com.sergiocodev.app.model.Kardex();
-            kardex.setProduct(entity.getLot().getProduct());
-            kardex.setEstablishment(entity.getEstablishment());
+            StockMovement movement = new StockMovement();
+            movement.setLot(entity.getLot());
+            movement.setEstablishment(entity.getEstablishment());
 
-            // Default to ADJUSTMENT if not specified (or infer based on diff)
-            // If movementType provided in request, parse it.
-            com.sergiocodev.app.model.Kardex.MovementType type = com.sergiocodev.app.model.Kardex.MovementType.ADJUSTMENT;
+            // Default to ADJUSTMENT_IN/OUT if not specified
+            StockMovement.MovementType type = diff.compareTo(java.math.BigDecimal.ZERO) > 0
+                    ? StockMovement.MovementType.ADJUSTMENT_IN
+                    : StockMovement.MovementType.ADJUSTMENT_OUT;
+
             if (request.getMovementType() != null) {
                 try {
-                    type = com.sergiocodev.app.model.Kardex.MovementType.valueOf(request.getMovementType());
+                    type = StockMovement.MovementType.valueOf(request.getMovementType());
                 } catch (IllegalArgumentException e) {
                     // ignore, use default
                 }
-            } else {
-                if (diff.compareTo(java.math.BigDecimal.ZERO) > 0)
-                    type = com.sergiocodev.app.model.Kardex.MovementType.IN;
-                else
-                    type = com.sergiocodev.app.model.Kardex.MovementType.OUT;
             }
-            kardex.setMovementType(type);
+            movement.setType(type);
+            movement.setQuantity(diff.abs());
+            movement.setBalanceAfter(newQuantity);
+            movement.setReferenceTable("inventory");
+            movement.setReferenceId(saved.getId());
+            movement.setCreatedAt(java.time.LocalDateTime.now());
 
-            // Kardex quantity is usually integer, but inventory is BigDecimal.
-            // Assuming for now we cast to int or Kardex should be BigDecimal.
-            // Requirement said "Stock global" but didn't specify type.
-            // Kardex entity has Integer quantity. Let's cast for now.
-            kardex.setQuantity(diff.abs());
-            kardex.setBalance(newQuantity);
-            kardex.setNotes(request.getNotes() != null ? request.getNotes() : "Manual Adjustment");
-
-            kardexRepository.save(kardex);
+            stockMovementRepository.save(movement);
         }
 
         return new InventoryResponse(saved);

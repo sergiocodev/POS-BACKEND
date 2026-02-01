@@ -23,7 +23,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final ProductRepository productRepository;
     private final ProductLotRepository lotRepository;
     private final InventoryRepository inventoryRepository;
-    private final com.sergiocodev.app.repository.KardexRepository kardexRepository;
+    private final StockMovementRepository stockMovementRepository;
 
     @Override
     @Transactional
@@ -88,15 +88,18 @@ public class PurchaseServiceImpl implements PurchaseService {
             inventory.setLastMovement(LocalDateTime.now());
             inventoryRepository.save(inventory);
 
-            // Kardex Movement
-            com.sergiocodev.app.model.Kardex kardex = new com.sergiocodev.app.model.Kardex();
-            kardex.setProduct(product);
-            kardex.setEstablishment(entity.getEstablishment());
-            kardex.setMovementType(com.sergiocodev.app.model.Kardex.MovementType.PURCHASE);
-            kardex.setQuantity(new BigDecimal(ir.getQuantity() + ir.getBonusQuantity()));
-            kardex.setBalance(newQty);
-            kardex.setNotes("Purchase: " + entity.getSeries() + "-" + entity.getNumber());
-            kardexRepository.save(kardex);
+            // Stock Movement
+            StockMovement movement = new StockMovement();
+            movement.setEstablishment(entity.getEstablishment());
+            movement.setLot(lot);
+            movement.setType(StockMovement.MovementType.PURCHASE);
+            movement.setQuantity(new java.math.BigDecimal(ir.getQuantity() + ir.getBonusQuantity()));
+            movement.setBalanceAfter(newQty);
+            movement.setReferenceTable("purchases");
+            movement.setReferenceId(entity.getId());
+            movement.setUser(entity.getUser());
+            movement.setCreatedAt(java.time.LocalDateTime.now());
+            stockMovementRepository.save(movement);
         }
 
         entity.setSubTotal(subTotal);
