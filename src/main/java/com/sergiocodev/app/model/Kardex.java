@@ -29,11 +29,11 @@ public class Kardex {
     @Enumerated(EnumType.STRING)
     private MovementType movementType;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private java.math.BigDecimal quantity;
 
-    @Column(nullable = false)
-    private Integer balance;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private java.math.BigDecimal balance;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

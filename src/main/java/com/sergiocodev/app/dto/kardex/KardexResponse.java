@@ -15,8 +15,8 @@ public class KardexResponse {
     private Long productId;
     private String productName;
     private String movementType;
-    private Integer quantity;
-    private Integer balance;
+    private java.math.BigDecimal quantity;
+    private java.math.BigDecimal balance;
     private String notes;
     private LocalDateTime createdAt;
     private String establishmentName;

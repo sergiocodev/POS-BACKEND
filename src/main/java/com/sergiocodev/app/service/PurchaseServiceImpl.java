@@ -93,8 +93,8 @@ public class PurchaseServiceImpl implements PurchaseService {
             kardex.setProduct(product);
             kardex.setEstablishment(entity.getEstablishment());
             kardex.setMovementType(com.sergiocodev.app.model.Kardex.MovementType.PURCHASE);
-            kardex.setQuantity(ir.getQuantity() + ir.getBonusQuantity());
-            kardex.setBalance(newQty.intValue());
+            kardex.setQuantity(new BigDecimal(ir.getQuantity() + ir.getBonusQuantity()));
+            kardex.setBalance(newQty);
             kardex.setNotes("Purchase: " + entity.getSeries() + "-" + entity.getNumber());
             kardexRepository.save(kardex);
         }

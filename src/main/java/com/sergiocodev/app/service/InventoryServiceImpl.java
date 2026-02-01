@@ -76,8 +76,8 @@ public class InventoryServiceImpl implements InventoryService {
             // Assuming for now we cast to int or Kardex should be BigDecimal.
             // Requirement said "Stock global" but didn't specify type.
             // Kardex entity has Integer quantity. Let's cast for now.
-            kardex.setQuantity(diff.abs().intValue());
-            kardex.setBalance(newQuantity.intValue());
+            kardex.setQuantity(diff.abs());
+            kardex.setBalance(newQuantity);
             kardex.setNotes(request.getNotes() != null ? request.getNotes() : "Manual Adjustment");
 
             kardexRepository.save(kardex);

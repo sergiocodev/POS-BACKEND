@@ -47,4 +47,29 @@ public class SaleController {
         service.cancel(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/pdf")
+    @Operation(summary = "Descargar PDF/Ticket")
+    public ResponseEntity<byte[]> getPdf(@PathVariable Long id) {
+        byte[] pdf = service.getPdf(id);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=sale-" + id + ".pdf")
+                .body(pdf);
+    }
+
+    @GetMapping("/{id}/xml")
+    @Operation(summary = "Descargar XML")
+    public ResponseEntity<String> getXml(@PathVariable Long id) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=sale-" + id + ".xml")
+                .body(service.getXml(id));
+    }
+
+    @GetMapping("/{id}/cdr")
+    @Operation(summary = "Descargar CDR (Constancia SUNAT)")
+    public ResponseEntity<String> getCdr(@PathVariable Long id) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=sale-" + id + "-cdr.xml")
+                .body(service.getCdr(id));
+    }
 }

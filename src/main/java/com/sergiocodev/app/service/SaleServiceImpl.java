@@ -23,7 +23,7 @@ public class SaleServiceImpl implements SaleService {
     private final ProductRepository productRepository;
     private final ProductLotRepository lotRepository;
     private final InventoryRepository inventoryRepository;
-    private final StockMovementRepository movementRepository;
+    private final com.sergiocodev.app.repository.KardexRepository kardexRepository;
     private final CashSessionRepository cashSessionRepository;
 
     @Override
@@ -75,17 +75,16 @@ public class SaleServiceImpl implements SaleService {
                 inventory.setLastMovement(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
-                // Stock Movement
-                StockMovement movement = new StockMovement();
-                movement.setEstablishment(entity.getEstablishment());
-                movement.setLot(lot);
-                movement.setType(StockMovement.MovementType.SALE);
-                movement.setQuantity(ir.getQuantity().negate()); // Negative for sale
-                movement.setBalanceAfter(inventory.getQuantity());
-                movement.setReferenceTable("sales");
-                movement.setReferenceId(entity.getId());
-                movement.setUser(entity.getUser());
-                movementRepository.save(movement);
+                // Kardex Movement
+                com.sergiocodev.app.model.Kardex kardex = new com.sergiocodev.app.model.Kardex();
+                kardex.setProduct(product);
+                kardex.setEstablishment(entity.getEstablishment());
+                kardex.setMovementType(com.sergiocodev.app.model.Kardex.MovementType.SALE);
+                kardex.setQuantity(ir.getQuantity().multiply(new BigDecimal("-1"))); // Negative for sale (display logic
+                                                                                     // might differ)
+                kardex.setBalance(inventory.getQuantity());
+                kardex.setNotes("Sale: " + entity.getSeries() + "-" + entity.getNumber());
+                kardexRepository.save(kardex);
             }
         }
 
@@ -134,5 +133,24 @@ public class SaleServiceImpl implements SaleService {
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
         sale.setStatus(Sale.SaleStatus.CANCELED);
         repository.save(sale);
+    }
+
+    @Override
+    public byte[] getPdf(Long id) {
+        // Mock PDF generation
+        return "PDF Content Placeholder".getBytes();
+    }
+
+    @Override
+    public String getXml(Long id) {
+        // Return URL or Content. Using content for now as requested "Download XML"
+        // usually implies file.
+        return "<xml>Placeholder for Sale " + id + "</xml>";
+    }
+
+    @Override
+    public String getCdr(Long id) {
+        // Return URL or Content
+        return "<cdr>Placeholder for Sale " + id + "</cdr>";
     }
 }

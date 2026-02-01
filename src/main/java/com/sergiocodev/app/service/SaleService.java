@@ -12,4 +12,10 @@ public interface SaleService {
     SaleResponse getById(Long id);
 
     void cancel(Long id);
+
+    byte[] getPdf(Long id);
+
+    String getXml(Long id);
+
+    String getCdr(Long id);
 }
