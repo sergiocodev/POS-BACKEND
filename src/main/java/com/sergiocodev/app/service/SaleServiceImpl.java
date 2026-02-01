@@ -73,6 +73,7 @@ public class SaleServiceImpl implements SaleService {
 
                 inventory.setQuantity(inventory.getQuantity().subtract(ir.getQuantity()));
                 inventory.setLastMovement(LocalDateTime.now());
+                item.setUnitCost(inventory.getCostPrice()); // Record cost at time of sale
                 inventoryRepository.save(inventory);
 
                 // Stock Movement

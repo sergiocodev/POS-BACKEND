@@ -38,6 +38,9 @@ public class SaleItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "unit_cost", precision = 12, scale = 4)
+    private BigDecimal unitCost;
+
     @Column(name = "applied_tax_rate", nullable = false, precision = 6, scale = 4)
     private BigDecimal appliedTaxRate = BigDecimal.ZERO;
 }
