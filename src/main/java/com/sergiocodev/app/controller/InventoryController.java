@@ -28,6 +28,24 @@ public class InventoryController {
         return ResponseEntity.ok(service.updateStock(request));
     }
 
+    @PostMapping("/adjustments")
+    @Operation(summary = "Ajuste manual de inventario (Robo/Pérdida/Ingreso)")
+    public ResponseEntity<InventoryResponse> adjustStock(@Valid @RequestBody InventoryRequest request) {
+        return ResponseEntity.ok(service.updateStock(request));
+    }
+
+    @GetMapping("/alerts")
+    @Operation(summary = "Reporte Vencimientos (Semáforo)", description = "Lista productos próximos a vencer (90 días)")
+    public ResponseEntity<List<InventoryResponse>> getAlerts() {
+        return ResponseEntity.ok(service.getAlerts());
+    }
+
+    @GetMapping("/low-stock")
+    @Operation(summary = "Reporte stock mínimo", description = "Lista productos con stock bajo (<= 10)")
+    public ResponseEntity<List<InventoryResponse>> getLowStock() {
+        return ResponseEntity.ok(service.getLowStock());
+    }
+
     @GetMapping
     @Operation(summary = "Listar todos los registros de inventario")
     public ResponseEntity<List<InventoryResponse>> getAll() {

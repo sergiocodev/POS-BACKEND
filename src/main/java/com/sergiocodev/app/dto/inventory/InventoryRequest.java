@@ -22,4 +22,8 @@ public class InventoryRequest {
 
     private BigDecimal costPrice;
     private BigDecimal salesPrice;
+
+    // For adjustments
+    private String movementType; // IN, OUT, ADJUSTMENT, LOSS, THEFT, RETURN
+    private String notes;
 }

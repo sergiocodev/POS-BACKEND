@@ -12,4 +12,8 @@ public interface InventoryService {
     List<InventoryResponse> getByEstablishment(Long establishmentId);
 
     InventoryResponse getById(Long id);
+
+    List<InventoryResponse> getAlerts();
+
+    List<InventoryResponse> getLowStock();
 }
