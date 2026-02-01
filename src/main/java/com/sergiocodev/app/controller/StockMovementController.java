@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stock-movements")
+@RequestMapping("/api/v1/stock-movements")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Stock Movements", description = "Endpoints para la gestión de movimientos de stock")

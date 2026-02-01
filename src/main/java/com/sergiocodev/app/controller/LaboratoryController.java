@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/laboratories")
+@RequestMapping("/api/v1/laboratories")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Laboratories", description = "Endpoints para la gestión del laboratorio")

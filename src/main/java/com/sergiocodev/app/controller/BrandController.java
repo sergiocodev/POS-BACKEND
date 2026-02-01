@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/brands")
+@RequestMapping("/api/v1/brands")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Brands", description = "Endpoints para la gestión de marcas")

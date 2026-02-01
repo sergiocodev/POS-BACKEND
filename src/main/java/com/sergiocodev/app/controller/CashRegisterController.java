@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cash-registers")
+@RequestMapping("/api/v1/cash-registers")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Cash Registers", description = "Endpoints para la gestión de la caja registradora")

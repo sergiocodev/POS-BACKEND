@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/active-ingredients")
+@RequestMapping("/api/v1/active-ingredients")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")

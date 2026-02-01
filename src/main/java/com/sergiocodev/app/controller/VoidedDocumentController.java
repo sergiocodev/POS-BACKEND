@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/voided-documents")
+@RequestMapping("/api/v1/voided-documents")
 @RequiredArgsConstructor
 @Tag(name = "Voided Documents", description = "API para gestión de bajas de documentos SUNAT")
 public class VoidedDocumentController {

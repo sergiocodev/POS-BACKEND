@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/suppliers")
+@RequestMapping("/api/v1/suppliers")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Suppliers", description = "Endpoints para la gestión de proveedores")

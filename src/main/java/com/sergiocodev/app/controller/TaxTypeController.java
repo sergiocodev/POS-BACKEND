@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tax-types")
+@RequestMapping("/api/v1/tax-types")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Tax Types", description = "Endpoints para la gestión del tipo de impuesto")
