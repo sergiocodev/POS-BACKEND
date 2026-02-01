@@ -58,4 +58,12 @@ public class ActiveIngredientServiceImpl implements ActiveIngredientService {
     public void delete(Long id) {
         repository.deleteById(id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActiveIngredientResponse> search(String query) {
+        return repository.findByNameContainingIgnoreCase(query).stream()
+                .map(ActiveIngredientResponse::new)
+                .collect(Collectors.toList());
+    }
 }

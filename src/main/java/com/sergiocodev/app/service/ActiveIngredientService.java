@@ -14,4 +14,6 @@ public interface ActiveIngredientService {
     ActiveIngredientResponse update(Long id, ActiveIngredientRequest request);
 
     void delete(Long id);
+
+    List<ActiveIngredientResponse> search(String query);
 }

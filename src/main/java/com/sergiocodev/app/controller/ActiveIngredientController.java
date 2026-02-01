@@ -35,6 +35,12 @@ public class ActiveIngredientController {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @GetMapping("/search")
+    @Operation(summary = "Buscar ingredientes activos")
+    public ResponseEntity<List<ActiveIngredientResponse>> search(@RequestParam String query) {
+        return ResponseEntity.ok(service.search(query));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener ingrediente activo por ID")
     public ResponseEntity<ActiveIngredientResponse> getById(@PathVariable Long id) {
