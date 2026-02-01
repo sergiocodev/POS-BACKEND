@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
+import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ProductServiceImpl implements ProductService {
     private final PresentationRepository presentationRepository;
     private final TaxTypeRepository taxTypeRepository;
     private final ActiveIngredientRepository activeIngredientRepository;
+    private final ProductLotRepository productLotRepository;
 
     @Override
     @Transactional
@@ -35,8 +37,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAll() {
-        return repository.findAll().stream()
+    public List<ProductResponse> getAll(Long categoryId, Long brandId, Boolean active) {
+        return repository.findAllWithFilters(categoryId, brandId, active).stream()
                 .map(ProductResponse::new)
                 .collect(Collectors.toList());
     }
@@ -63,6 +65,22 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> search(String query) {
+        return repository.searchByQuery(query).stream()
+                .map(ProductResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductLotResponse> getLots(Long productId) {
+        return productLotRepository.findByProductIdOrderByExpiryDateAsc(productId).stream()
+                .map(ProductLotResponse::new)
+                .collect(Collectors.toList());
     }
 
     private void mapBasicInfo(ProductRequest request, Product entity) {

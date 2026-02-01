@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+import com.sergiocodev.app.dto.productlot.ProductLotResponse;
+
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
@@ -30,9 +32,18 @@ public class ProductController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar productos")
-    public ResponseEntity<List<ProductResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
+    public ResponseEntity<List<ProductResponse>> getAll(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(service.getAll(categoryId, brandId, active));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Buscar productos (POS)", description = "Busca productos por código de barras, nombre o principio activo")
+    public ResponseEntity<List<ProductResponse>> search(@RequestParam String query) {
+        return ResponseEntity.ok(service.search(query));
     }
 
     @GetMapping("/{id}")
@@ -45,6 +56,12 @@ public class ProductController {
     @Operation(summary = "Actualizar producto")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(service.update(id, request));
+    }
+
+    @GetMapping("/{id}/lots")
+    @Operation(summary = "Ver lotes asociados", description = "Obtiene los lotes asociados a un producto")
+    public ResponseEntity<List<ProductLotResponse>> getLots(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getLots(id));
     }
 
     @DeleteMapping("/{id}")
