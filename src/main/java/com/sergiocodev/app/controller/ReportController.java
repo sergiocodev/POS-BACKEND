@@ -90,4 +90,31 @@ public class ReportController {
             @RequestParam Long establishmentId) {
         return ResponseEntity.ok(service.getLowRotation(days, establishmentId));
     }
+
+    @GetMapping("/purchases")
+    @Operation(summary = "Reporte de compras por período")
+    public ResponseEntity<List<PurchaseReport>> getPurchases(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getPurchases(start, end, establishmentId));
+    }
+
+    @GetMapping("/sales")
+    @Operation(summary = "Reporte de ventas detallado por período")
+    public ResponseEntity<List<SalesReport>> getSales(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getSales(start, end, establishmentId));
+    }
+
+    @GetMapping("/sales/summary")
+    @Operation(summary = "Resumen agregado de ventas por período")
+    public ResponseEntity<SalesSummaryReport> getSalesSummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.getSalesSummary(start, end, establishmentId));
+    }
 }

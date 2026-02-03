@@ -101,4 +101,11 @@ public class UserService {
         }
         userRepository.deleteById(id);
     }
+
+    @Transactional
+    public User toggleActive(Long id) {
+        User user = getById(id);
+        user.setActive(!user.isActive());
+        return userRepository.save(user);
+    }
 }

@@ -21,10 +21,13 @@ public class ReportServiceImpl implements ReportService {
 
         private final SaleRepository saleRepository;
         private final InventoryRepository inventoryRepository;
+        private final PurchaseRepository purchaseRepository;
 
-        public ReportServiceImpl(SaleRepository saleRepository, InventoryRepository inventoryRepository) {
+        public ReportServiceImpl(SaleRepository saleRepository, InventoryRepository inventoryRepository,
+                        PurchaseRepository purchaseRepository) {
                 this.saleRepository = saleRepository;
                 this.inventoryRepository = inventoryRepository;
+                this.purchaseRepository = purchaseRepository;
         }
 
         @Override
@@ -262,5 +265,88 @@ public class ReportServiceImpl implements ReportService {
                                 })
                                 .filter(r -> r.getLastSaleDate().isBefore(threshold))
                                 .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<PurchaseReport> getPurchases(LocalDate start, LocalDate end, Long establishmentId) {
+                return purchaseRepository.findAll().stream()
+                                .filter(p -> p.getEstablishment().getId().equals(establishmentId)
+                                                && !p.getIssueDate().isBefore(start)
+                                                && !p.getIssueDate().isAfter(end))
+                                .map(p -> new PurchaseReport(
+                                                p.getId(),
+                                                p.getSupplier().getName(),
+                                                p.getDocumentType().name(),
+                                                (p.getSeries() != null ? p.getSeries() + "-" : "") +
+                                                                (p.getNumber() != null ? p.getNumber() : ""),
+                                                p.getIssueDate(),
+                                                p.getArrivalDate(),
+                                                p.getSubTotal(),
+                                                p.getTax(),
+                                                p.getTotal(),
+                                                p.getStatus().name(),
+                                                p.getItems().size()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesReport> getSales(LocalDate start, LocalDate end, Long establishmentId) {
+                LocalDateTime startTime = start.atStartOfDay();
+                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+
+                return saleRepository.findAll().stream()
+                                .filter(s -> s.getEstablishment().getId().equals(establishmentId)
+                                                && !s.getDate().isBefore(startTime)
+                                                && !s.getDate().isAfter(endTime))
+                                .map(s -> new SalesReport(
+                                                s.getId(),
+                                                s.getCustomer() != null ? s.getCustomer().getName()
+                                                                : "Cliente General",
+                                                s.getUser().getFullName(),
+                                                s.getDocumentType().name(),
+                                                s.getSeries() + "-" + s.getNumber(),
+                                                s.getDate(),
+                                                s.getSubTotal(),
+                                                s.getTax(),
+                                                s.getTotal(),
+                                                s.getStatus().name(),
+                                                s.getSunatStatus() != null ? s.getSunatStatus().name() : null,
+                                                s.isVoided()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public SalesSummaryReport getSalesSummary(LocalDate start, LocalDate end, Long establishmentId) {
+                LocalDateTime startTime = start.atStartOfDay();
+                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+
+                List<Sale> sales = saleRepository.findAll().stream()
+                                .filter(s -> s.getEstablishment().getId().equals(establishmentId)
+                                                && !s.getDate().isBefore(startTime)
+                                                && !s.getDate().isAfter(endTime))
+                                .collect(Collectors.toList());
+
+                long totalTransactions = sales.stream().filter(s -> !s.isVoided()).count();
+                BigDecimal totalRevenue = sales.stream().filter(s -> !s.isVoided())
+                                .map(Sale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalTax = sales.stream().filter(s -> !s.isVoided())
+                                .map(Sale::getTax).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                long voidedCount = sales.stream().filter(Sale::isVoided).count();
+                BigDecimal voidedAmount = sales.stream().filter(Sale::isVoided)
+                                .map(Sale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                Map<String, Long> countByDocumentType = sales.stream().filter(s -> !s.isVoided())
+                                .collect(Collectors.groupingBy(s -> s.getDocumentType().name(), Collectors.counting()));
+
+                Map<String, BigDecimal> amountByDocumentType = sales.stream().filter(s -> !s.isVoided())
+                                .collect(Collectors.groupingBy(s -> s.getDocumentType().name(),
+                                                Collectors.reducing(BigDecimal.ZERO, Sale::getTotal, BigDecimal::add)));
+
+                return new SalesSummaryReport(start, end, totalTransactions, totalRevenue, totalTax,
+                                voidedCount, voidedAmount, countByDocumentType, amountByDocumentType);
         }
 }

@@ -22,4 +22,10 @@ public interface ReportService {
     List<HourlyHeatReport> getHourlyHeat(LocalDate start, LocalDate end, Long establishmentId);
 
     List<LowRotationReport> getLowRotation(int days, Long establishmentId);
+
+    List<PurchaseReport> getPurchases(LocalDate start, LocalDate end, Long establishmentId);
+
+    List<SalesReport> getSales(LocalDate start, LocalDate end, Long establishmentId);
+
+    SalesSummaryReport getSalesSummary(LocalDate start, LocalDate end, Long establishmentId);
 }

@@ -243,9 +243,7 @@ public class SaleServiceImpl implements SaleService {
         sale.setVoidReason(reason);
         repository.save(sale);
 
-        // Logical reverse of inventory or wait for batch? usually invalidate requires
-        // manual stock check or automatic return.
-        // Assuming automatic return for now.
+        // Logical reverse of inventory
         for (SaleItem item : sale.getItems()) {
             if (item.getLot() != null) {
                 Inventory inventory = inventoryRepository
@@ -257,13 +255,28 @@ public class SaleServiceImpl implements SaleService {
                 StockMovement movement = new StockMovement();
                 movement.setLot(item.getLot());
                 movement.setEstablishment(sale.getEstablishment());
-                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
+                movement.setType(StockMovement.MovementType.VOID_RETURN);
                 movement.setQuantity(item.getQuantity());
                 movement.setBalanceAfter(inventory.getQuantity());
-                movement.setReferenceTable("voids");
+                movement.setReferenceTable("sales");
                 movement.setReferenceId(sale.getId());
+                movement.setUser(userRepository.findById(userId).orElse(sale.getUser()));
                 movement.setCreatedAt(LocalDateTime.now());
                 stockMovementRepository.save(movement);
+            }
+        }
+
+        // Update Cash Session if applicable
+        CashSession session = sale.getCashSession();
+        if (session != null && session.getStatus() == CashSession.SessionStatus.OPEN) {
+            BigDecimal refundAmount = sale.getPayments().stream()
+                    .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
+                    .map(SalePayment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+                session.setCalculatedBalance(session.getCalculatedBalance().subtract(refundAmount));
+                cashSessionRepository.save(session);
             }
         }
     }

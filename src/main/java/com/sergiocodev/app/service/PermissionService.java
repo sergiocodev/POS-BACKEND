@@ -1,0 +1,153 @@
+package com.sergiocodev.app.service;
+
+import com.sergiocodev.app.dto.permission.CreatePermissionRequest;
+import com.sergiocodev.app.dto.permission.PermissionResponse;
+import com.sergiocodev.app.model.Permission;
+import com.sergiocodev.app.repository.PermissionRepository;
+import com.sergiocodev.app.repository.RoleRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class PermissionService {
+
+    private final PermissionRepository permissionRepository;
+    private final RoleRepository roleRepository;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * Obtener todos los permisos
+     */
+    public List<PermissionResponse> getAll() {
+        return permissionRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener permisos filtrados por módulo
+     */
+    public List<PermissionResponse> getByModule(String module) {
+        return permissionRepository.findByModule(module).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Buscar permisos por nombre o descripción
+     */
+    public List<PermissionResponse> search(String query) {
+        return permissionRepository.findByNameContainingOrDescriptionContaining(query, query).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener permisos agrupados por módulo
+     */
+    public Map<String, List<PermissionResponse>> getGroupedByModule() {
+        return permissionRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.groupingBy(
+                        p -> p.getModule() != null ? p.getModule() : "SIN_MODULO"));
+    }
+
+    /**
+     * Obtener lista de módulos únicos
+     */
+    public List<String> getModules() {
+        return permissionRepository.findAll().stream()
+                .map(Permission::getModule)
+                .filter(module -> module != null && !module.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener un permiso por ID
+     */
+    public PermissionResponse getById(Long id) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
+        return toResponse(permission);
+    }
+
+    /**
+     * Crear un nuevo permiso
+     */
+    @Transactional
+    public PermissionResponse create(CreatePermissionRequest request) {
+        // Verificar que no exista un permiso con el mismo nombre
+        if (permissionRepository.findByName(request.getName()).isPresent()) {
+            throw new RuntimeException("Ya existe un permiso con el nombre: " + request.getName());
+        }
+
+        Permission permission = new Permission();
+        permission.setName(request.getName());
+        permission.setDescription(request.getDescription());
+        permission.setModule(request.getModule());
+
+        Permission saved = permissionRepository.save(permission);
+        return toResponse(saved);
+    }
+
+    /**
+     * Actualizar un permiso
+     */
+    @Transactional
+    public PermissionResponse update(Long id, CreatePermissionRequest request) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
+
+        // Verificar que no exista otro permiso con el mismo nombre
+        permissionRepository.findByName(request.getName()).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new RuntimeException("Ya existe otro permiso con el nombre: " + request.getName());
+            }
+        });
+
+        permission.setName(request.getName());
+        permission.setDescription(request.getDescription());
+        permission.setModule(request.getModule());
+
+        Permission updated = permissionRepository.save(permission);
+        return toResponse(updated);
+    }
+
+    /**
+     * Eliminar un permiso
+     */
+    @Transactional
+    public void delete(Long id) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
+
+        // Verificar que el permiso no esté asignado a ningún rol
+        if (roleRepository.existsByPermissions_Id(id)) {
+            throw new RuntimeException("No se puede eliminar el permiso '" + permission.getName() +
+                    "' porque está asignado a uno o más roles");
+        }
+
+        permissionRepository.delete(permission);
+    }
+
+    /**
+     * Convertir entidad a DTO
+     */
+    private PermissionResponse toResponse(Permission permission) {
+        return new PermissionResponse(
+                permission.getId(),
+                permission.getName(),
+                permission.getDescription(),
+                permission.getModule(),
+                permission.getCreatedAt().format(FORMATTER));
+    }
+}

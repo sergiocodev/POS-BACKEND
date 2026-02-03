@@ -91,4 +91,17 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Alternar estado activo", description = "Activa o desactiva un usuario")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User status toggled successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PatchMapping("/{id}/toggle-active")
+    public ResponseEntity<User> toggleActive(@PathVariable Long id) {
+        User user = userService.toggleActive(id);
+        // Hide password
+        user.setPasswordHash("***");
+        return ResponseEntity.ok(user);
+    }
 }

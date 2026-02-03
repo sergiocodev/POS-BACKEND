@@ -23,10 +23,12 @@ public class CashSessionResponse {
     private LocalDateTime closedAt;
     private String notes;
     private CashSession.SessionStatus status;
+    private Long establishmentId;
 
     public CashSessionResponse(CashSession session) {
         this.id = session.getId();
         this.cashRegisterName = session.getCashRegister().getName();
+        this.establishmentId = session.getCashRegister().getEstablishment().getId();
         this.username = session.getUser().getUsername();
         this.openingBalance = session.getOpeningBalance();
         this.closingBalance = session.getClosingBalance();

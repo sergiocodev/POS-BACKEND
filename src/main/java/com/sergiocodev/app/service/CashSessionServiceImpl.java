@@ -44,7 +44,12 @@ public class CashSessionServiceImpl implements CashSessionService {
         entity.setClosingBalance(closingBalance);
         entity.setClosedAt(LocalDateTime.now());
         entity.setStatus(CashSession.SessionStatus.CLOSED);
-        // diffAmount is calculated in DB or can be calculated here if needed
+
+        // Calculate diff: closingBalance - calculatedBalance
+        if (entity.getCalculatedBalance() != null) {
+            entity.setDiffAmount(closingBalance.subtract(entity.getCalculatedBalance()));
+        }
+
         return new CashSessionResponse(repository.save(entity));
     }
 
@@ -90,11 +95,8 @@ public class CashSessionServiceImpl implements CashSessionService {
         entity.setStatus(CashSession.SessionStatus.CLOSED);
 
         // Calculate diff: closingBalance - calculatedBalance
-        // Assuming calculatedBalance is updated by sales (not implemented yet, but
-        // field exists)
         if (entity.getCalculatedBalance() != null) {
-            BigDecimal diff = closingBalance.subtract(entity.getCalculatedBalance());
-            entity.setDiffAmount(diff);
+            entity.setDiffAmount(closingBalance.subtract(entity.getCalculatedBalance()));
         }
 
         return new CashSessionResponse(repository.save(entity));
