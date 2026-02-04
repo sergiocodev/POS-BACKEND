@@ -26,6 +26,9 @@ public class ProductRequest {
 
     private String description;
 
+    @Size(max = 255, message = "Image URL cannot exceed 255 characters")
+    private String imageUrl;
+
     @NotNull(message = "Brand ID is required")
     private Long brandId;
 

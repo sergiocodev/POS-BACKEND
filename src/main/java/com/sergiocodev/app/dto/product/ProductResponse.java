@@ -17,6 +17,7 @@ public class ProductResponse {
     private String digemidCode;
     private String name;
     private String description;
+    private String imageUrl;
     private String brandName;
     private String categoryName;
     private String laboratoryName;
@@ -36,6 +37,7 @@ public class ProductResponse {
         this.digemidCode = product.getDigemidCode();
         this.name = product.getName();
         this.description = product.getDescription();
+        this.imageUrl = product.getImageUrl();
         this.brandName = product.getBrand() != null ? product.getBrand().getName() : null;
         this.categoryName = product.getCategory() != null ? product.getCategory().getName() : null;
         this.laboratoryName = product.getLaboratory() != null ? product.getLaboratory().getName() : null;

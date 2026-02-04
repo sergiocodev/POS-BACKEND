@@ -83,6 +83,7 @@ public class AuthService {
                                 user.getUsername(),
                                 user.getEmail(),
                                 user.getFullName(),
+                                user.getProfilePicture(),
                                 rolesNames,
                                 permissionNames);
         }
@@ -109,6 +110,7 @@ public class AuthService {
                 newUser.setUsername(request.getUsername());
                 newUser.setEmail(request.getEmail());
                 newUser.setFullName(request.getFullName());
+                newUser.setProfilePicture(request.getProfilePicture());
                 newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
                 newUser.setActive(true);
 
@@ -131,6 +133,7 @@ public class AuthService {
                                 savedUser.getUsername(),
                                 savedUser.getEmail(),
                                 savedUser.getFullName(),
+                                savedUser.getProfilePicture(),
                                 roles,
                                 permissions);
         }
@@ -174,6 +177,7 @@ public class AuthService {
                                 user.getUsername(),
                                 user.getEmail(),
                                 user.getFullName(),
+                                user.getProfilePicture(),
                                 rolesNames,
                                 permissionNames);
         }

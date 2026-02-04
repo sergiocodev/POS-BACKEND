@@ -51,6 +51,7 @@ public class UserService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
+        user.setProfilePicture(request.getProfilePicture());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setActive(request.getActive() != null ? request.getActive() : true);
 
@@ -77,6 +78,7 @@ public class UserService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
+        user.setProfilePicture(request.getProfilePicture());
 
         if (request.getActive() != null) {
             user.setActive(request.getActive());

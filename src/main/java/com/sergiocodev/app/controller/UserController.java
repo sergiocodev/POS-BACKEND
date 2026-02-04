@@ -1,7 +1,9 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.external.ExternalConsultationResponse;
 import com.sergiocodev.app.dto.user.UserRequest;
 import com.sergiocodev.app.model.User;
+import com.sergiocodev.app.service.ExternalConsultationService;
 import com.sergiocodev.app.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +29,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final ExternalConsultationService externalConsultationService;
 
     @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
@@ -103,5 +106,16 @@ public class UserController {
         // Hide password
         user.setPasswordHash("***");
         return ResponseEntity.ok(user);
+    }
+
+    @Operation(summary = "Consulta externa de documento", description = "Busca datos de una persona (DNI) o empresa (RUC) en servicios externos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Data found"),
+            @ApiResponse(responseCode = "404", description = "Document not found")
+    })
+    @GetMapping("/search/{numeroDocumento}")
+    public ResponseEntity<ExternalConsultationResponse> searchByDocument(@PathVariable String numeroDocumento) {
+        ExternalConsultationResponse response = externalConsultationService.searchByDocument(numeroDocumento);
+        return ResponseEntity.ok(response);
     }
 }

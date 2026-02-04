@@ -88,6 +88,7 @@ public class ProductServiceImpl implements ProductService {
         entity.setDigemidCode(request.getDigemidCode());
         entity.setName(request.getName());
         entity.setDescription(request.getDescription());
+        entity.setImageUrl(request.getImageUrl());
         entity.setBrand(brandRepository.findById(request.getBrandId()).orElse(null));
         entity.setCategory(categoryRepository.findById(request.getCategoryId()).orElse(null));
         entity.setLaboratory(laboratoryRepository.findById(request.getLaboratoryId()).orElse(null));

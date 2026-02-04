@@ -17,6 +17,7 @@ public class UserRequest {
     private String email;
 
     private String fullName;
+    private String profilePicture;
     private String password;
     private Boolean active;
     private Set<Long> roleIds;
