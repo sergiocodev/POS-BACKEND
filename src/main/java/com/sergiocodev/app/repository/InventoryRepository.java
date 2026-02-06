@@ -20,4 +20,17 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
     java.util.List<Inventory> findExpiringSoon(
             @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+            "lot",
+            "lot.product",
+            "lot.product.brand",
+            "lot.product.category",
+            "lot.product.laboratory",
+            "lot.product.presentation",
+            "lot.product.taxType",
+            "lot.product.ingredients",
+            "lot.product.ingredients.activeIngredient"
+    })
+    java.util.List<Inventory> findAllByEstablishmentId(Long establishmentId);
 }

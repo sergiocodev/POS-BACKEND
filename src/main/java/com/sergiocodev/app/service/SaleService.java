@@ -1,5 +1,6 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
 import java.util.List;
@@ -24,4 +25,6 @@ public interface SaleService {
     SaleResponse createDebitNote(Long id, String reason, Long userId);
 
     void invalidate(Long id, String reason, Long userId);
+
+    List<ProductForSaleResponse> listProductsForSale(Long establishmentId);
 }

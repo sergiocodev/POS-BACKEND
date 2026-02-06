@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
 import com.sergiocodev.app.service.SaleService;
@@ -99,5 +100,12 @@ public class SaleController {
             @RequestParam Long userId) {
         service.invalidate(id, reason, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/ListProductsForSale")
+    @Operation(summary = "Listar produtos para venta con stock y detalles")
+    public ResponseEntity<List<ProductForSaleResponse>> listProductsForSale(
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(service.listProductsForSale(establishmentId));
     }
 }

@@ -1,5 +1,6 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
 import com.sergiocodev.app.model.*;
@@ -279,5 +280,41 @@ public class SaleServiceImpl implements SaleService {
                 cashSessionRepository.save(session);
             }
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductForSaleResponse> listProductsForSale(Long establishmentId) {
+        List<Inventory> inventoryList = inventoryRepository.findAllByEstablishmentId(establishmentId);
+
+        return inventoryList.stream().map(inventory -> {
+            ProductForSaleResponse dto = new ProductForSaleResponse();
+            ProductLot lot = inventory.getLot();
+            Product product = lot.getProduct();
+
+            dto.setId(inventory.getId());
+            dto.setProductId(product.getId());
+            dto.setName(product.getName());
+            dto.setDescription(product.getDescription());
+            dto.setPresentation(product.getPresentation() != null ? product.getPresentation().getDescription() : null);
+
+            if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
+                String concentration = product.getIngredients().stream()
+                        .map(pi -> pi.getActiveIngredient().getName() + " "
+                                + (pi.getConcentration() != null ? pi.getConcentration() : ""))
+                        .collect(Collectors.joining(", "));
+                dto.setConcentration(concentration);
+            }
+
+            dto.setCategory(product.getCategory() != null ? product.getCategory().getName() : null);
+            dto.setLaboratory(product.getLaboratory() != null ? product.getLaboratory().getName() : null);
+            dto.setSalesPrice(inventory.getSalesPrice());
+            dto.setStock(inventory.getQuantity());
+            dto.setExpirationDate(lot.getExpiryDate());
+            dto.setLotCode(lot.getLotCode());
+            dto.setLotId(lot.getId());
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 }
