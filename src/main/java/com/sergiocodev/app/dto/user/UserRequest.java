@@ -2,23 +2,16 @@ package com.sergiocodev.app.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-
 import java.util.Set;
 
-@Data
-public class UserRequest {
+public record UserRequest(
+        @NotBlank(message = "Username is required") String username,
 
-    @NotBlank(message = "Username is required")
-    private String username;
+        @NotBlank(message = "Email is required") @Email(message = "Email must be valid") String email,
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
-    private String email;
-
-    private String fullName;
-    private String profilePicture;
-    private String password;
-    private Boolean active;
-    private Set<Long> roleIds;
+        String fullName,
+        String profilePicture,
+        String password,
+        Boolean active,
+        Set<Long> roleIds) {
 }

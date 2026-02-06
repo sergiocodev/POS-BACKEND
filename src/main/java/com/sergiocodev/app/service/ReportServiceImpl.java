@@ -142,16 +142,22 @@ public class ReportServiceImpl implements ReportService {
                                         return new TopProductReport(e.getKey(), name, e.getValue(), percentage,
                                                         BigDecimal.ZERO);
                                 })
-                                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                                .sorted((a, b) -> b.value().compareTo(a.value()))
                                 .collect(Collectors.toList());
 
+                List<TopProductReport> withCumulative = new ArrayList<>();
                 BigDecimal cumulative = BigDecimal.ZERO;
                 for (var r : sorted) {
-                        cumulative = cumulative.add(r.getPercentage());
-                        r.setCumulativePercentage(cumulative);
+                        cumulative = cumulative.add(r.percentage());
+                        withCumulative.add(new TopProductReport(
+                                        r.productId(),
+                                        r.productName(),
+                                        r.value(),
+                                        r.percentage(),
+                                        cumulative));
                 }
 
-                return sorted.stream().limit(limit).collect(Collectors.toList());
+                return withCumulative.stream().limit(limit).collect(Collectors.toList());
         }
 
         @Override
@@ -263,7 +269,7 @@ public class ReportServiceImpl implements ReportService {
 
                                         return new LowRotationReport(p.getId(), p.getName(), lastSale, stock);
                                 })
-                                .filter(r -> r.getLastSaleDate().isBefore(threshold))
+                                .filter(r -> r.lastSaleDate().isBefore(threshold))
                                 .collect(Collectors.toList());
         }
 

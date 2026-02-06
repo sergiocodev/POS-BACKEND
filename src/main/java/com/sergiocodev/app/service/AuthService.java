@@ -39,7 +39,7 @@ public class AuthService {
          */
         @Transactional
         public LoginResponse login(LoginRequest request) {
-                String usernameOrEmail = request.getUsernameOrEmail();
+                String usernameOrEmail = request.usernameOrEmail();
 
                 // Find user by username or email
                 User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
@@ -55,7 +55,7 @@ public class AuthService {
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
                                                 user.getUsername(),
-                                                request.getPassword()));
+                                                request.password()));
 
                 // Update last login
                 user.setLastLogin(LocalDateTime.now());
@@ -94,24 +94,24 @@ public class AuthService {
         @Transactional
         public LoginResponse register(RegisterRequest request) {
                 // Check if username already exists
-                if (userRepository.existsByUsername(request.getUsername())) {
+                if (userRepository.existsByUsername(request.username())) {
                         throw new UserAlreadyExistsException(
-                                        "Username '" + request.getUsername() + "' already exists");
+                                        "Username '" + request.username() + "' already exists");
                 }
 
                 // Check if email already exists
-                if (userRepository.existsByEmail(request.getEmail())) {
+                if (userRepository.existsByEmail(request.email())) {
                         throw new UserAlreadyExistsException(
-                                        "Email '" + request.getEmail() + "' is already registered");
+                                        "Email '" + request.email() + "' is already registered");
                 }
 
                 // Create new user
                 User newUser = new User();
-                newUser.setUsername(request.getUsername());
-                newUser.setEmail(request.getEmail());
-                newUser.setFullName(request.getFullName());
-                newUser.setProfilePicture(request.getProfilePicture());
-                newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                newUser.setUsername(request.username());
+                newUser.setEmail(request.email());
+                newUser.setFullName(request.fullName());
+                newUser.setProfilePicture(request.profilePicture());
+                newUser.setPasswordHash(passwordEncoder.encode(request.password()));
                 newUser.setActive(true);
 
                 // Save to database
@@ -142,7 +142,7 @@ public class AuthService {
          * Refreshes the JWT token
          */
         public LoginResponse refresh(RefreshTokenRequest request) {
-                String refreshToken = request.getRefreshToken();
+                String refreshToken = request.refreshToken();
                 String username = jwtUtil.extractUsername(refreshToken);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);

@@ -4,6 +4,7 @@ import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
 import com.sergiocodev.app.exception.CustomerNotFoundException;
 import com.sergiocodev.app.exception.DuplicateDocumentException;
+import com.sergiocodev.app.mapper.CustomerMapper;
 import com.sergiocodev.app.model.Customer;
 import com.sergiocodev.app.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,25 +19,19 @@ import java.util.stream.Collectors;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CustomerMapper customerMapper;
 
     @Override
     @Transactional
     public CustomerResponse create(CustomerRequest request) {
-        if (customerRepository.existsByDocumentNumber(request.getDocumentNumber())) {
+        if (customerRepository.existsByDocumentNumber(request.documentNumber())) {
             throw new DuplicateDocumentException(
-                    "Document number '" + request.getDocumentNumber() + "' already exists");
+                    "Document number '" + request.documentNumber() + "' already exists");
         }
 
-        Customer customer = new Customer();
-        customer.setDocumentType(request.getDocumentType());
-        customer.setDocumentNumber(request.getDocumentNumber());
-        customer.setName(request.getName());
-        customer.setPhone(request.getPhone());
-        customer.setEmail(request.getEmail());
-        customer.setAddress(request.getAddress());
-
+        Customer customer = customerMapper.toEntity(request);
         Customer savedCustomer = customerRepository.save(customer);
-        return new CustomerResponse(savedCustomer);
+        return customerMapper.toResponse(savedCustomer);
     }
 
     @Override
@@ -44,7 +39,7 @@ public class CustomerServiceImpl implements CustomerService {
     public List<CustomerResponse> getAll() {
         return customerRepository.findAll()
                 .stream()
-                .map(CustomerResponse::new)
+                .map(customerMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +48,7 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponse getById(Long id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + id));
-        return new CustomerResponse(customer);
+        return customerMapper.toResponse(customer);
     }
 
     @Override
@@ -62,21 +57,15 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + id));
 
-        if (!request.getDocumentNumber().equals(customer.getDocumentNumber()) &&
-                customerRepository.existsByDocumentNumber(request.getDocumentNumber())) {
+        if (!request.documentNumber().equals(customer.getDocumentNumber()) &&
+                customerRepository.existsByDocumentNumber(request.documentNumber())) {
             throw new DuplicateDocumentException(
-                    "Document number '" + request.getDocumentNumber() + "' already exists");
+                    "Document number '" + request.documentNumber() + "' already exists");
         }
 
-        customer.setDocumentType(request.getDocumentType());
-        customer.setDocumentNumber(request.getDocumentNumber());
-        customer.setName(request.getName());
-        customer.setPhone(request.getPhone());
-        customer.setEmail(request.getEmail());
-        customer.setAddress(request.getAddress());
-
+        customerMapper.updateEntity(request, customer);
         Customer updatedCustomer = customerRepository.save(customer);
-        return new CustomerResponse(updatedCustomer);
+        return customerMapper.toResponse(updatedCustomer);
     }
 
     @Override

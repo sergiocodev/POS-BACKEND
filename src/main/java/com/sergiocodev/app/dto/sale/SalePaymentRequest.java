@@ -2,21 +2,12 @@ package com.sergiocodev.app.dto.sale;
 
 import com.sergiocodev.app.model.SalePayment;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SalePaymentRequest {
+public record SalePaymentRequest(
+        @NotNull(message = "Payment method is required") SalePayment.PaymentMethod paymentMethod,
 
-    @NotNull(message = "Payment method is required")
-    private SalePayment.PaymentMethod paymentMethod;
+        @NotNull(message = "Amount is required") BigDecimal amount,
 
-    @NotNull(message = "Amount is required")
-    private BigDecimal amount;
-
-    private String reference;
+        String reference) {
 }

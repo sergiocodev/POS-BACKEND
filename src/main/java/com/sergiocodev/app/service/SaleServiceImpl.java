@@ -3,8 +3,24 @@ package com.sergiocodev.app.service;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
-import com.sergiocodev.app.model.*;
-import com.sergiocodev.app.repository.*;
+import com.sergiocodev.app.mapper.SaleMapper;
+import com.sergiocodev.app.model.Sale;
+import com.sergiocodev.app.model.CashSession;
+import com.sergiocodev.app.model.Product;
+import com.sergiocodev.app.model.ProductLot;
+import com.sergiocodev.app.model.SaleItem;
+import com.sergiocodev.app.model.Inventory;
+import com.sergiocodev.app.model.StockMovement;
+import com.sergiocodev.app.model.SalePayment;
+import com.sergiocodev.app.repository.SaleRepository;
+import com.sergiocodev.app.repository.CustomerRepository;
+import com.sergiocodev.app.repository.EstablishmentRepository;
+import com.sergiocodev.app.repository.UserRepository;
+import com.sergiocodev.app.repository.ProductRepository;
+import com.sergiocodev.app.repository.ProductLotRepository;
+import com.sergiocodev.app.repository.InventoryRepository;
+import com.sergiocodev.app.repository.StockMovementRepository;
+import com.sergiocodev.app.repository.CashSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,17 +42,17 @@ public class SaleServiceImpl implements SaleService {
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final CashSessionRepository cashSessionRepository;
+    private final SaleMapper mapper;
 
     @Override
     @Transactional
     public SaleResponse create(SaleRequest request, Long userId) {
-        Sale entity = new Sale();
-        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId()).orElse(null));
-        if (request.getCustomerId() != null) {
-            entity.setCustomer(customerRepository.findById(request.getCustomerId()).orElse(null));
+        Sale entity = mapper.toEntity(request);
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId()).orElse(null));
+        if (request.customerId() != null) {
+            entity.setCustomer(customerRepository.findById(request.customerId()).orElse(null));
         }
         entity.setUser(userRepository.findById(userId).orElse(null));
-        entity.setDocumentType(request.getDocumentType());
         entity.setSeries("B001"); // Dummy
         entity.setNumber("000001"); // Dummy
         entity.setDate(LocalDateTime.now());
@@ -49,17 +65,15 @@ public class SaleServiceImpl implements SaleService {
         entity.setCashSession(session);
 
         BigDecimal subTotal = BigDecimal.ZERO;
-        for (var ir : request.getItems()) {
-            Product product = productRepository.findById(ir.getProductId()).orElse(null);
-            ProductLot lot = ir.getLotId() != null ? lotRepository.findById(ir.getLotId()).orElse(null) : null;
+        for (var ir : request.items()) {
+            Product product = productRepository.findById(ir.productId()).orElse(null);
+            ProductLot lot = ir.lotId() != null ? lotRepository.findById(ir.lotId()).orElse(null) : null;
 
-            SaleItem item = new SaleItem();
+            SaleItem item = mapper.toItemEntity(ir);
             item.setSale(entity);
             item.setProduct(product);
             item.setLot(lot);
-            item.setQuantity(ir.getQuantity());
-            item.setUnitPrice(ir.getUnitPrice());
-            BigDecimal amount = ir.getUnitPrice().multiply(ir.getQuantity());
+            BigDecimal amount = ir.unitPrice().multiply(ir.quantity());
             item.setAmount(amount);
             item.setAppliedTaxRate(new BigDecimal("0.18"));
             entity.getItems().add(item);
@@ -69,10 +83,10 @@ public class SaleServiceImpl implements SaleService {
             // Update Inventory
             if (lot != null) {
                 Inventory inventory = inventoryRepository
-                        .findByEstablishmentIdAndLotId(request.getEstablishmentId(), lot.getId())
+                        .findByEstablishmentIdAndLotId(request.establishmentId(), lot.getId())
                         .orElseThrow(() -> new RuntimeException("No inventory for lot: " + lot.getLotCode()));
 
-                inventory.setQuantity(inventory.getQuantity().subtract(ir.getQuantity()));
+                inventory.setQuantity(inventory.getQuantity().subtract(ir.quantity()));
                 inventory.setLastMovement(LocalDateTime.now());
                 item.setUnitCost(inventory.getCostPrice()); // Record cost at time of sale
                 inventoryRepository.save(inventory);
@@ -82,7 +96,7 @@ public class SaleServiceImpl implements SaleService {
                 movement.setEstablishment(entity.getEstablishment());
                 movement.setLot(lot);
                 movement.setType(StockMovement.MovementType.SALE);
-                movement.setQuantity(ir.getQuantity().multiply(new java.math.BigDecimal("-1")));
+                movement.setQuantity(ir.quantity().multiply(new java.math.BigDecimal("-1")));
                 movement.setBalanceAfter(inventory.getQuantity());
                 movement.setReferenceTable("sales");
                 movement.setReferenceId(entity.getId());
@@ -96,29 +110,26 @@ public class SaleServiceImpl implements SaleService {
         entity.setTotal(subTotal); // Assuming inclusive
         entity.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
 
-        for (var pr : request.getPayments()) {
-            SalePayment payment = new SalePayment();
+        for (var pr : request.payments()) {
+            SalePayment payment = mapper.toPaymentEntity(pr);
             payment.setSale(entity);
-            payment.setPaymentMethod(pr.getPaymentMethod());
-            payment.setAmount(pr.getAmount());
-            payment.setReference(pr.getReference());
             entity.getPayments().add(payment);
 
             // Update cash session calculated balance if Cash
-            if (session != null && pr.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO) {
-                session.setCalculatedBalance(session.getCalculatedBalance().add(pr.getAmount()));
+            if (session != null && pr.paymentMethod() == SalePayment.PaymentMethod.EFECTIVO) {
+                session.setCalculatedBalance(session.getCalculatedBalance().add(pr.amount()));
                 cashSessionRepository.save(session);
             }
         }
 
-        return new SaleResponse(repository.save(entity));
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<SaleResponse> getAll() {
         return repository.findAll().stream()
-                .map(SaleResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -126,7 +137,7 @@ public class SaleServiceImpl implements SaleService {
     @Transactional(readOnly = true)
     public SaleResponse getById(Long id) {
         return repository.findById(id)
-                .map(SaleResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
     }
 
@@ -147,14 +158,11 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public String getXml(Long id) {
-        // Return URL or Content. Using content for now as requested "Download XML"
-        // usually implies file.
         return "<xml>Placeholder for Sale " + id + "</xml>";
     }
 
     @Override
     public String getCdr(Long id) {
-        // Return URL or Content
         return "<cdr>Placeholder for Sale " + id + "</cdr>";
     }
 
@@ -221,15 +229,12 @@ public class SaleServiceImpl implements SaleService {
             cashSessionRepository.save(session);
         }
 
-        return new SaleResponse(repository.save(note));
+        return mapper.toResponse(repository.save(note));
     }
 
     @Override
     @Transactional
     public SaleResponse createDebitNote(Long id, String reason, Long userId) {
-        // Implementation similar to credit note but with positive amounts and inverse
-        // inventory if applicable
-        // For simplicity in this step, throwing exception or placeholder
         throw new UnsupportedOperationException("Debit notes not yet implemented");
     }
 
@@ -288,33 +293,31 @@ public class SaleServiceImpl implements SaleService {
         List<Inventory> inventoryList = inventoryRepository.findAllByEstablishmentId(establishmentId);
 
         return inventoryList.stream().map(inventory -> {
-            ProductForSaleResponse dto = new ProductForSaleResponse();
             ProductLot lot = inventory.getLot();
             Product product = lot.getProduct();
 
-            dto.setId(inventory.getId());
-            dto.setProductId(product.getId());
-            dto.setName(product.getName());
-            dto.setDescription(product.getDescription());
-            dto.setPresentation(product.getPresentation() != null ? product.getPresentation().getDescription() : null);
-
+            String concentration = "";
             if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                String concentration = product.getIngredients().stream()
+                concentration = product.getIngredients().stream()
                         .map(pi -> pi.getActiveIngredient().getName() + " "
                                 + (pi.getConcentration() != null ? pi.getConcentration() : ""))
                         .collect(Collectors.joining(", "));
-                dto.setConcentration(concentration);
             }
 
-            dto.setCategory(product.getCategory() != null ? product.getCategory().getName() : null);
-            dto.setLaboratory(product.getLaboratory() != null ? product.getLaboratory().getName() : null);
-            dto.setSalesPrice(inventory.getSalesPrice());
-            dto.setStock(inventory.getQuantity());
-            dto.setExpirationDate(lot.getExpiryDate());
-            dto.setLotCode(lot.getLotCode());
-            dto.setLotId(lot.getId());
-
-            return dto;
+            return new ProductForSaleResponse(
+                    inventory.getId(),
+                    product.getId(),
+                    product.getName(),
+                    product.getDescription(),
+                    product.getPresentation() != null ? product.getPresentation().getDescription() : null,
+                    concentration,
+                    product.getCategory() != null ? product.getCategory().getName() : null,
+                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
+                    inventory.getSalesPrice(),
+                    inventory.getQuantity(),
+                    lot.getExpiryDate(),
+                    lot.getLotCode(),
+                    lot.getId());
         }).collect(Collectors.toList());
     }
 }

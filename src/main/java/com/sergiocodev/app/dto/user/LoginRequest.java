@@ -1,18 +1,9 @@
 package com.sergiocodev.app.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginRequest {
+public record LoginRequest(
+        @NotBlank(message = "Username or email is required") String usernameOrEmail,
 
-    @NotBlank(message = "Username or email is required")
-    private String usernameOrEmail;
-
-    @NotBlank(message = "Password is required")
-    private String password;
+        @NotBlank(message = "Password is required") String password) {
 }

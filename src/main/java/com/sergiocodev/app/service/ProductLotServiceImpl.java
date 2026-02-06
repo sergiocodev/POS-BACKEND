@@ -22,13 +22,13 @@ public class ProductLotServiceImpl implements ProductLotService {
     @Override
     @Transactional
     public ProductLotResponse create(ProductLotRequest request) {
-        Product product = productRepository.findById(request.getProductId())
+        Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         ProductLot entity = new ProductLot();
         entity.setProduct(product);
-        entity.setLotCode(request.getLotCode());
-        entity.setExpiryDate(request.getExpiryDate());
+        entity.setLotCode(request.lotCode());
+        entity.setExpiryDate(request.expiryDate());
         return new ProductLotResponse(repository.save(entity));
     }
 

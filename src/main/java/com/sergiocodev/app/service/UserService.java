@@ -15,6 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.sergiocodev.app.dto.user.UserResponse;
+import com.sergiocodev.app.mapper.UserMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -23,77 +27,86 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper mapper;
 
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public List<UserResponse> getAll() {
+        return userRepository.findAll().stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public User getById(Long id) {
+    public UserResponse getById(Long id) {
         return userRepository.findById(id)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
     }
 
-    public User getByUsername(String username) {
+    public UserResponse getByUsername(String username) {
         return userRepository.findByUsername(username)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
     }
 
+    // Returning User for internal use if needed, but usually we return Response
+    // Let's refactor to return UserResponse for the service layer used by
+    // controllers
     @Transactional
-    public User create(UserRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("Username already exists: " + request.getUsername());
+    public UserResponse create(UserRequest request) {
+        if (userRepository.existsByUsername(request.username())) {
+            throw new UserAlreadyExistsException("Username already exists: " + request.username());
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
+        if (userRepository.existsByEmail(request.email())) {
+            throw new UserAlreadyExistsException("Email already exists: " + request.email());
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setProfilePicture(request.getProfilePicture());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setActive(request.getActive() != null ? request.getActive() : true);
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setFullName(request.fullName());
+        user.setProfilePicture(request.profilePicture());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setActive(request.active() != null ? request.active() : true);
 
-        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.getRoleIds()));
+        if (request.roleIds() != null && !request.roleIds().isEmpty()) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.roleIds()));
             user.setRoles(roles);
         }
 
-        return userRepository.save(user);
+        return mapper.toResponse(userRepository.save(user));
     }
 
     @Transactional
-    public User update(Long id, UserRequest request) {
-        User user = getById(id);
+    public UserResponse update(Long id, UserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
-        if (!user.getUsername().equals(request.getUsername())
-                && userRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("Username already exists: " + request.getUsername());
+        if (!user.getUsername().equals(request.username())
+                && userRepository.existsByUsername(request.username())) {
+            throw new UserAlreadyExistsException("Username already exists: " + request.username());
         }
-        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
-        }
-
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setProfilePicture(request.getProfilePicture());
-
-        if (request.getActive() != null) {
-            user.setActive(request.getActive());
+        if (!user.getEmail().equals(request.email()) && userRepository.existsByEmail(request.email())) {
+            throw new UserAlreadyExistsException("Email already exists: " + request.email());
         }
 
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setFullName(request.fullName());
+        user.setProfilePicture(request.profilePicture());
+
+        if (request.active() != null) {
+            user.setActive(request.active());
         }
 
-        if (request.getRoleIds() != null) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.getRoleIds()));
+        if (request.password() != null && !request.password().isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(request.password()));
+        }
+
+        if (request.roleIds() != null) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.roleIds()));
             user.setRoles(roles);
         }
 
-        return userRepository.save(user);
+        return mapper.toResponse(userRepository.save(user));
     }
 
     @Transactional
@@ -105,9 +118,10 @@ public class UserService {
     }
 
     @Transactional
-    public User toggleActive(Long id) {
-        User user = getById(id);
+    public UserResponse toggleActive(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         user.setActive(!user.isActive());
-        return userRepository.save(user);
+        return mapper.toResponse(userRepository.save(user));
     }
 }

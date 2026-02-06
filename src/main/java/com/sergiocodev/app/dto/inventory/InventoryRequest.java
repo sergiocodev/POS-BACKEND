@@ -1,29 +1,19 @@
 package com.sergiocodev.app.dto.inventory;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class InventoryRequest {
+public record InventoryRequest(
+        @NotNull(message = "Establishment ID is required") Long establishmentId,
 
-    @NotNull(message = "Establishment ID is required")
-    private Long establishmentId;
+        @NotNull(message = "Lot ID is required") Long lotId,
 
-    @NotNull(message = "Lot ID is required")
-    private Long lotId;
+        @NotNull(message = "Quantity is required") BigDecimal quantity,
 
-    @NotNull(message = "Quantity is required")
-    private BigDecimal quantity;
+        BigDecimal costPrice,
+        BigDecimal salesPrice,
 
-    private BigDecimal costPrice;
-    private BigDecimal salesPrice;
-
-    // For adjustments
-    private String movementType; // IN, OUT, ADJUSTMENT, LOSS, THEFT, RETURN
-    private String notes;
+        // For adjustments
+        String movementType, // IN, OUT, ADJUSTMENT, LOSS, THEFT, RETURN
+        String notes) {
 }

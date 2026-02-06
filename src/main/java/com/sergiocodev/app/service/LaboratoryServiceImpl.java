@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.laboratory.LaboratoryRequest;
 import com.sergiocodev.app.dto.laboratory.LaboratoryResponse;
+import com.sergiocodev.app.mapper.LaboratoryMapper;
 import com.sergiocodev.app.model.Laboratory;
 import com.sergiocodev.app.repository.LaboratoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,21 +16,20 @@ import java.util.stream.Collectors;
 public class LaboratoryServiceImpl implements LaboratoryService {
 
     private final LaboratoryRepository repository;
+    private final LaboratoryMapper mapper;
 
     @Override
     @Transactional
     public LaboratoryResponse create(LaboratoryRequest request) {
-        Laboratory entity = new Laboratory();
-        entity.setName(request.getName());
-        entity.setActive(request.isActive());
-        return new LaboratoryResponse(repository.save(entity));
+        Laboratory entity = mapper.toEntity(request);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LaboratoryResponse> getAll() {
         return repository.findAll().stream()
-                .map(LaboratoryResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -37,7 +37,7 @@ public class LaboratoryServiceImpl implements LaboratoryService {
     @Transactional(readOnly = true)
     public LaboratoryResponse getById(Long id) {
         return repository.findById(id)
-                .map(LaboratoryResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Laboratory not found"));
     }
 
@@ -46,9 +46,8 @@ public class LaboratoryServiceImpl implements LaboratoryService {
     public LaboratoryResponse update(Long id, LaboratoryRequest request) {
         Laboratory entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Laboratory not found"));
-        entity.setName(request.getName());
-        entity.setActive(request.isActive());
-        return new LaboratoryResponse(repository.save(entity));
+        mapper.updateEntity(request, entity);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override

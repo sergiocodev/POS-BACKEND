@@ -26,13 +26,13 @@ public class CashSessionServiceImpl implements CashSessionService {
     @Transactional
     public CashSessionResponse openSession(CashSessionRequest request, Long userId) {
         CashSession entity = new CashSession();
-        entity.setCashRegister(registerRepository.findById(request.getCashRegisterId()).orElse(null));
+        entity.setCashRegister(registerRepository.findById(request.cashRegisterId()).orElse(null));
         entity.setUser(userRepository.findById(userId).orElse(null));
-        entity.setOpeningBalance(request.getOpeningBalance());
-        entity.setCalculatedBalance(request.getOpeningBalance());
+        entity.setOpeningBalance(request.openingBalance());
+        entity.setCalculatedBalance(request.openingBalance());
         entity.setStatus(CashSession.SessionStatus.OPEN);
         entity.setOpenedAt(LocalDateTime.now());
-        entity.setNotes(request.getNotes());
+        entity.setNotes(request.notes());
         return new CashSessionResponse(repository.save(entity));
     }
 

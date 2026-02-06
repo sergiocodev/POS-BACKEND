@@ -3,6 +3,7 @@ package com.sergiocodev.app.service;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
+import com.sergiocodev.app.mapper.ProductMapper;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -23,23 +24,24 @@ public class ProductServiceImpl implements ProductService {
     private final TaxTypeRepository taxTypeRepository;
     private final ActiveIngredientRepository activeIngredientRepository;
     private final ProductLotRepository productLotRepository;
+    private final ProductMapper mapper;
 
     @Override
     @Transactional
     public ProductResponse create(ProductRequest request) {
-        Product entity = new Product();
+        Product entity = mapper.toEntity(request);
         mapBasicInfo(request, entity);
         entity = repository.save(entity); // Save first to get the ID
 
         mapIngredients(request, entity);
-        return new ProductResponse(repository.save(entity)); // Save again to persist ingredients
+        return mapper.toResponse(repository.save(entity)); // Save again to persist ingredients
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponse> getAll(Long categoryId, Long brandId, Boolean active) {
         return repository.findAllWithFilters(categoryId, brandId, active).stream()
-                .map(ProductResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -47,7 +49,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductResponse getById(Long id) {
         return repository.findById(id)
-                .map(ProductResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
@@ -56,9 +58,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(Long id, ProductRequest request) {
         Product entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
+        mapper.updateEntity(request, entity);
         mapBasicInfo(request, entity);
         mapIngredients(request, entity);
-        return new ProductResponse(repository.save(entity));
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
@@ -71,7 +74,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponse> search(String query) {
         return repository.searchByQuery(query).stream()
-                .map(ProductResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -84,38 +87,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void mapBasicInfo(ProductRequest request, Product entity) {
-        entity.setCode(request.getCode());
-        entity.setDigemidCode(request.getDigemidCode());
-        entity.setName(request.getName());
-        entity.setDescription(request.getDescription());
-        entity.setImageUrl(request.getImageUrl());
-        entity.setBrand(brandRepository.findById(request.getBrandId()).orElse(null));
-        entity.setCategory(categoryRepository.findById(request.getCategoryId()).orElse(null));
-        entity.setLaboratory(laboratoryRepository.findById(request.getLaboratoryId()).orElse(null));
-        entity.setPresentation(presentationRepository.findById(request.getPresentationId()).orElse(null));
-        entity.setTaxType(taxTypeRepository.findById(request.getTaxTypeId()).orElse(null));
-        entity.setRequiresPrescription(request.isRequiresPrescription());
-        entity.setGeneric(request.isGeneric());
-        if (request.getUnitType() != null) {
-            entity.setUnitType(Product.UnitType.valueOf(request.getUnitType()));
+        entity.setBrand(brandRepository.findById(request.brandId()).orElse(null));
+        entity.setCategory(categoryRepository.findById(request.categoryId()).orElse(null));
+        entity.setLaboratory(laboratoryRepository.findById(request.laboratoryId()).orElse(null));
+        entity.setPresentation(presentationRepository.findById(request.presentationId()).orElse(null));
+        entity.setTaxType(taxTypeRepository.findById(request.taxTypeId()).orElse(null));
+        if (request.unitType() != null) {
+            entity.setUnitType(Product.UnitType.valueOf(request.unitType()));
         }
-        entity.setPurchaseFactor(request.getPurchaseFactor());
-        entity.setFractionLabel(request.getFractionLabel());
-        entity.setActive(request.isActive());
     }
 
     private void mapIngredients(ProductRequest request, Product entity) {
-        if (request.getIngredients() != null) {
+        if (request.ingredients() != null) {
             entity.getIngredients().clear();
-            request.getIngredients().forEach(ir -> {
-                ActiveIngredient activeIngredient = activeIngredientRepository.findById(ir.getActiveIngredientId())
+            request.ingredients().forEach(ir -> {
+                ActiveIngredient activeIngredient = activeIngredientRepository.findById(ir.activeIngredientId())
                         .orElseThrow(() -> new RuntimeException(
-                                "Active ingredient not found with id: " + ir.getActiveIngredientId()));
+                                "Active ingredient not found with id: " + ir.activeIngredientId()));
 
                 ProductIngredient pi = new ProductIngredient();
                 pi.setProduct(entity);
                 pi.setActiveIngredient(activeIngredient);
-                pi.setConcentration(ir.getConcentration());
+                pi.setConcentration(ir.concentration());
 
                 // Initialize the composite ID explicitly now that we have the product ID
                 pi.getId().setProductId(entity.getId());

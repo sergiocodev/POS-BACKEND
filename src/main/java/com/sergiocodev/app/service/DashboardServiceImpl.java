@@ -238,7 +238,7 @@ public class DashboardServiceImpl implements DashboardService {
                                                 Collectors.reducing(BigDecimal.ZERO, Sale::getTotal, BigDecimal::add)))
                                 .entrySet().stream()
                                 .map(e -> new EmployeePerformanceDashboard(e.getKey().getFullName(), e.getValue()))
-                                .sorted((e1, e2) -> e2.getTotalSold().compareTo(e1.getTotalSold()))
+                                .sorted((e1, e2) -> e2.totalSold().compareTo(e1.totalSold()))
                                 .collect(Collectors.toList());
         }
 }

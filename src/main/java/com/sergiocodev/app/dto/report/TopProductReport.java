@@ -1,17 +1,15 @@
 package com.sergiocodev.app.dto.report;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TopProductReport {
-    private Long productId;
-    private String productName;
-    private BigDecimal value; // Quantity or Amount
-    private BigDecimal percentage;
-    private BigDecimal cumulativePercentage;
+public record TopProductReport(
+        Long productId,
+        String productName,
+        BigDecimal value, // Quantity or Amount
+        BigDecimal percentage,
+        BigDecimal cumulativePercentage) {
+    // Note: If you need to set cumulativePercentage later,
+    // you might need a custom constructor or a with method since records are
+    // immutable.
+    // However, for typical DTO usage, this should be fine.
 }

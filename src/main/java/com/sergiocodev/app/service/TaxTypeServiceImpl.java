@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.taxtype.TaxTypeRequest;
 import com.sergiocodev.app.dto.taxtype.TaxTypeResponse;
+import com.sergiocodev.app.mapper.TaxTypeMapper;
 import com.sergiocodev.app.model.TaxType;
 import com.sergiocodev.app.repository.TaxTypeRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,23 +16,20 @@ import java.util.stream.Collectors;
 public class TaxTypeServiceImpl implements TaxTypeService {
 
     private final TaxTypeRepository repository;
+    private final TaxTypeMapper mapper;
 
     @Override
     @Transactional
     public TaxTypeResponse create(TaxTypeRequest request) {
-        TaxType entity = new TaxType();
-        entity.setName(request.getName());
-        entity.setRate(request.getRate());
-        entity.setCodeSunat(request.getCodeSunat());
-        entity.setActive(request.isActive());
-        return new TaxTypeResponse(repository.save(entity));
+        TaxType entity = mapper.toEntity(request);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TaxTypeResponse> getAll() {
         return repository.findAll().stream()
-                .map(TaxTypeResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -39,7 +37,7 @@ public class TaxTypeServiceImpl implements TaxTypeService {
     @Transactional(readOnly = true)
     public TaxTypeResponse getById(Long id) {
         return repository.findById(id)
-                .map(TaxTypeResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Tax type not found"));
     }
 
@@ -48,11 +46,8 @@ public class TaxTypeServiceImpl implements TaxTypeService {
     public TaxTypeResponse update(Long id, TaxTypeRequest request) {
         TaxType entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tax type not found"));
-        entity.setName(request.getName());
-        entity.setRate(request.getRate());
-        entity.setCodeSunat(request.getCodeSunat());
-        entity.setActive(request.isActive());
-        return new TaxTypeResponse(repository.save(entity));
+        mapper.updateEntity(request, entity);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override

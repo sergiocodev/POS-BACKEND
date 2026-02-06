@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
+import com.sergiocodev.app.mapper.InventoryMapper;
 import com.sergiocodev.app.model.Inventory;
 import com.sergiocodev.app.model.StockMovement;
 import com.sergiocodev.app.repository.EstablishmentRepository;
@@ -23,28 +24,29 @@ public class InventoryServiceImpl implements InventoryService {
     private final EstablishmentRepository establishmentRepository;
     private final ProductLotRepository lotRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final InventoryMapper mapper;
 
     @Override
     @Transactional
     public InventoryResponse updateStock(InventoryRequest request) {
-        Inventory entity = repository.findByEstablishmentIdAndLotId(request.getEstablishmentId(), request.getLotId())
+        Inventory entity = repository.findByEstablishmentIdAndLotId(request.establishmentId(), request.lotId())
                 .orElseGet(() -> {
                     Inventory newInv = new Inventory();
                     newInv.setEstablishment(
-                            establishmentRepository.findById(request.getEstablishmentId()).orElse(null));
-                    newInv.setLot(lotRepository.findById(request.getLotId()).orElse(null));
+                            establishmentRepository.findById(request.establishmentId()).orElse(null));
+                    newInv.setLot(lotRepository.findById(request.lotId()).orElse(null));
                     newInv.setQuantity(java.math.BigDecimal.ZERO);
                     return newInv;
                 });
 
         java.math.BigDecimal oldQuantity = entity.getQuantity();
-        java.math.BigDecimal newQuantity = request.getQuantity();
+        java.math.BigDecimal newQuantity = request.quantity();
 
         entity.setQuantity(newQuantity);
-        if (request.getCostPrice() != null)
-            entity.setCostPrice(request.getCostPrice());
-        if (request.getSalesPrice() != null)
-            entity.setSalesPrice(request.getSalesPrice());
+        if (request.costPrice() != null)
+            entity.setCostPrice(request.costPrice());
+        if (request.salesPrice() != null)
+            entity.setSalesPrice(request.salesPrice());
         entity.setLastMovement(LocalDateTime.now());
 
         Inventory saved = repository.save(entity);
@@ -62,9 +64,9 @@ public class InventoryServiceImpl implements InventoryService {
                     ? StockMovement.MovementType.ADJUSTMENT_IN
                     : StockMovement.MovementType.ADJUSTMENT_OUT;
 
-            if (request.getMovementType() != null) {
+            if (request.movementType() != null) {
                 try {
-                    type = StockMovement.MovementType.valueOf(request.getMovementType());
+                    type = StockMovement.MovementType.valueOf(request.movementType());
                 } catch (IllegalArgumentException e) {
                     // ignore, use default
                 }
@@ -79,26 +81,23 @@ public class InventoryServiceImpl implements InventoryService {
             stockMovementRepository.save(movement);
         }
 
-        return new InventoryResponse(saved);
+        return mapper.toResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<InventoryResponse> getAll() {
         return repository.findAll().stream()
-                .map(InventoryResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<InventoryResponse> getByEstablishment(Long establishmentId) {
-        // This would need a repo method findByEstablishmentId, but I'll use findAll and
-        // filter for now
-        // or just create the repo method if needed.
         return repository.findAll().stream()
                 .filter(i -> i.getEstablishment().getId().equals(establishmentId))
-                .map(InventoryResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -106,7 +105,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public InventoryResponse getById(Long id) {
         return repository.findById(id)
-                .map(InventoryResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Inventory record not found"));
     }
 
@@ -115,7 +114,7 @@ public class InventoryServiceImpl implements InventoryService {
     public List<InventoryResponse> getAlerts() {
         // Expiry within 3 months (90 days)
         return repository.findExpiringSoon(java.time.LocalDate.now().plusDays(90)).stream()
-                .map(InventoryResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -123,7 +122,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public List<InventoryResponse> getLowStock() {
         return repository.findLowStock().stream()
-                .map(InventoryResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 }

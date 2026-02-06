@@ -22,14 +22,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public EmployeeResponse create(EmployeeRequest request) {
         Employee entity = new Employee();
-        entity.setFirstName(request.getFirstName());
-        entity.setLastName(request.getLastName());
-        entity.setDocumentNumber(request.getDocumentNumber());
-        if (request.getUserId() != null) {
-            entity.setUser(userRepository.findById(request.getUserId())
+        entity.setFirstName(request.firstName());
+        entity.setLastName(request.lastName());
+        entity.setDocumentNumber(request.documentNumber());
+        if (request.userId() != null) {
+            entity.setUser(userRepository.findById(request.userId())
                     .orElseThrow(() -> new RuntimeException("User not found")));
         }
-        entity.setActive(request.isActive());
+        entity.setActive(request.active());
         return new EmployeeResponse(repository.save(entity));
     }
 
@@ -54,16 +54,16 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeResponse update(Long id, EmployeeRequest request) {
         Employee entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
-        entity.setFirstName(request.getFirstName());
-        entity.setLastName(request.getLastName());
-        entity.setDocumentNumber(request.getDocumentNumber());
-        if (request.getUserId() != null) {
-            entity.setUser(userRepository.findById(request.getUserId())
+        entity.setFirstName(request.firstName());
+        entity.setLastName(request.lastName());
+        entity.setDocumentNumber(request.documentNumber());
+        if (request.userId() != null) {
+            entity.setUser(userRepository.findById(request.userId())
                     .orElseThrow(() -> new RuntimeException("User not found")));
         } else {
             entity.setUser(null);
         }
-        entity.setActive(request.isActive());
+        entity.setActive(request.active());
         return new EmployeeResponse(repository.save(entity));
     }
 

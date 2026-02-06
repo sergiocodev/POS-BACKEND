@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.external.ExternalConsultationResponse;
 import com.sergiocodev.app.dto.user.UserRequest;
-import com.sergiocodev.app.model.User;
+import com.sergiocodev.app.dto.user.UserResponse;
 import com.sergiocodev.app.service.ExternalConsultationService;
 import com.sergiocodev.app.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,11 +35,8 @@ public class UserController {
     @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
     @GetMapping
-    public ResponseEntity<ResponseApi<List<User>>> getAll() {
-        List<User> users = userService.getAll();
-        // Hide passwords
-        users.forEach(u -> u.setPasswordHash("***"));
-        return ResponseEntity.ok(ResponseApi.success(users));
+    public ResponseEntity<ResponseApi<List<UserResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(userService.getAll()));
     }
 
     @Operation(summary = "Obtener perfil", description = "Obtiene el perfil del usuario autenticado")
@@ -48,16 +45,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/profile")
-    public ResponseEntity<ResponseApi<User>> getProfile() {
+    public ResponseEntity<ResponseApi<UserResponse>> getProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-
-        User user = userService.getByUsername(username);
-
-        // Hide password
-        user.setPasswordHash("***");
-
-        return ResponseEntity.ok(ResponseApi.success(user));
+        return ResponseEntity.ok(ResponseApi.success(userService.getByUsername(username)));
     }
 
     @Operation(summary = "Obtener usuario por ID", description = "Obtiene un usuario específico por su ID")
@@ -66,27 +57,23 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseApi<User>> getById(@PathVariable Long id) {
-        User user = userService.getById(id);
-
-        // Hide password
-        user.setPasswordHash("***");
-
-        return ResponseEntity.ok(ResponseApi.success(user));
+    public ResponseEntity<ResponseApi<UserResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(userService.getById(id)));
     }
 
     @Operation(summary = "Crear usuario", description = "Crea un nuevo usuario (ADMIN)")
     @PostMapping
-    public ResponseEntity<ResponseApi<User>> create(@Valid @RequestBody UserRequest request) {
-        User user = userService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseApi.success(user, "Usuario creado exitosamente"));
+    public ResponseEntity<ResponseApi<UserResponse>> create(@Valid @RequestBody UserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(userService.create(request), "Usuario creado exitosamente"));
     }
 
     @Operation(summary = "Actualizar usuario", description = "Actualiza un usuario existente")
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseApi<User>> update(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
-        User user = userService.update(id, request);
-        return ResponseEntity.ok(ResponseApi.success(user, "Usuario actualizado exitosamente"));
+    public ResponseEntity<ResponseApi<UserResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody UserRequest request) {
+        return ResponseEntity
+                .ok(ResponseApi.success(userService.update(id, request), "Usuario actualizado exitosamente"));
     }
 
     @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su ID")
@@ -102,11 +89,9 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PatchMapping("/{id}/toggle-active")
-    public ResponseEntity<ResponseApi<User>> toggleActive(@PathVariable Long id) {
-        User user = userService.toggleActive(id);
-        // Hide password
-        user.setPasswordHash("***");
-        return ResponseEntity.ok(ResponseApi.success(user, "Estado de usuario actualizado exitosamente"));
+    public ResponseEntity<ResponseApi<UserResponse>> toggleActive(@PathVariable Long id) {
+        return ResponseEntity
+                .ok(ResponseApi.success(userService.toggleActive(id), "Estado de usuario actualizado exitosamente"));
     }
 
     @Operation(summary = "Consulta externa de documento", description = "Busca datos de una persona (DNI) o empresa (RUC) en servicios externos")

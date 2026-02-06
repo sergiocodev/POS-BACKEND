@@ -23,15 +23,15 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Transactional
     public StockMovementResponse create(StockMovementRequest request) {
         StockMovement entity = new StockMovement();
-        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId()).orElse(null));
-        entity.setLot(lotRepository.findById(request.getLotId()).orElse(null));
-        entity.setType(request.getType());
-        entity.setQuantity(request.getQuantity());
-        entity.setBalanceAfter(request.getBalanceAfter());
-        entity.setReferenceTable(request.getReferenceTable());
-        entity.setReferenceId(request.getReferenceId());
-        if (request.getUserId() != null) {
-            entity.setUser(userRepository.findById(request.getUserId()).orElse(null));
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId()).orElse(null));
+        entity.setLot(lotRepository.findById(request.lotId()).orElse(null));
+        entity.setType(request.type());
+        entity.setQuantity(request.quantity());
+        entity.setBalanceAfter(request.balanceAfter());
+        entity.setReferenceTable(request.referenceTable());
+        entity.setReferenceId(request.referenceId());
+        if (request.userId() != null) {
+            entity.setUser(userRepository.findById(request.userId()).orElse(null));
         }
 
         return new StockMovementResponse(repository.save(entity));

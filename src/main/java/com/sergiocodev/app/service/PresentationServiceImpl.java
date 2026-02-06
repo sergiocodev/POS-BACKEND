@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.presentation.PresentationRequest;
 import com.sergiocodev.app.dto.presentation.PresentationResponse;
+import com.sergiocodev.app.mapper.PresentationMapper;
 import com.sergiocodev.app.model.Presentation;
 import com.sergiocodev.app.repository.PresentationRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,20 +16,20 @@ import java.util.stream.Collectors;
 public class PresentationServiceImpl implements PresentationService {
 
     private final PresentationRepository repository;
+    private final PresentationMapper mapper;
 
     @Override
     @Transactional
     public PresentationResponse create(PresentationRequest request) {
-        Presentation entity = new Presentation();
-        entity.setDescription(request.getDescription());
-        return new PresentationResponse(repository.save(entity));
+        Presentation entity = mapper.toEntity(request);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PresentationResponse> getAll() {
         return repository.findAll().stream()
-                .map(PresentationResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -36,7 +37,7 @@ public class PresentationServiceImpl implements PresentationService {
     @Transactional(readOnly = true)
     public PresentationResponse getById(Long id) {
         return repository.findById(id)
-                .map(PresentationResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Presentation not found"));
     }
 
@@ -45,8 +46,8 @@ public class PresentationServiceImpl implements PresentationService {
     public PresentationResponse update(Long id, PresentationRequest request) {
         Presentation entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Presentation not found"));
-        entity.setDescription(request.getDescription());
-        return new PresentationResponse(repository.save(entity));
+        mapper.updateEntity(request, entity);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override

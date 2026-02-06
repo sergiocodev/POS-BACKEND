@@ -20,10 +20,10 @@ public class EstablishmentServiceImpl implements EstablishmentService {
     @Transactional
     public EstablishmentResponse create(EstablishmentRequest request) {
         Establishment entity = new Establishment();
-        entity.setName(request.getName());
-        entity.setAddress(request.getAddress());
-        entity.setCodeSunat(request.getCodeSunat());
-        entity.setActive(request.isActive());
+        entity.setName(request.name());
+        entity.setAddress(request.address());
+        entity.setCodeSunat(request.codeSunat());
+        entity.setActive(request.active());
         return new EstablishmentResponse(repository.save(entity));
     }
 
@@ -48,10 +48,10 @@ public class EstablishmentServiceImpl implements EstablishmentService {
     public EstablishmentResponse update(Long id, EstablishmentRequest request) {
         Establishment entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Establishment not found"));
-        entity.setName(request.getName());
-        entity.setAddress(request.getAddress());
-        entity.setCodeSunat(request.getCodeSunat());
-        entity.setActive(request.isActive());
+        entity.setName(request.name());
+        entity.setAddress(request.address());
+        entity.setCodeSunat(request.codeSunat());
+        entity.setActive(request.active());
         return new EstablishmentResponse(repository.save(entity));
     }
 

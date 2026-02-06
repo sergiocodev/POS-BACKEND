@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientRequest;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientResponse;
+import com.sergiocodev.app.mapper.ActiveIngredientMapper;
 import com.sergiocodev.app.model.ActiveIngredient;
 import com.sergiocodev.app.repository.ActiveIngredientRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,22 +16,20 @@ import java.util.stream.Collectors;
 public class ActiveIngredientServiceImpl implements ActiveIngredientService {
 
     private final ActiveIngredientRepository repository;
+    private final ActiveIngredientMapper mapper;
 
     @Override
     @Transactional
     public ActiveIngredientResponse create(ActiveIngredientRequest request) {
-        ActiveIngredient entity = new ActiveIngredient();
-        entity.setName(request.getName());
-        entity.setDescription(request.getDescription());
-        entity.setActive(request.isActive());
-        return new ActiveIngredientResponse(repository.save(entity));
+        ActiveIngredient entity = mapper.toEntity(request);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ActiveIngredientResponse> getAll() {
         return repository.findAll().stream()
-                .map(ActiveIngredientResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -38,7 +37,7 @@ public class ActiveIngredientServiceImpl implements ActiveIngredientService {
     @Transactional(readOnly = true)
     public ActiveIngredientResponse getById(Long id) {
         return repository.findById(id)
-                .map(ActiveIngredientResponse::new)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Active ingredient not found"));
     }
 
@@ -47,10 +46,8 @@ public class ActiveIngredientServiceImpl implements ActiveIngredientService {
     public ActiveIngredientResponse update(Long id, ActiveIngredientRequest request) {
         ActiveIngredient entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Active ingredient not found"));
-        entity.setName(request.getName());
-        entity.setDescription(request.getDescription());
-        entity.setActive(request.isActive());
-        return new ActiveIngredientResponse(repository.save(entity));
+        mapper.updateEntity(request, entity);
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override
@@ -63,7 +60,7 @@ public class ActiveIngredientServiceImpl implements ActiveIngredientService {
     @Transactional(readOnly = true)
     public List<ActiveIngredientResponse> search(String query) {
         return repository.findByNameContainingIgnoreCase(query).stream()
-                .map(ActiveIngredientResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 }

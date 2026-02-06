@@ -2,6 +2,7 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.permission.PermissionResponse;
 import com.sergiocodev.app.dto.role.*;
+import com.sergiocodev.app.mapper.RoleMapper;
 import com.sergiocodev.app.model.Permission;
 import com.sergiocodev.app.model.Role;
 import com.sergiocodev.app.repository.PermissionRepository;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,14 +24,14 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final RoleMapper roleMapper;
 
     /**
      * Obtener todos los roles
      */
     public List<RoleResponse> getAll() {
         return roleRepository.findAll().stream()
-                .map(this::toRoleResponse)
+                .map(roleMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -41,7 +41,7 @@ public class RoleService {
     public RoleDetailResponse getById(Long id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
-        return toRoleDetailResponse(role);
+        return roleMapper.toDetailResponse(role);
     }
 
     /**
@@ -50,18 +50,18 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse create(CreateRoleRequest request) {
         // Verificar que no exista un rol con el mismo nombre
-        if (roleRepository.findByName(request.getName()).isPresent()) {
-            throw new RuntimeException("Ya existe un rol con el nombre: " + request.getName());
+        if (roleRepository.findByName(request.name()).isPresent()) {
+            throw new RuntimeException("Ya existe un rol con el nombre: " + request.name());
         }
 
         Role role = new Role();
-        role.setName(request.getName());
-        role.setDescription(request.getDescription());
-        role.setActive(request.isActive());
+        role.setName(request.name());
+        role.setDescription(request.description());
+        role.setActive(request.active());
         role.setPermissions(new HashSet<>());
 
         Role saved = roleRepository.save(role);
-        return toRoleDetailResponse(saved);
+        return roleMapper.toDetailResponse(saved);
     }
 
     /**
@@ -73,18 +73,18 @@ public class RoleService {
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
 
         // Verificar que no exista otro rol con el mismo nombre
-        roleRepository.findByName(request.getName()).ifPresent(existing -> {
+        roleRepository.findByName(request.name()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Ya existe otro rol con el nombre: " + request.getName());
+                throw new RuntimeException("Ya existe otro rol con el nombre: " + request.name());
             }
         });
 
-        role.setName(request.getName());
-        role.setDescription(request.getDescription());
-        role.setActive(request.isActive());
+        role.setName(request.name());
+        role.setDescription(request.description());
+        role.setActive(request.active());
 
         Role updated = roleRepository.save(role);
-        return toRoleDetailResponse(updated);
+        return roleMapper.toDetailResponse(updated);
     }
 
     /**
@@ -114,7 +114,7 @@ public class RoleService {
 
         role.setActive(!role.isActive());
         Role updated = roleRepository.save(role);
-        return toRoleResponse(updated);
+        return roleMapper.toResponse(updated);
     }
 
     /**
@@ -125,7 +125,12 @@ public class RoleService {
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
 
         return role.getPermissions().stream()
-                .map(this::toPermissionResponse)
+                .map(permission -> new PermissionResponse(
+                        permission.getId(),
+                        permission.getName(),
+                        permission.getDescription(),
+                        permission.getModule(),
+                        permission.getCreatedAt() != null ? permission.getCreatedAt().toString() : null))
                 .collect(Collectors.toList());
     }
 
@@ -137,16 +142,7 @@ public class RoleService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
 
-        Set<Permission> permissionsToAdd = new HashSet<>();
-        for (Long permissionId : request.getPermissionIds()) {
-            Permission permission = permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
-            permissionsToAdd.add(permission);
-        }
-
-        role.getPermissions().addAll(permissionsToAdd);
-        Role updated = roleRepository.save(role);
-        return toRoleDetailResponse(updated);
+        return handlePermissions(role, request.permissionIds(), false);
     }
 
     /**
@@ -157,16 +153,25 @@ public class RoleService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
 
-        Set<Permission> newPermissions = new HashSet<>();
-        for (Long permissionId : request.getPermissionIds()) {
+        return handlePermissions(role, request.permissionIds(), true);
+    }
+
+    private RoleDetailResponse handlePermissions(Role role, Set<Long> permissionIds, boolean replace) {
+        Set<Permission> permissions = new HashSet<>();
+        for (Long permissionId : permissionIds) {
             Permission permission = permissionRepository.findById(permissionId)
                     .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
-            newPermissions.add(permission);
+            permissions.add(permission);
         }
 
-        role.setPermissions(newPermissions);
+        if (replace) {
+            role.setPermissions(permissions);
+        } else {
+            role.getPermissions().addAll(permissions);
+        }
+
         Role updated = roleRepository.save(role);
-        return toRoleDetailResponse(updated);
+        return roleMapper.toDetailResponse(updated);
     }
 
     /**
@@ -182,7 +187,7 @@ public class RoleService {
 
         role.getPermissions().remove(permission);
         Role updated = roleRepository.save(role);
-        return toRoleDetailResponse(updated);
+        return roleMapper.toDetailResponse(updated);
     }
 
     /**
@@ -193,55 +198,13 @@ public class RoleService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
 
-        for (Long permissionId : request.getPermissionIds()) {
+        for (Long permissionId : request.permissionIds()) {
             Permission permission = permissionRepository.findById(permissionId)
                     .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
             role.getPermissions().remove(permission);
         }
 
         Role updated = roleRepository.save(role);
-        return toRoleDetailResponse(updated);
-    }
-
-    /**
-     * Convertir Role a RoleResponse
-     */
-    private RoleResponse toRoleResponse(Role role) {
-        return new RoleResponse(
-                role.getId(),
-                role.getName(),
-                role.getDescription(),
-                role.isActive(),
-                role.getPermissions().size(),
-                role.getCreatedAt().format(FORMATTER));
-    }
-
-    /**
-     * Convertir Role a RoleDetailResponse
-     */
-    private RoleDetailResponse toRoleDetailResponse(Role role) {
-        Set<PermissionResponse> permissions = role.getPermissions().stream()
-                .map(this::toPermissionResponse)
-                .collect(Collectors.toSet());
-
-        return new RoleDetailResponse(
-                role.getId(),
-                role.getName(),
-                role.getDescription(),
-                role.isActive(),
-                permissions,
-                role.getCreatedAt().format(FORMATTER));
-    }
-
-    /**
-     * Convertir Permission a PermissionResponse
-     */
-    private PermissionResponse toPermissionResponse(Permission permission) {
-        return new PermissionResponse(
-                permission.getId(),
-                permission.getName(),
-                permission.getDescription(),
-                permission.getModule(),
-                permission.getCreatedAt().format(FORMATTER));
+        return roleMapper.toDetailResponse(updated);
     }
 }

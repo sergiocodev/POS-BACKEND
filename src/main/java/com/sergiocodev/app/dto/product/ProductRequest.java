@@ -3,58 +3,38 @@ package com.sergiocodev.app.dto.product;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProductRequest {
+public record ProductRequest(
+        @NotBlank(message = "Code is required") @Size(max = 50, message = "Code cannot exceed 50 characters") String code,
 
-    @NotBlank(message = "Code is required")
-    @Size(max = 50, message = "Code cannot exceed 50 characters")
-    private String code;
+        @Size(max = 50, message = "DIGEMID code cannot exceed 50 characters") String digemidCode,
 
-    @Size(max = 50, message = "DIGEMID code cannot exceed 50 characters")
-    private String digemidCode;
+        @NotBlank(message = "Name is required") @Size(max = 255, message = "Name cannot exceed 255 characters") String name,
 
-    @NotBlank(message = "Name is required")
-    @Size(max = 255, message = "Name cannot exceed 255 characters")
-    private String name;
+        String description,
 
-    private String description;
+        @Size(max = 255, message = "Image URL cannot exceed 255 characters") String imageUrl,
 
-    @Size(max = 255, message = "Image URL cannot exceed 255 characters")
-    private String imageUrl;
+        @NotNull(message = "Brand ID is required") Long brandId,
 
-    @NotNull(message = "Brand ID is required")
-    private Long brandId;
+        @NotNull(message = "Category ID is required") Long categoryId,
 
-    @NotNull(message = "Category ID is required")
-    private Long categoryId;
+        @NotNull(message = "Laboratory ID is required") Long laboratoryId,
 
-    @NotNull(message = "Laboratory ID is required")
-    private Long laboratoryId;
+        @NotNull(message = "Presentation ID is required") Long presentationId,
 
-    @NotNull(message = "Presentation ID is required")
-    private Long presentationId;
+        @NotNull(message = "Tax type ID is required") Long taxTypeId,
 
-    @NotNull(message = "Tax type ID is required")
-    private Long taxTypeId;
+        boolean requiresPrescription,
+        boolean isGeneric,
 
-    private boolean requiresPrescription = false;
-    private boolean isGeneric = false;
+        @NotBlank(message = "Unit type is required") String unitType,
 
-    @NotBlank(message = "Unit type is required")
-    private String unitType = "UNI";
+        @NotNull(message = "Purchase factor is required") Integer purchaseFactor,
 
-    @NotNull(message = "Purchase factor is required")
-    private Integer purchaseFactor = 1;
+        String fractionLabel,
+        boolean active,
 
-    private String fractionLabel;
-    private boolean active = true;
-
-    private List<ProductIngredientRequest> ingredients;
+        List<ProductIngredientRequest> ingredients) {
 }

@@ -1,22 +1,14 @@
 package com.sergiocodev.app.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ResponseApi<T> {
-    private int status;
-    private String message;
-    private T data;
-    private LocalDateTime timestamp;
-
+public record ResponseApi<T>(
+        int status,
+        String message,
+        T data,
+        LocalDateTime timestamp) {
     public static <T> ResponseApi<T> success(T data, String message) {
         return ResponseApi.<T>builder()
                 .status(200)

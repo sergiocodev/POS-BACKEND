@@ -22,10 +22,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Transactional
     public CashRegisterResponse create(CashRegisterRequest request) {
         CashRegister entity = new CashRegister();
-        entity.setName(request.getName());
-        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId())
+        entity.setName(request.name());
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
                 .orElseThrow(() -> new RuntimeException("Establishment not found")));
-        entity.setActive(request.isActive());
+        entity.setActive(request.active());
         return new CashRegisterResponse(repository.save(entity));
     }
 
@@ -50,10 +50,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     public CashRegisterResponse update(Long id, CashRegisterRequest request) {
         CashRegister entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cash register not found"));
-        entity.setName(request.getName());
-        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId())
+        entity.setName(request.name());
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
                 .orElseThrow(() -> new RuntimeException("Establishment not found")));
-        entity.setActive(request.isActive());
+        entity.setActive(request.active());
         return new CashRegisterResponse(repository.save(entity));
     }
 

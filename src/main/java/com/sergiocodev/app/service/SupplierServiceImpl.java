@@ -20,12 +20,12 @@ public class SupplierServiceImpl implements SupplierService {
     @Transactional
     public SupplierResponse create(SupplierRequest request) {
         Supplier entity = new Supplier();
-        entity.setName(request.getName());
-        entity.setRuc(request.getRuc());
-        entity.setPhone(request.getPhone());
-        entity.setEmail(request.getEmail());
-        entity.setAddress(request.getAddress());
-        entity.setActive(request.isActive());
+        entity.setName(request.name());
+        entity.setRuc(request.ruc());
+        entity.setPhone(request.phone());
+        entity.setEmail(request.email());
+        entity.setAddress(request.address());
+        entity.setActive(request.active());
         return new SupplierResponse(repository.save(entity));
     }
 
@@ -50,12 +50,12 @@ public class SupplierServiceImpl implements SupplierService {
     public SupplierResponse update(Long id, SupplierRequest request) {
         Supplier entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Supplier not found"));
-        entity.setName(request.getName());
-        entity.setRuc(request.getRuc());
-        entity.setPhone(request.getPhone());
-        entity.setEmail(request.getEmail());
-        entity.setAddress(request.getAddress());
-        entity.setActive(request.isActive());
+        entity.setName(request.name());
+        entity.setRuc(request.ruc());
+        entity.setPhone(request.phone());
+        entity.setEmail(request.email());
+        entity.setAddress(request.address());
+        entity.setActive(request.active());
         return new SupplierResponse(repository.save(entity));
     }
 

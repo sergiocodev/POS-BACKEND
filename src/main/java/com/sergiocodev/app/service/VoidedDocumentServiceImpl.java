@@ -30,15 +30,15 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         @Transactional
         public VoidedDocumentResponse create(VoidedDocumentRequest request, Long userId) {
                 VoidedDocument entity = new VoidedDocument();
-                entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId())
+                entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
                                 .orElseThrow(() -> new RuntimeException("Establishment not found")));
                 entity.setUser(userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("User not found")));
-                entity.setIssueDate(request.getIssueDate());
+                entity.setIssueDate(request.issueDate());
                 entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.PENDING);
 
                 // Create items and mark sales as voided
-                for (Long saleId : request.getSaleIds()) {
+                for (Long saleId : request.saleIds()) {
                         Sale sale = saleRepository.findById(saleId)
                                         .orElseThrow(() -> new RuntimeException("Sale not found: " + saleId));
 
@@ -52,8 +52,8 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
                         VoidedDocumentItem item = new VoidedDocumentItem();
                         item.setVoidedDocument(entity);
                         item.setSale(sale);
-                        item.setDescription(request.getDescription() != null
-                                        ? request.getDescription()
+                        item.setDescription(request.description() != null
+                                        ? request.description()
                                         : "Anulación de " + sale.getDocumentType() + " " + sale.getSeries() + "-"
                                                         + sale.getNumber());
                         entity.getItems().add(item);

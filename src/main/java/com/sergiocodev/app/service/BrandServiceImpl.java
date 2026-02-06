@@ -4,6 +4,7 @@ import com.sergiocodev.app.dto.brand.BrandRequest;
 import com.sergiocodev.app.dto.brand.BrandResponse;
 import com.sergiocodev.app.exception.BrandNotFoundException;
 import com.sergiocodev.app.exception.DuplicateBrandException;
+import com.sergiocodev.app.mapper.BrandMapper;
 import com.sergiocodev.app.model.Brand;
 import com.sergiocodev.app.repository.BrandRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,22 +19,18 @@ import java.util.stream.Collectors;
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
+    private final BrandMapper mapper;
 
     @Override
     @Transactional
     public BrandResponse create(BrandRequest request) {
-        if (brandRepository.existsByName(request.getName())) {
-            throw new DuplicateBrandException("Brand already exists with name: " + request.getName());
+        if (brandRepository.existsByName(request.name())) {
+            throw new DuplicateBrandException("Brand already exists with name: " + request.name());
         }
 
-        Brand brand = new Brand();
-        brand.setName(request.getName());
-        if (request.getActive() != null) {
-            brand.setActive(request.getActive());
-        }
-
+        Brand brand = mapper.toEntity(request);
         Brand savedBrand = brandRepository.save(brand);
-        return new BrandResponse(savedBrand);
+        return mapper.toResponse(savedBrand);
     }
 
     @Override
@@ -41,7 +38,7 @@ public class BrandServiceImpl implements BrandService {
     public List<BrandResponse> getAll() {
         return brandRepository.findAll()
                 .stream()
-                .map(BrandResponse::new)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -50,7 +47,7 @@ public class BrandServiceImpl implements BrandService {
     public BrandResponse getById(Long id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Brand not found with ID: " + id));
-        return new BrandResponse(brand);
+        return mapper.toResponse(brand);
     }
 
     @Override
@@ -59,18 +56,15 @@ public class BrandServiceImpl implements BrandService {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Brand not found with ID: " + id));
 
-        if (!brand.getName().equals(request.getName()) &&
-                brandRepository.existsByName(request.getName())) {
-            throw new DuplicateBrandException("Brand already exists with name: " + request.getName());
+        if (!brand.getName().equals(request.name()) &&
+                brandRepository.existsByName(request.name())) {
+            throw new DuplicateBrandException("Brand already exists with name: " + request.name());
         }
 
-        brand.setName(request.getName());
-        if (request.getActive() != null) {
-            brand.setActive(request.getActive());
-        }
+        mapper.updateEntity(request, brand);
 
         Brand updatedBrand = brandRepository.save(brand);
-        return new BrandResponse(updatedBrand);
+        return mapper.toResponse(updatedBrand);
     }
 
     @Override

@@ -56,7 +56,7 @@ public class PermissionService {
         return permissionRepository.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.groupingBy(
-                        p -> p.getModule() != null ? p.getModule() : "SIN_MODULO"));
+                        p -> p.module() != null ? p.module() : "SIN_MODULO"));
     }
 
     /**
@@ -86,14 +86,14 @@ public class PermissionService {
     @Transactional
     public PermissionResponse create(CreatePermissionRequest request) {
         // Verificar que no exista un permiso con el mismo nombre
-        if (permissionRepository.findByName(request.getName()).isPresent()) {
-            throw new RuntimeException("Ya existe un permiso con el nombre: " + request.getName());
+        if (permissionRepository.findByName(request.name()).isPresent()) {
+            throw new RuntimeException("Ya existe un permiso con el nombre: " + request.name());
         }
 
         Permission permission = new Permission();
-        permission.setName(request.getName());
-        permission.setDescription(request.getDescription());
-        permission.setModule(request.getModule());
+        permission.setName(request.name());
+        permission.setDescription(request.description());
+        permission.setModule(request.module());
 
         Permission saved = permissionRepository.save(permission);
         return toResponse(saved);
@@ -108,15 +108,15 @@ public class PermissionService {
                 .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
 
         // Verificar que no exista otro permiso con el mismo nombre
-        permissionRepository.findByName(request.getName()).ifPresent(existing -> {
+        permissionRepository.findByName(request.name()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Ya existe otro permiso con el nombre: " + request.getName());
+                throw new RuntimeException("Ya existe otro permiso con el nombre: " + request.name());
             }
         });
 
-        permission.setName(request.getName());
-        permission.setDescription(request.getDescription());
-        permission.setModule(request.getModule());
+        permission.setName(request.name());
+        permission.setDescription(request.description());
+        permission.setModule(request.module());
 
         Permission updated = permissionRepository.save(permission);
         return toResponse(updated);
