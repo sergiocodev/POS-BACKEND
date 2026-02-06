@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.service.ProductService;
@@ -27,47 +28,49 @@ public class ProductController {
 
     @PostMapping
     @Operation(summary = "Crear producto")
-    public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<ProductResponse>> create(@Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Producto creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
-    public ResponseEntity<List<ProductResponse>> getAll(
+    public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Boolean active) {
-        return ResponseEntity.ok(service.getAll(categoryId, brandId, active));
+        return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId, brandId, active)));
     }
 
     @GetMapping("/search")
     @Operation(summary = "Buscar productos (POS)", description = "Busca productos por código de barras, nombre o principio activo")
-    public ResponseEntity<List<ProductResponse>> search(@RequestParam String query) {
-        return ResponseEntity.ok(service.search(query));
+    public ResponseEntity<ResponseApi<List<ProductResponse>>> search(@RequestParam String query) {
+        return ResponseEntity.ok(ResponseApi.success(service.search(query)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID")
-    public ResponseEntity<ProductResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<ProductResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar producto")
-    public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<ResponseApi<ProductResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.ok(ResponseApi.success(service.update(id, request), "Producto actualizado exitosamente"));
     }
 
     @GetMapping("/{id}/lots")
     @Operation(summary = "Ver lotes asociados", description = "Obtiene los lotes asociados a un producto")
-    public ResponseEntity<List<ProductLotResponse>> getLots(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getLots(id));
+    public ResponseEntity<ResponseApi<List<ProductLotResponse>>> getLots(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getLots(id)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar producto")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Producto eliminado exitosamente"));
     }
 }

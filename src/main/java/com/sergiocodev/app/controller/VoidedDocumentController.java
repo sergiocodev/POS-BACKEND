@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentResponse;
 import com.sergiocodev.app.model.VoidedDocument;
@@ -25,44 +26,47 @@ public class VoidedDocumentController {
 
     @PostMapping
     @Operation(summary = "Crear baja de documentos")
-    public ResponseEntity<VoidedDocumentResponse> create(
+    public ResponseEntity<ResponseApi<VoidedDocumentResponse>> create(
             @Valid @RequestBody VoidedDocumentRequest request,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, userId));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request, userId), "Baja de documentos creada exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todas las bajas")
-    public ResponseEntity<List<VoidedDocumentResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<VoidedDocumentResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener baja por ID")
-    public ResponseEntity<VoidedDocumentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<VoidedDocumentResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @GetMapping("/establishment/{establishmentId}")
     @Operation(summary = "Listar bajas por establecimiento")
-    public ResponseEntity<List<VoidedDocumentResponse>> getByEstablishment(@PathVariable Long establishmentId) {
-        return ResponseEntity.ok(service.getByEstablishment(establishmentId));
+    public ResponseEntity<ResponseApi<List<VoidedDocumentResponse>>> getByEstablishment(
+            @PathVariable Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishment(establishmentId)));
     }
 
     @PatchMapping("/{id}/sunat-status")
     @Operation(summary = "Actualizar estado SUNAT de la baja")
-    public ResponseEntity<VoidedDocumentResponse> updateSunatStatus(
+    public ResponseEntity<ResponseApi<VoidedDocumentResponse>> updateSunatStatus(
             @PathVariable Long id,
             @RequestParam VoidedDocument.VoidedSunatStatus status,
             @RequestParam(required = false) String description) {
-        return ResponseEntity.ok(service.updateSunatStatus(id, status, description));
+        return ResponseEntity.ok(ResponseApi.success(service.updateSunatStatus(id, status, description),
+                "Estado SUNAT actualizado exitosamente"));
     }
 
     @PostMapping("/process")
     @Operation(summary = "Proceso Batch: Enviar bajas del día a SUNAT")
-    public ResponseEntity<Void> processDailyVoids(@RequestParam Long establishmentId) {
+    public ResponseEntity<ResponseApi<Void>> processDailyVoids(@RequestParam Long establishmentId) {
         service.processDailyVoids(establishmentId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Bajas enviadas a SUNAT exitosamente"));
     }
 }

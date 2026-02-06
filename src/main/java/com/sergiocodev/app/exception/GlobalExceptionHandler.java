@@ -1,5 +1,6 @@
 package com.sergiocodev.app.exception;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -9,7 +10,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,135 +20,99 @@ public class GlobalExceptionHandler {
          * Handles UserNotFoundException
          */
         @ExceptionHandler(UserNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleUserNotFound(
+        public ResponseEntity<ResponseApi<Object>> handleUserNotFound(
                         UserNotFoundException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.NOT_FOUND.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
         }
 
         /**
          * Handles UserAlreadyExistsException
          */
         @ExceptionHandler(UserAlreadyExistsException.class)
-        public ResponseEntity<ErrorResponse> handleUserAlreadyExists(
+        public ResponseEntity<ResponseApi<Object>> handleUserAlreadyExists(
                         UserAlreadyExistsException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
         }
 
         /**
          * Handles BadCredentialsException
          */
         @ExceptionHandler(BadCredentialsException.class)
-        public ResponseEntity<ErrorResponse> handleBadCredentials(
+        public ResponseEntity<ResponseApi<Object>> handleBadCredentials(
                         BadCredentialsException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.UNAUTHORIZED.value(),
-                                "Invalid username or password",
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(ResponseApi.error(HttpStatus.UNAUTHORIZED.value(),
+                                                "Invalid username or password"));
         }
 
         /**
          * Handles CustomerNotFoundException
          */
         @ExceptionHandler(CustomerNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleCustomerNotFound(
+        public ResponseEntity<ResponseApi<Object>> handleCustomerNotFound(
                         CustomerNotFoundException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.NOT_FOUND.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
         }
 
         /**
          * Handles DuplicateDniException
          */
         @ExceptionHandler(DuplicateDniException.class)
-        public ResponseEntity<ErrorResponse> handleDniDuplicated(
+        public ResponseEntity<ResponseApi<Object>> handleDniDuplicated(
                         DuplicateDniException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
         }
 
         /**
          * Handles BrandNotFoundException
          */
         @ExceptionHandler(BrandNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleBrandNotFound(
+        public ResponseEntity<ResponseApi<Object>> handleBrandNotFound(
                         BrandNotFoundException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.NOT_FOUND.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
         }
 
         /**
          * Handles DuplicateBrandException
          */
         @ExceptionHandler(DuplicateBrandException.class)
-        public ResponseEntity<ErrorResponse> handleBrandNameDuplicated(
+        public ResponseEntity<ResponseApi<Object>> handleBrandNameDuplicated(
                         DuplicateBrandException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
         }
 
         /**
          * Handles CategoryNotFoundException
          */
         @ExceptionHandler(CategoryNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleCategoryNotFound(
+        public ResponseEntity<ResponseApi<Object>> handleCategoryNotFound(
                         CategoryNotFoundException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.NOT_FOUND.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
         }
 
         /**
          * Handles DuplicateCategoryException
          */
         @ExceptionHandler(DuplicateCategoryException.class)
-        public ResponseEntity<ErrorResponse> handleCategoryNameDuplicated(
+        public ResponseEntity<ResponseApi<Object>> handleCategoryNameDuplicated(
                         DuplicateCategoryException ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
         }
 
         /**
          * Handles validation errors (Bean Validation)
          */
         @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<Map<String, Object>> handleValidationErrors(
+        public ResponseEntity<ResponseApi<Object>> handleValidationErrors(
                         MethodArgumentNotValidException ex) {
-                Map<String, Object> response = new HashMap<>();
                 Map<String, String> errors = new HashMap<>();
 
                 ex.getBindingResult().getAllErrors().forEach(error -> {
@@ -157,9 +121,12 @@ public class GlobalExceptionHandler {
                         errors.put(field, message);
                 });
 
-                response.put("status", HttpStatus.BAD_REQUEST.value());
-                response.put("errors", errors);
-                response.put("timestamp", LocalDateTime.now());
+                ResponseApi<Object> response = ResponseApi.builder()
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .message("Validation failed")
+                                .data(errors)
+                                .timestamp(java.time.LocalDateTime.now())
+                                .build();
 
                 return ResponseEntity.badRequest().body(response);
         }
@@ -168,13 +135,10 @@ public class GlobalExceptionHandler {
          * Handles general exceptions
          */
         @ExceptionHandler(Exception.class)
-        public ResponseEntity<ErrorResponse> handleGeneralException(
+        public ResponseEntity<ResponseApi<Object>> handleGeneralException(
                         Exception ex, WebRequest request) {
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                "Internal server error: " + ex.getMessage(),
-                                LocalDateTime.now(),
-                                request.getDescription(false).replace("uri=", ""));
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(ResponseApi.error(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                                "Internal server error: " + ex.getMessage()));
         }
 }

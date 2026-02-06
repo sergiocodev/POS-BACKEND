@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.productlot.ProductLotRequest;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 import com.sergiocodev.app.service.ProductLotService;
@@ -25,32 +26,33 @@ public class ProductLotController {
 
     @PostMapping
     @Operation(summary = "Crear lote de producto")
-    public ResponseEntity<ProductLotResponse> create(@Valid @RequestBody ProductLotRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<ProductLotResponse>> create(@Valid @RequestBody ProductLotRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Lote de producto creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todos los lotes de productos")
-    public ResponseEntity<List<ProductLotResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<ProductLotResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/product/{productId}")
     @Operation(summary = "Listado de lotes de productos por ID")
-    public ResponseEntity<List<ProductLotResponse>> getByProductId(@PathVariable Long productId) {
-        return ResponseEntity.ok(service.getByProductId(productId));
+    public ResponseEntity<ResponseApi<List<ProductLotResponse>>> getByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByProductId(productId)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener lote de producto por ID del producto")
-    public ResponseEntity<ProductLotResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<ProductLotResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar lote de producto")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Lote de producto eliminado exitosamente"));
     }
 }

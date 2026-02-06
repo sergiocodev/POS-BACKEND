@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.presentation.PresentationRequest;
 import com.sergiocodev.app.dto.presentation.PresentationResponse;
 import com.sergiocodev.app.service.PresentationService;
@@ -25,33 +26,35 @@ public class PresentationController {
 
     @PostMapping
     @Operation(summary = "Crear presentación")
-    public ResponseEntity<PresentationResponse> create(@Valid @RequestBody PresentationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<PresentationResponse>> create(@Valid @RequestBody PresentationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Presentación creada exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar presentaciones")
-    public ResponseEntity<List<PresentationResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<PresentationResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener presentación por ID")
-    public ResponseEntity<PresentationResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<PresentationResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar presentación")
-    public ResponseEntity<PresentationResponse> update(@PathVariable Long id,
+    public ResponseEntity<ResponseApi<PresentationResponse>> update(@PathVariable Long id,
             @Valid @RequestBody PresentationRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Presentación actualizada exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar presentación")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Presentación eliminada exitosamente"));
     }
 }

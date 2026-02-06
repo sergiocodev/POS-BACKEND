@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
 import com.sergiocodev.app.service.InventoryService;
@@ -24,43 +25,44 @@ public class InventoryController {
 
     @PostMapping("/update")
     @Operation(summary = "Actualizar nivel de stock manualmente")
-    public ResponseEntity<InventoryResponse> updateStock(@Valid @RequestBody InventoryRequest request) {
-        return ResponseEntity.ok(service.updateStock(request));
+    public ResponseEntity<ResponseApi<InventoryResponse>> updateStock(@Valid @RequestBody InventoryRequest request) {
+        return ResponseEntity.ok(ResponseApi.success(service.updateStock(request), "Stock actualizado exitosamente"));
     }
 
     @PostMapping("/adjustments")
     @Operation(summary = "Ajuste manual de inventario (Robo/Pérdida/Ingreso)")
-    public ResponseEntity<InventoryResponse> adjustStock(@Valid @RequestBody InventoryRequest request) {
-        return ResponseEntity.ok(service.updateStock(request));
+    public ResponseEntity<ResponseApi<InventoryResponse>> adjustStock(@Valid @RequestBody InventoryRequest request) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.updateStock(request), "Ajuste de inventario procesado exitosamente"));
     }
 
     @GetMapping("/alerts")
     @Operation(summary = "Reporte Vencimientos (Semáforo)", description = "Lista productos próximos a vencer (90 días)")
-    public ResponseEntity<List<InventoryResponse>> getAlerts() {
-        return ResponseEntity.ok(service.getAlerts());
+    public ResponseEntity<ResponseApi<List<InventoryResponse>>> getAlerts() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAlerts()));
     }
 
     @GetMapping("/low-stock")
     @Operation(summary = "Reporte stock mínimo", description = "Lista productos con stock bajo (<= 10)")
-    public ResponseEntity<List<InventoryResponse>> getLowStock() {
-        return ResponseEntity.ok(service.getLowStock());
+    public ResponseEntity<ResponseApi<List<InventoryResponse>>> getLowStock() {
+        return ResponseEntity.ok(ResponseApi.success(service.getLowStock()));
     }
 
     @GetMapping
     @Operation(summary = "Listar todos los registros de inventario")
-    public ResponseEntity<List<InventoryResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<InventoryResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/establishment/{establishmentId}")
     @Operation(summary = "Listar inventario por establecimiento")
-    public ResponseEntity<List<InventoryResponse>> getByEstablishment(@PathVariable Long establishmentId) {
-        return ResponseEntity.ok(service.getByEstablishment(establishmentId));
+    public ResponseEntity<ResponseApi<List<InventoryResponse>>> getByEstablishment(@PathVariable Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishment(establishmentId)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener registro de inventario por ID")
-    public ResponseEntity<InventoryResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<InventoryResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 }

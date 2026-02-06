@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.supplier.SupplierRequest;
 import com.sergiocodev.app.dto.supplier.SupplierResponse;
 import com.sergiocodev.app.service.SupplierService;
@@ -25,32 +26,35 @@ public class SupplierController {
 
     @PostMapping
     @Operation(summary = "Crear proveedor")
-    public ResponseEntity<SupplierResponse> create(@Valid @RequestBody SupplierRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<SupplierResponse>> create(@Valid @RequestBody SupplierRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Proveedor creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar proveedores")
-    public ResponseEntity<List<SupplierResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<SupplierResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener proveedor por ID")
-    public ResponseEntity<SupplierResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<SupplierResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar proveedor")
-    public ResponseEntity<SupplierResponse> update(@PathVariable Long id, @Valid @RequestBody SupplierRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<ResponseApi<SupplierResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody SupplierRequest request) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Proveedor actualizado exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar proveedor")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Proveedor eliminado exitosamente"));
     }
 }

@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.cashregister.CashRegisterRequest;
 import com.sergiocodev.app.dto.cashregister.CashRegisterResponse;
 import com.sergiocodev.app.service.CashRegisterService;
@@ -25,33 +26,35 @@ public class CashRegisterController {
 
     @PostMapping
     @Operation(summary = "Crear caja registradora")
-    public ResponseEntity<CashRegisterResponse> create(@Valid @RequestBody CashRegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<CashRegisterResponse>> create(@Valid @RequestBody CashRegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Caja registradora creada exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todas las cajas registradoras")
-    public ResponseEntity<List<CashRegisterResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<CashRegisterResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener caja registradora por ID")
-    public ResponseEntity<CashRegisterResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<CashRegisterResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar caja registradora")
-    public ResponseEntity<CashRegisterResponse> update(@PathVariable Long id,
+    public ResponseEntity<ResponseApi<CashRegisterResponse>> update(@PathVariable Long id,
             @Valid @RequestBody CashRegisterRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Caja registradora actualizada exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar caja registradora")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Caja registradora eliminada exitosamente"));
     }
 }

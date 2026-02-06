@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.service.FileStorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,11 +22,11 @@ public class UploadController {
 
     @Operation(summary = "Subir un archivo", description = "Sube una imagen y devuelve la ruta pública")
     @PostMapping
-    public ResponseEntity<Map<String, String>> uploadFile(
+    public ResponseEntity<ResponseApi<Map<String, String>>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("folder") String folder) {
 
         String filePath = fileStorageService.store(file, folder);
-        return ResponseEntity.ok(Map.of("url", filePath));
+        return ResponseEntity.ok(ResponseApi.success(Map.of("url", filePath), "Archivo subido exitosamente"));
     }
 }

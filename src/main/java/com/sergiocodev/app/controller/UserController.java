@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.external.ExternalConsultationResponse;
 import com.sergiocodev.app.dto.user.UserRequest;
 import com.sergiocodev.app.model.User;
@@ -34,11 +35,11 @@ public class UserController {
     @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
     @GetMapping
-    public ResponseEntity<List<User>> getAll() {
+    public ResponseEntity<ResponseApi<List<User>>> getAll() {
         List<User> users = userService.getAll();
         // Hide passwords
         users.forEach(u -> u.setPasswordHash("***"));
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(ResponseApi.success(users));
     }
 
     @Operation(summary = "Obtener perfil", description = "Obtiene el perfil del usuario autenticado")
@@ -47,7 +48,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/profile")
-    public ResponseEntity<User> getProfile() {
+    public ResponseEntity<ResponseApi<User>> getProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
@@ -56,7 +57,7 @@ public class UserController {
         // Hide password
         user.setPasswordHash("***");
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ResponseApi.success(user));
     }
 
     @Operation(summary = "Obtener usuario por ID", description = "Obtiene un usuario específico por su ID")
@@ -65,34 +66,34 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<User>> getById(@PathVariable Long id) {
         User user = userService.getById(id);
 
         // Hide password
         user.setPasswordHash("***");
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ResponseApi.success(user));
     }
 
     @Operation(summary = "Crear usuario", description = "Crea un nuevo usuario (ADMIN)")
     @PostMapping
-    public ResponseEntity<User> create(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<ResponseApi<User>> create(@Valid @RequestBody UserRequest request) {
         User user = userService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseApi.success(user, "Usuario creado exitosamente"));
     }
 
     @Operation(summary = "Actualizar usuario", description = "Actualiza un usuario existente")
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+    public ResponseEntity<ResponseApi<User>> update(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
         User user = userService.update(id, request);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ResponseApi.success(user, "Usuario actualizado exitosamente"));
     }
 
     @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         userService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Usuario eliminado exitosamente"));
     }
 
     @Operation(summary = "Alternar estado activo", description = "Activa o desactiva un usuario")
@@ -101,11 +102,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PatchMapping("/{id}/toggle-active")
-    public ResponseEntity<User> toggleActive(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<User>> toggleActive(@PathVariable Long id) {
         User user = userService.toggleActive(id);
         // Hide password
         user.setPasswordHash("***");
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ResponseApi.success(user, "Estado de usuario actualizado exitosamente"));
     }
 
     @Operation(summary = "Consulta externa de documento", description = "Busca datos de una persona (DNI) o empresa (RUC) en servicios externos")
@@ -114,8 +115,9 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Document not found")
     })
     @GetMapping("/search/{numeroDocumento}")
-    public ResponseEntity<ExternalConsultationResponse> searchByDocument(@PathVariable String numeroDocumento) {
+    public ResponseEntity<ResponseApi<ExternalConsultationResponse>> searchByDocument(
+            @PathVariable String numeroDocumento) {
         ExternalConsultationResponse response = externalConsultationService.searchByDocument(numeroDocumento);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response));
     }
 }

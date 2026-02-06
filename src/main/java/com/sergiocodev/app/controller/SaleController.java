@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
@@ -26,27 +27,29 @@ public class SaleController {
 
     @PostMapping
     @Operation(summary = "Procesar una nueva venta")
-    public ResponseEntity<SaleResponse> create(@Valid @RequestBody SaleRequest request, @RequestParam Long userId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, userId));
+    public ResponseEntity<ResponseApi<SaleResponse>> create(@Valid @RequestBody SaleRequest request,
+            @RequestParam Long userId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request, userId), "Venta procesada exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todas las ventas")
-    public ResponseEntity<List<SaleResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<SaleResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una venta por ID")
-    public ResponseEntity<SaleResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<SaleResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancelar una venta")
-    public ResponseEntity<Void> cancel(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id) {
         service.cancel(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Venta cancelada exitosamente"));
     }
 
     @GetMapping("/{id}/pdf")
@@ -76,36 +79,38 @@ public class SaleController {
 
     @PostMapping("/{id}/credit-note")
     @Operation(summary = "Emitir Nota de Crédito")
-    public ResponseEntity<SaleResponse> createCreditNote(
+    public ResponseEntity<ResponseApi<SaleResponse>> createCreditNote(
             @PathVariable Long id,
             @RequestParam String reason,
             @RequestParam Long userId) {
-        return ResponseEntity.ok(service.createCreditNote(id, reason, userId));
+        return ResponseEntity.ok(ResponseApi.success(service.createCreditNote(id, reason, userId),
+                "Nota de crédito emitida exitosamente"));
     }
 
     @PostMapping("/{id}/debit-note")
     @Operation(summary = "Emitir Nota de Débito")
-    public ResponseEntity<SaleResponse> createDebitNote(
+    public ResponseEntity<ResponseApi<SaleResponse>> createDebitNote(
             @PathVariable Long id,
             @RequestParam String reason,
             @RequestParam Long userId) {
-        return ResponseEntity.ok(service.createDebitNote(id, reason, userId));
+        return ResponseEntity.ok(ResponseApi.success(service.createDebitNote(id, reason, userId),
+                "Nota de débito emitida exitosamente"));
     }
 
     @PostMapping("/{id}/invalidate")
     @Operation(summary = "Invalidar/Baja de documento")
-    public ResponseEntity<Void> invalidate(
+    public ResponseEntity<ResponseApi<Void>> invalidate(
             @PathVariable Long id,
             @RequestParam String reason,
             @RequestParam Long userId) {
         service.invalidate(id, reason, userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Documento invalidado exitosamente"));
     }
 
     @GetMapping("/ListProductsForSale")
     @Operation(summary = "Listar produtos para venta con stock y detalles")
-    public ResponseEntity<List<ProductForSaleResponse>> listProductsForSale(
+    public ResponseEntity<ResponseApi<List<ProductForSaleResponse>>> listProductsForSale(
             @RequestParam Long establishmentId) {
-        return ResponseEntity.ok(service.listProductsForSale(establishmentId));
+        return ResponseEntity.ok(ResponseApi.success(service.listProductsForSale(establishmentId)));
     }
 }

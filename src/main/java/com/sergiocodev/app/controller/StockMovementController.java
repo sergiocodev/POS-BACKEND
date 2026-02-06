@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.stockmovement.StockMovementRequest;
 import com.sergiocodev.app.dto.stockmovement.StockMovementResponse;
 import com.sergiocodev.app.service.StockMovementService;
@@ -25,25 +26,27 @@ public class StockMovementController {
 
     @PostMapping
     @Operation(summary = "Crear movimiento manual de stock")
-    public ResponseEntity<StockMovementResponse> create(@Valid @RequestBody StockMovementRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<StockMovementResponse>> create(@Valid @RequestBody StockMovementRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Movimiento de stock registrado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todos los movimientos de stock")
-    public ResponseEntity<List<StockMovementResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<StockMovementResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/product/{productId}")
     @Operation(summary = "Listar movimientos por producto")
-    public ResponseEntity<List<StockMovementResponse>> getByProduct(@PathVariable Long productId) {
-        return ResponseEntity.ok(service.getByProduct(productId));
+    public ResponseEntity<ResponseApi<List<StockMovementResponse>>> getByProduct(@PathVariable Long productId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByProduct(productId)));
     }
 
     @GetMapping("/establishment/{establishmentId}")
     @Operation(summary = "Listar movimientos por establecimiento")
-    public ResponseEntity<List<StockMovementResponse>> getByEstablishment(@PathVariable Long establishmentId) {
-        return ResponseEntity.ok(service.getByEstablishment(establishmentId));
+    public ResponseEntity<ResponseApi<List<StockMovementResponse>>> getByEstablishment(
+            @PathVariable Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishment(establishmentId)));
     }
 }

@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.purchase.PurchaseRequest;
 import com.sergiocodev.app.dto.purchase.PurchaseResponse;
 import com.sergiocodev.app.service.PurchaseService;
@@ -25,27 +26,28 @@ public class PurchaseController {
 
     @PostMapping
     @Operation(summary = "Procesar una nueva compra")
-    public ResponseEntity<PurchaseResponse> create(@Valid @RequestBody PurchaseRequest request,
+    public ResponseEntity<ResponseApi<PurchaseResponse>> create(@Valid @RequestBody PurchaseRequest request,
             @RequestParam Long userId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, userId));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request, userId), "Compra procesada exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todas las compras")
-    public ResponseEntity<List<PurchaseResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<PurchaseResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener compra por ID")
-    public ResponseEntity<PurchaseResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<PurchaseResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancelar una compra")
-    public ResponseEntity<Void> cancel(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id) {
         service.cancel(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Compra cancelada exitosamente"));
     }
 }

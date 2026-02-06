@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.brand.BrandRequest;
 import com.sergiocodev.app.dto.brand.BrandResponse;
 import com.sergiocodev.app.service.BrandService;
@@ -33,17 +34,18 @@ public class BrandController {
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
     @PostMapping
-    public ResponseEntity<BrandResponse> create(@Valid @RequestBody BrandRequest request) {
+    public ResponseEntity<ResponseApi<BrandResponse>> create(@Valid @RequestBody BrandRequest request) {
         BrandResponse response = brandService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(response, "Marca creada exitosamente"));
     }
 
     @Operation(summary = "Listar marcas", description = "Obtiene la lista de todas las marcas registradas")
     @ApiResponse(responseCode = "200", description = "List of brands obtained successfully")
     @GetMapping
-    public ResponseEntity<List<BrandResponse>> getAll() {
+    public ResponseEntity<ResponseApi<List<BrandResponse>>> getAll() {
         List<BrandResponse> brands = brandService.getAll();
-        return ResponseEntity.ok(brands);
+        return ResponseEntity.ok(ResponseApi.success(brands));
     }
 
     @Operation(summary = "Obtener marca por ID", description = "Obtiene una marca específica por su ID")
@@ -52,9 +54,9 @@ public class BrandController {
             @ApiResponse(responseCode = "404", description = "Brand not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<BrandResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<BrandResponse>> getById(@PathVariable Long id) {
         BrandResponse response = brandService.getById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response));
     }
 
     @Operation(summary = "Actualizar marca", description = "Actualiza los datos de una marca existente")
@@ -65,11 +67,11 @@ public class BrandController {
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<BrandResponse> update(
+    public ResponseEntity<ResponseApi<BrandResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody BrandRequest request) {
         BrandResponse response = brandService.update(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response, "Marca actualizada exitosamente"));
     }
 
     @Operation(summary = "Eliminar marca", description = "Elimina una marca del sistema")
@@ -78,8 +80,8 @@ public class BrandController {
             @ApiResponse(responseCode = "404", description = "Brand not found")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         brandService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Marca eliminada exitosamente"));
     }
 }

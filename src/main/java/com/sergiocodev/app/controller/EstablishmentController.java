@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.establishment.EstablishmentRequest;
 import com.sergiocodev.app.dto.establishment.EstablishmentResponse;
 import com.sergiocodev.app.service.EstablishmentService;
@@ -25,33 +26,35 @@ public class EstablishmentController {
 
     @PostMapping
     @Operation(summary = "Crear establecimiento")
-    public ResponseEntity<EstablishmentResponse> create(@Valid @RequestBody EstablishmentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<EstablishmentResponse>> create(@Valid @RequestBody EstablishmentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Establecimiento creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar establecimientos")
-    public ResponseEntity<List<EstablishmentResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<EstablishmentResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener establecimiento por ID")
-    public ResponseEntity<EstablishmentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<EstablishmentResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar establecimiento")
-    public ResponseEntity<EstablishmentResponse> update(@PathVariable Long id,
+    public ResponseEntity<ResponseApi<EstablishmentResponse>> update(@PathVariable Long id,
             @Valid @RequestBody EstablishmentRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Establecimiento actualizado exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar establecimiento")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Establecimiento eliminado exitosamente"));
     }
 }

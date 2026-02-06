@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.taxtype.TaxTypeRequest;
 import com.sergiocodev.app.dto.taxtype.TaxTypeResponse;
 import com.sergiocodev.app.service.TaxTypeService;
@@ -25,32 +26,35 @@ public class TaxTypeController {
 
     @PostMapping
     @Operation(summary = "Crear tipo de impuesto")
-    public ResponseEntity<TaxTypeResponse> create(@Valid @RequestBody TaxTypeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<TaxTypeResponse>> create(@Valid @RequestBody TaxTypeRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Tipo de impuesto creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar todos los tipos de impuesto")
-    public ResponseEntity<List<TaxTypeResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<TaxTypeResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener el tipo de impuesto por ID")
-    public ResponseEntity<TaxTypeResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<TaxTypeResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar tipo de impuesto")
-    public ResponseEntity<TaxTypeResponse> update(@PathVariable Long id, @Valid @RequestBody TaxTypeRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<ResponseApi<TaxTypeResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody TaxTypeRequest request) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Tipo de impuesto actualizado exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar tipo de impuesto")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Tipo de impuesto eliminado exitosamente"));
     }
 }

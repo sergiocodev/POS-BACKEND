@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
 import com.sergiocodev.app.service.CustomerService;
@@ -33,17 +34,18 @@ public class CustomerController {
             @ApiResponse(responseCode = "409", description = "Duplicate document number")
     })
     @PostMapping
-    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
+    public ResponseEntity<ResponseApi<CustomerResponse>> create(@Valid @RequestBody CustomerRequest request) {
         CustomerResponse response = customerService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(response, "Cliente creado exitosamente"));
     }
 
     @Operation(summary = "Lista de clientes", description = "Obtiene la lista de todos los clientes registrados")
     @ApiResponse(responseCode = "200", description = "List of customers obtained successfully")
     @GetMapping
-    public ResponseEntity<List<CustomerResponse>> getAll() {
+    public ResponseEntity<ResponseApi<List<CustomerResponse>>> getAll() {
         List<CustomerResponse> customers = customerService.getAll();
-        return ResponseEntity.ok(customers);
+        return ResponseEntity.ok(ResponseApi.success(customers));
     }
 
     @Operation(summary = "Obtener cliente por ID", description = "Obtiene un cliente específico por su ID")
@@ -52,9 +54,9 @@ public class CustomerController {
             @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<CustomerResponse>> getById(@PathVariable Long id) {
         CustomerResponse response = customerService.getById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response));
     }
 
     @Operation(summary = "Actualizar cliente", description = "Actualiza los datos de un cliente existente")
@@ -65,11 +67,11 @@ public class CustomerController {
             @ApiResponse(responseCode = "409", description = "Duplicate document number")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerResponse> update(
+    public ResponseEntity<ResponseApi<CustomerResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody CustomerRequest request) {
         CustomerResponse response = customerService.update(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response, "Cliente actualizado exitosamente"));
     }
 
     @Operation(summary = "Eliminar cliente", description = "Elimina un cliente del sistema")
@@ -78,8 +80,8 @@ public class CustomerController {
             @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         customerService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Cliente eliminado exitosamente"));
     }
 }

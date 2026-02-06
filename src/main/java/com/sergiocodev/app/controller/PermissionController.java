@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.permission.CreatePermissionRequest;
 import com.sergiocodev.app.dto.permission.PermissionResponse;
 import com.sergiocodev.app.service.PermissionService;
@@ -30,64 +31,66 @@ public class PermissionController {
     @Operation(summary = "Listar todos los permisos", description = "Obtiene la lista de todos los permisos disponibles en el sistema")
     @GetMapping
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<List<PermissionResponse>> getAll(
+    public ResponseEntity<ResponseApi<List<PermissionResponse>>> getAll(
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String search) {
 
         if (module != null && !module.isEmpty()) {
-            return ResponseEntity.ok(permissionService.getByModule(module));
+            return ResponseEntity.ok(ResponseApi.success(permissionService.getByModule(module)));
         }
 
         if (search != null && !search.isEmpty()) {
-            return ResponseEntity.ok(permissionService.search(search));
+            return ResponseEntity.ok(ResponseApi.success(permissionService.search(search)));
         }
 
-        return ResponseEntity.ok(permissionService.getAll());
+        return ResponseEntity.ok(ResponseApi.success(permissionService.getAll()));
     }
 
     @Operation(summary = "Permisos agrupados por módulo", description = "Obtiene los permisos organizados por módulo")
     @GetMapping("/grouped")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<Map<String, List<PermissionResponse>>> getGrouped() {
-        return ResponseEntity.ok(permissionService.getGroupedByModule());
+    public ResponseEntity<ResponseApi<Map<String, List<PermissionResponse>>>> getGrouped() {
+        return ResponseEntity.ok(ResponseApi.success(permissionService.getGroupedByModule()));
     }
 
     @Operation(summary = "Listar módulos", description = "Obtiene la lista de módulos disponibles")
     @GetMapping("/modules")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<List<String>> getModules() {
-        return ResponseEntity.ok(permissionService.getModules());
+    public ResponseEntity<ResponseApi<List<String>>> getModules() {
+        return ResponseEntity.ok(ResponseApi.success(permissionService.getModules()));
     }
 
     @Operation(summary = "Obtener permiso por ID", description = "Obtiene los detalles de un permiso específico")
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<PermissionResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(permissionService.getById(id));
+    public ResponseEntity<ResponseApi<PermissionResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(permissionService.getById(id)));
     }
 
     @Operation(summary = "Crear nuevo permiso", description = "Crea un nuevo permiso en el sistema")
     @PostMapping
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<PermissionResponse> create(@Valid @RequestBody CreatePermissionRequest request) {
+    public ResponseEntity<ResponseApi<PermissionResponse>> create(@Valid @RequestBody CreatePermissionRequest request) {
         PermissionResponse created = permissionService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(created, "Permiso creado exitosamente"));
     }
 
     @Operation(summary = "Actualizar permiso", description = "Actualiza la información de un permiso existente")
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<PermissionResponse> update(
+    public ResponseEntity<ResponseApi<PermissionResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody CreatePermissionRequest request) {
-        return ResponseEntity.ok(permissionService.update(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(permissionService.update(id, request), "Permiso actualizado exitosamente"));
     }
 
     @Operation(summary = "Eliminar permiso", description = "Elimina un permiso del sistema")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         permissionService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Permiso eliminado exitosamente"));
     }
 }

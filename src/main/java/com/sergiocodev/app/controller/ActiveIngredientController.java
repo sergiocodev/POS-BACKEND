@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientRequest;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientResponse;
 import com.sergiocodev.app.service.ActiveIngredientService;
@@ -25,39 +26,42 @@ public class ActiveIngredientController {
 
     @PostMapping
     @Operation(summary = "Crear ingrediente activo")
-    public ResponseEntity<ActiveIngredientResponse> create(@Valid @RequestBody ActiveIngredientRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
+            @Valid @RequestBody ActiveIngredientRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Ingrediente activo creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar ingredientes activos")
-    public ResponseEntity<List<ActiveIngredientResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<ActiveIngredientResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/search")
     @Operation(summary = "Buscar ingredientes activos")
-    public ResponseEntity<List<ActiveIngredientResponse>> search(@RequestParam String query) {
-        return ResponseEntity.ok(service.search(query));
+    public ResponseEntity<ResponseApi<List<ActiveIngredientResponse>>> search(@RequestParam String query) {
+        return ResponseEntity.ok(ResponseApi.success(service.search(query)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener ingrediente activo por ID")
-    public ResponseEntity<ActiveIngredientResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<ActiveIngredientResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar ingrediente activo")
-    public ResponseEntity<ActiveIngredientResponse> update(@PathVariable Long id,
+    public ResponseEntity<ResponseApi<ActiveIngredientResponse>> update(@PathVariable Long id,
             @Valid @RequestBody ActiveIngredientRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(service.update(id, request), "Ingrediente activo actualizado exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar ingrediente activo")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Ingrediente activo eliminado exitosamente"));
     }
 }

@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.user.LoginRequest;
 import com.sergiocodev.app.dto.user.LoginResponse;
 import com.sergiocodev.app.dto.user.RefreshTokenRequest;
@@ -31,9 +32,9 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ResponseApi<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response, "Inicio de sesión exitoso"));
     }
 
     @Operation(summary = "Registrar usuario", description = "Registra un nuevo usuario en el sistema")
@@ -42,9 +43,10 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid data or user already exists")
     })
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ResponseApi<LoginResponse>> register(@Valid @RequestBody RegisterRequest request) {
         LoginResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(response, "Usuario registrado exitosamente"));
     }
 
     @Operation(summary = "Refrescar token", description = "Obtiene un nuevo token de acceso usando un refresh token")
@@ -53,23 +55,23 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid refresh token")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<ResponseApi<LoginResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         LoginResponse response = authService.refresh(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseApi.success(response, "Token refrescado exitosamente"));
     }
 
     @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario (lado del cliente)")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<ResponseApi<Void>> logout() {
         authService.logout();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Sesión cerrada exitosamente"));
     }
 
     @Operation(summary = "Obtener usuario actual", description = "Devuelve los datos del usuario autenticado actualmente")
     @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser() {
+    public ResponseEntity<ResponseApi<User>> getCurrentUser() {
         User user = authService.getCurrentUser();
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ResponseApi.success(user));
     }
 
 }

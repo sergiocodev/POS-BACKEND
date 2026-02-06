@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.dashboard.*;
 import com.sergiocodev.app.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,47 +25,47 @@ public class DashboardController {
 
     @GetMapping("/summary-cards")
     @Operation(summary = "Tarjetas de resumen KPIs")
-    public ResponseEntity<DashboardSummaryResponse> getSummaryCards(@RequestParam Long establishmentId) {
-        return ResponseEntity.ok(service.getSummaryCards(establishmentId));
+    public ResponseEntity<ResponseApi<DashboardSummaryResponse>> getSummaryCards(@RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSummaryCards(establishmentId)));
     }
 
     @GetMapping("/sales-chart")
     @Operation(summary = "Gráfico de tendencia de ventas")
-    public ResponseEntity<List<SalesChartResponse>> getSalesChart(
+    public ResponseEntity<ResponseApi<List<SalesChartResponse>>> getSalesChart(
             @RequestParam(defaultValue = "7days") String range,
             @RequestParam Long establishmentId) {
-        return ResponseEntity.ok(service.getSalesChart(range, establishmentId));
+        return ResponseEntity.ok(ResponseApi.success(service.getSalesChart(range, establishmentId)));
     }
 
     @GetMapping("/alerts")
     @Operation(summary = "Alertas críticas de inventario y SUNAT")
-    public ResponseEntity<DashboardAlertsResponse> getAlerts(@RequestParam Long establishmentId) {
-        return ResponseEntity.ok(service.getAlerts(establishmentId));
+    public ResponseEntity<ResponseApi<DashboardAlertsResponse>> getAlerts(@RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAlerts(establishmentId)));
     }
 
     @GetMapping("/payment-methods")
     @Operation(summary = "Distribución de métodos de pago")
-    public ResponseEntity<List<PaymentMethodDistribution>> getPaymentMethods(
+    public ResponseEntity<ResponseApi<List<PaymentMethodDistribution>>> getPaymentMethods(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam Long establishmentId) {
         LocalDate searchDate = date != null ? date : LocalDate.now();
-        return ResponseEntity.ok(service.getPaymentMethods(searchDate, establishmentId));
+        return ResponseEntity.ok(ResponseApi.success(service.getPaymentMethods(searchDate, establishmentId)));
     }
 
     @GetMapping("/top-products")
     @Operation(summary = "Top productos más vendidos")
-    public ResponseEntity<List<TopProductDashboard>> getTopProducts(
+    public ResponseEntity<ResponseApi<List<TopProductDashboard>>> getTopProducts(
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam Long establishmentId) {
-        return ResponseEntity.ok(service.getTopProducts(limit, establishmentId));
+        return ResponseEntity.ok(ResponseApi.success(service.getTopProducts(limit, establishmentId)));
     }
 
     @GetMapping("/employee-performance")
     @Operation(summary = "Rendimiento de colaboradores")
-    public ResponseEntity<List<EmployeePerformanceDashboard>> getEmployeePerformance(
+    public ResponseEntity<ResponseApi<List<EmployeePerformanceDashboard>>> getEmployeePerformance(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam Long establishmentId) {
         LocalDate searchDate = date != null ? date : LocalDate.now();
-        return ResponseEntity.ok(service.getEmployeePerformance(searchDate, establishmentId));
+        return ResponseEntity.ok(ResponseApi.success(service.getEmployeePerformance(searchDate, establishmentId)));
     }
 }

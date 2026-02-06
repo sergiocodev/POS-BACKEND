@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.permission.PermissionResponse;
 import com.sergiocodev.app.dto.role.*;
 import com.sergiocodev.app.service.RoleService;
@@ -29,47 +30,49 @@ public class RoleController {
     @Operation(summary = "Listar todos los roles", description = "Obtiene la lista de todos los roles disponibles")
     @GetMapping
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<List<RoleResponse>> getAll() {
-        return ResponseEntity.ok(roleService.getAll());
+    public ResponseEntity<ResponseApi<List<RoleResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(roleService.getAll()));
     }
 
     @Operation(summary = "Obtener rol por ID", description = "Obtiene los detalles de un rol específico con sus permisos")
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(roleService.getById(id));
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(roleService.getById(id)));
     }
 
     @Operation(summary = "Crear nuevo rol", description = "Crea un nuevo rol en el sistema")
     @PostMapping
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> create(@Valid @RequestBody CreateRoleRequest request) {
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> create(@Valid @RequestBody CreateRoleRequest request) {
         RoleDetailResponse created = roleService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(created, "Rol creado exitosamente"));
     }
 
     @Operation(summary = "Actualizar rol", description = "Actualiza la información de un rol existente")
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> update(
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateRoleRequest request) {
-        return ResponseEntity.ok(roleService.update(id, request));
+        return ResponseEntity.ok(ResponseApi.success(roleService.update(id, request), "Rol actualizado exitosamente"));
     }
 
     @Operation(summary = "Eliminar rol", description = "Elimina un rol del sistema")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         roleService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Rol eliminado exitosamente"));
     }
 
     @Operation(summary = "Activar/desactivar rol", description = "Cambia el estado activo de un rol")
     @PatchMapping("/{id}/toggle-active")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleResponse> toggleActive(@PathVariable Long id) {
-        return ResponseEntity.ok(roleService.toggleActive(id));
+    public ResponseEntity<ResponseApi<RoleResponse>> toggleActive(@PathVariable Long id) {
+        return ResponseEntity
+                .ok(ResponseApi.success(roleService.toggleActive(id), "Estado del rol actualizado exitosamente"));
     }
 
     // ==================== Gestión de Permisos ====================
@@ -77,43 +80,47 @@ public class RoleController {
     @Operation(summary = "Obtener permisos de un rol", description = "Obtiene la lista de permisos asignados a un rol")
     @GetMapping("/{id}/permissions")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<List<PermissionResponse>> getPermissions(@PathVariable Long id) {
-        return ResponseEntity.ok(roleService.getPermissions(id));
+    public ResponseEntity<ResponseApi<List<PermissionResponse>>> getPermissions(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(roleService.getPermissions(id)));
     }
 
     @Operation(summary = "Asignar permisos a un rol", description = "Agrega permisos a un rol (se suman a los existentes)")
     @PostMapping("/{id}/permissions")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> assignPermissions(
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> assignPermissions(
             @PathVariable Long id,
             @Valid @RequestBody AssignPermissionsRequest request) {
-        return ResponseEntity.ok(roleService.assignPermissions(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(roleService.assignPermissions(id, request), "Permisos asignados exitosamente"));
     }
 
     @Operation(summary = "Reemplazar permisos de un rol", description = "Reemplaza todos los permisos de un rol con los nuevos")
     @PutMapping("/{id}/permissions")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> replacePermissions(
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> replacePermissions(
             @PathVariable Long id,
             @Valid @RequestBody AssignPermissionsRequest request) {
-        return ResponseEntity.ok(roleService.replacePermissions(id, request));
+        return ResponseEntity.ok(
+                ResponseApi.success(roleService.replacePermissions(id, request), "Permisos actualizados exitosamente"));
     }
 
     @Operation(summary = "Remover un permiso de un rol", description = "Elimina un permiso específico de un rol")
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> removePermission(
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> removePermission(
             @PathVariable Long roleId,
             @PathVariable Long permissionId) {
-        return ResponseEntity.ok(roleService.removePermission(roleId, permissionId));
+        return ResponseEntity.ok(ResponseApi.success(roleService.removePermission(roleId, permissionId),
+                "Permiso removido exitosamente"));
     }
 
     @Operation(summary = "Remover múltiples permisos", description = "Elimina varios permisos de un rol")
     @PostMapping("/{id}/permissions/batch-remove")
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION + "')")
-    public ResponseEntity<RoleDetailResponse> removePermissions(
+    public ResponseEntity<ResponseApi<RoleDetailResponse>> removePermissions(
             @PathVariable Long id,
             @Valid @RequestBody AssignPermissionsRequest request) {
-        return ResponseEntity.ok(roleService.removePermissions(id, request));
+        return ResponseEntity
+                .ok(ResponseApi.success(roleService.removePermissions(id, request), "Permisos removidos exitosamente"));
     }
 }

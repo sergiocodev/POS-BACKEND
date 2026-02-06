@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.employee.EmployeeRequest;
 import com.sergiocodev.app.dto.employee.EmployeeResponse;
 import com.sergiocodev.app.service.EmployeeService;
@@ -25,32 +26,34 @@ public class EmployeeController {
 
     @PostMapping
     @Operation(summary = "Crear empleado")
-    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody EmployeeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<ResponseApi<EmployeeResponse>> create(@Valid @RequestBody EmployeeRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.create(request), "Empleado creado exitosamente"));
     }
 
     @GetMapping
     @Operation(summary = "Listar empleados")
-    public ResponseEntity<List<EmployeeResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<ResponseApi<List<EmployeeResponse>>> getAll() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener empleado por ID")
-    public ResponseEntity<EmployeeResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<ResponseApi<EmployeeResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar empleado")
-    public ResponseEntity<EmployeeResponse> update(@PathVariable Long id, @Valid @RequestBody EmployeeRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<ResponseApi<EmployeeResponse>> update(@PathVariable Long id,
+            @Valid @RequestBody EmployeeRequest request) {
+        return ResponseEntity.ok(ResponseApi.success(service.update(id, request), "Empleado actualizado exitosamente"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar empleado")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ResponseApi.success(null, "Empleado eliminado exitosamente"));
     }
 }
