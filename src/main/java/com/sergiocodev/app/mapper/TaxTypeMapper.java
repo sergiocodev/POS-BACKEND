@@ -13,8 +13,10 @@ public interface TaxTypeMapper {
     TaxTypeResponse toResponse(TaxType entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     TaxType toEntity(TaxTypeRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(TaxTypeRequest request, @MappingTarget TaxType entity);
 }

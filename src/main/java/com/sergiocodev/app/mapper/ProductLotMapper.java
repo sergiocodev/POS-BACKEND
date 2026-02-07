@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 public interface ProductLotMapper {
 
     @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "productName", source = "product.tradeName")
     ProductLotResponse toResponse(ProductLot entity);
 
     @Mapping(target = "id", ignore = true)

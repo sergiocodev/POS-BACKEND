@@ -13,8 +13,10 @@ public interface BrandMapper {
     BrandResponse toResponse(Brand entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Brand toEntity(BrandRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(BrandRequest request, @MappingTarget Brand entity);
 }

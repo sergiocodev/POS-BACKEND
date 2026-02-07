@@ -13,8 +13,10 @@ public interface SupplierMapper {
     SupplierResponse toResponse(Supplier entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Supplier toEntity(SupplierRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(SupplierRequest request, @MappingTarget Supplier entity);
 }

@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "purchases")
@@ -31,6 +31,7 @@ public class Purchase {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -69,7 +70,7 @@ public class Purchase {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PurchaseItem> items = new ArrayList<>();
+    private Set<PurchaseItem> items = new HashSet<>();
 
     public enum PurchaseDocumentType {
         GUIA, FACTURA, BOLETA

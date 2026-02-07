@@ -12,6 +12,6 @@ public interface InventoryMapper {
     @Mapping(target = "establishmentName", source = "establishment.name")
     @Mapping(target = "lotId", source = "lot.id")
     @Mapping(target = "lotCode", source = "lot.lotCode")
-    @Mapping(target = "productName", source = "lot.product.name")
+    @Mapping(target = "productName", source = "lot.product.tradeName")
     InventoryResponse toResponse(Inventory entity);
 }

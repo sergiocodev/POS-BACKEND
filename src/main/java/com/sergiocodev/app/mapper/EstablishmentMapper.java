@@ -13,8 +13,10 @@ public interface EstablishmentMapper {
     EstablishmentResponse toResponse(Establishment entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Establishment toEntity(EstablishmentRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(EstablishmentRequest request, @MappingTarget Establishment entity);
 }

@@ -13,8 +13,10 @@ public interface ActiveIngredientMapper {
     ActiveIngredientResponse toResponse(ActiveIngredient entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     ActiveIngredient toEntity(ActiveIngredientRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(ActiveIngredientRequest request, @MappingTarget ActiveIngredient entity);
 }

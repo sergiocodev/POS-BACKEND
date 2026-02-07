@@ -13,6 +13,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
+@org.hibernate.annotations.SQLRestriction("deleted_at IS NULL")
 public class User {
 
     @Id
@@ -45,6 +47,9 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @PreUpdate
     protected void onUpdate() {

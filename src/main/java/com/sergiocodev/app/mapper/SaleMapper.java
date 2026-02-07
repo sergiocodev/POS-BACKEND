@@ -14,10 +14,15 @@ public interface SaleMapper {
     @Mapping(target = "customerName", source = "customer.name")
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "relatedSaleId", source = "relatedSale.id")
+    @Mapping(target = "sunatResponseJson", source = "sunatResponseJson")
+    @Mapping(target = "sunatErrorCode", source = "sunatErrorCode")
     SaleResponse toResponse(Sale entity);
 
-    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "productName", source = "product.tradeName")
     @Mapping(target = "lotCode", source = "lot.lotCode")
+    @Mapping(target = "appliedTaxRate", source = "appliedTaxRate")
+    @Mapping(target = "discountAmount", source = "discountAmount")
+    @Mapping(target = "discountReason", source = "discountReason")
     SaleItemResponse toItemResponse(SaleItem item);
 
     SalePaymentResponse toPaymentResponse(SalePayment payment);
@@ -48,6 +53,8 @@ public interface SaleMapper {
     @Mapping(target = "sunatMessage", ignore = true)
     @Mapping(target = "xmlUrl", ignore = true)
     @Mapping(target = "relatedSale", ignore = true)
+    @Mapping(target = "sunatResponseJson", ignore = true)
+    @Mapping(target = "sunatErrorCode", ignore = true)
     Sale toEntity(SaleRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -57,6 +64,8 @@ public interface SaleMapper {
     @Mapping(target = "amount", ignore = true)
     @Mapping(target = "appliedTaxRate", ignore = true)
     @Mapping(target = "unitCost", ignore = true)
+    @Mapping(target = "discountAmount", ignore = true)
+    @Mapping(target = "discountReason", ignore = true)
     SaleItem toItemEntity(SaleItemRequest request);
 
     @Mapping(target = "id", ignore = true)

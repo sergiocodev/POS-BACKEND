@@ -3,6 +3,7 @@ package com.sergiocodev.app.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
@@ -11,10 +12,12 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class SaleItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,4 +46,10 @@ public class SaleItem {
 
     @Column(name = "applied_tax_rate", nullable = false, precision = 6, scale = 4)
     private BigDecimal appliedTaxRate = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "discount_reason", length = 100)
+    private String discountReason;
 }

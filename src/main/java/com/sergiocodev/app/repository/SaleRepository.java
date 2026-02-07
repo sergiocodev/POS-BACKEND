@@ -8,7 +8,15 @@ import java.util.List;
 
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "payments", "customer",
+            "establishment", "user" })
     List<Sale> findByCustomerId(Long customerId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "payments", "customer",
+            "establishment", "user" })
     List<Sale> findByCashSessionId(Long cashSessionId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "payments", "customer",
+            "establishment", "user" })
+    List<Sale> findAll();
 }

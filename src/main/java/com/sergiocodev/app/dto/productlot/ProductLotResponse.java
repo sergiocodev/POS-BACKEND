@@ -15,7 +15,7 @@ public record ProductLotResponse(
         this(
                 lot.getId(),
                 lot.getProduct().getId(),
-                lot.getProduct().getName(),
+                lot.getProduct().getTradeName(),
                 lot.getLotCode(),
                 lot.getExpiryDate(),
                 lot.getCreatedAt());

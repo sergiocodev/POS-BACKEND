@@ -44,6 +44,7 @@ public class StockMovement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -54,7 +55,8 @@ public class StockMovement {
         PURCHASE,
         ADJUSTMENT_IN,
         ADJUSTMENT_OUT,
-        TRANSFER,
+        TRANSFER_IN,
+        TRANSFER_OUT,
         SALE_RETURN,
         VOID_RETURN
     }

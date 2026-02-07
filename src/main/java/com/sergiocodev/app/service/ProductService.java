@@ -20,4 +20,6 @@ public interface ProductService {
     List<ProductResponse> search(String query);
 
     List<ProductLotResponse> getLots(Long productId);
+
+    ProductResponse toggleStatus(Long id);
 }

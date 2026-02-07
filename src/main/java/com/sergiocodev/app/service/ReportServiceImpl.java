@@ -69,7 +69,7 @@ public class ReportServiceImpl implements ReportService {
                 List<ProfitabilityReport> reports = new ArrayList<>();
                 for (var entry : itemsByProduct.entrySet()) {
                         List<SaleItem> items = entry.getValue();
-                        String name = items.get(0).getProduct().getName();
+                        String name = items.get(0).getProduct().getTradeName();
                         BigDecimal qty = items.stream().map(SaleItem::getQuantity).reduce(BigDecimal.ZERO,
                                         BigDecimal::add);
                         BigDecimal revenue = items.stream().map(SaleItem::getAmount).reduce(BigDecimal.ZERO,
@@ -134,7 +134,7 @@ public class ReportServiceImpl implements ReportService {
                                 .map(e -> {
                                         String name = items.stream()
                                                         .filter(i -> i.getProduct().getId().equals(e.getKey()))
-                                                        .findFirst().get().getProduct().getName();
+                                                        .findFirst().get().getProduct().getTradeName();
                                         BigDecimal percentage = grandTotal.compareTo(BigDecimal.ZERO) > 0
                                                         ? e.getValue().multiply(new BigDecimal("100"))
                                                                         .divide(grandTotal, 2, RoundingMode.HALF_UP)
@@ -175,7 +175,7 @@ public class ReportServiceImpl implements ReportService {
                                 .collect(Collectors.groupingBy(
                                                 item -> item.getProduct().getCategory() != null
                                                                 ? item.getProduct().getCategory()
-                                                                : new Category(0L, "Uncategorized", true),
+                                                                : new Category(0L, "Uncategorized", true, null),
                                                 Collectors.toList()))
                                 .entrySet().stream()
                                 .map(e -> {
@@ -267,7 +267,7 @@ public class ReportServiceImpl implements ReportService {
                                                         .max(LocalDateTime::compareTo)
                                                         .orElse(p.getCreatedAt()); // Use creation date if never sold
 
-                                        return new LowRotationReport(p.getId(), p.getName(), lastSale, stock);
+                                        return new LowRotationReport(p.getId(), p.getTradeName(), lastSale, stock);
                                 })
                                 .filter(r -> r.lastSaleDate().isBefore(threshold))
                                 .collect(Collectors.toList());

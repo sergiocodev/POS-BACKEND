@@ -6,6 +6,8 @@ import com.sergiocodev.app.model.Permission;
 import com.sergiocodev.app.repository.PermissionRepository;
 import com.sergiocodev.app.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +78,7 @@ public class PermissionService {
      */
     public PermissionResponse getById(Long id) {
         Permission permission = permissionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + id));
         return toResponse(permission);
     }
 
@@ -87,7 +89,7 @@ public class PermissionService {
     public PermissionResponse create(CreatePermissionRequest request) {
         // Verificar que no exista un permiso con el mismo nombre
         if (permissionRepository.findByName(request.name()).isPresent()) {
-            throw new RuntimeException("Ya existe un permiso con el nombre: " + request.name());
+            throw new BadRequestException("Ya existe un permiso con el nombre: " + request.name());
         }
 
         Permission permission = new Permission();
@@ -110,7 +112,7 @@ public class PermissionService {
         // Verificar que no exista otro permiso con el mismo nombre
         permissionRepository.findByName(request.name()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Ya existe otro permiso con el nombre: " + request.name());
+                throw new BadRequestException("Ya existe otro permiso con el nombre: " + request.name());
             }
         });
 
@@ -128,11 +130,11 @@ public class PermissionService {
     @Transactional
     public void delete(Long id) {
         Permission permission = permissionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + id));
 
         // Verificar que el permiso no esté asignado a ningún rol
         if (roleRepository.existsByPermissions_Id(id)) {
-            throw new RuntimeException("No se puede eliminar el permiso '" + permission.getName() +
+            throw new BadRequestException("No se puede eliminar el permiso '" + permission.getName() +
                     "' porque está asignado a uno o más roles");
         }
 

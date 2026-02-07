@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 public interface StockMovementMapper {
 
     @Mapping(target = "establishmentName", source = "establishment.name")
-    @Mapping(target = "productName", source = "lot.product.name")
+    @Mapping(target = "productName", source = "lot.product.tradeName")
     @Mapping(target = "lotCode", source = "lot.lotCode")
     @Mapping(target = "userName", source = "user.username")
     StockMovementResponse toResponse(StockMovement entity);

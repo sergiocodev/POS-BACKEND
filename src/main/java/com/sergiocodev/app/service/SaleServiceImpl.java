@@ -21,6 +21,8 @@ import com.sergiocodev.app.repository.ProductLotRepository;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.CashSessionRepository;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
+import com.sergiocodev.app.exception.StockInsufficientException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,15 +61,22 @@ public class SaleServiceImpl implements SaleService {
         entity.setStatus(Sale.SaleStatus.COMPLETED);
 
         // Find active cash session
-        CashSession session = cashSessionRepository.findAll().stream()
-                .filter(s -> s.getUser().getId().equals(userId) && s.getStatus() == CashSession.SessionStatus.OPEN)
-                .findFirst().orElse(null);
+        CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                .orElse(null);
         entity.setCashSession(session);
 
-        BigDecimal subTotal = BigDecimal.ZERO;
         for (var ir : request.items()) {
-            Product product = productRepository.findById(ir.productId()).orElse(null);
-            ProductLot lot = ir.lotId() != null ? lotRepository.findById(ir.lotId()).orElse(null) : null;
+            Product product = productRepository.findById(ir.productId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Product not found: " + ir.productId()));
+            ProductLot lot = ir.lotId() != null ? lotRepository.findById(ir.lotId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Lot not found: " + ir.lotId()))
+                    : null;
+
+            if (lot != null) {
+                validateStock(request.establishmentId(), lot.getId(), ir.quantity());
+            }
 
             SaleItem item = mapper.toItemEntity(ir);
             item.setSale(entity);
@@ -78,37 +87,10 @@ public class SaleServiceImpl implements SaleService {
             item.setAppliedTaxRate(new BigDecimal("0.18"));
             entity.getItems().add(item);
 
-            subTotal = subTotal.add(amount);
-
-            // Update Inventory
-            if (lot != null) {
-                Inventory inventory = inventoryRepository
-                        .findByEstablishmentIdAndLotId(request.establishmentId(), lot.getId())
-                        .orElseThrow(() -> new RuntimeException("No inventory for lot: " + lot.getLotCode()));
-
-                inventory.setQuantity(inventory.getQuantity().subtract(ir.quantity()));
-                inventory.setLastMovement(LocalDateTime.now());
-                item.setUnitCost(inventory.getCostPrice()); // Record cost at time of sale
-                inventoryRepository.save(inventory);
-
-                // Stock Movement
-                StockMovement movement = new StockMovement();
-                movement.setEstablishment(entity.getEstablishment());
-                movement.setLot(lot);
-                movement.setType(StockMovement.MovementType.SALE);
-                movement.setQuantity(ir.quantity().multiply(new java.math.BigDecimal("-1")));
-                movement.setBalanceAfter(inventory.getQuantity());
-                movement.setReferenceTable("sales");
-                movement.setReferenceId(entity.getId());
-                movement.setUser(entity.getUser());
-                movement.setCreatedAt(java.time.LocalDateTime.now());
-                stockMovementRepository.save(movement);
-            }
+            updateInventory(entity, item);
         }
 
-        entity.setSubTotal(subTotal);
-        entity.setTotal(subTotal); // Assuming inclusive
-        entity.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
+        calculateTotals(entity);
 
         for (var pr : request.payments()) {
             SalePayment payment = mapper.toPaymentEntity(pr);
@@ -125,6 +107,57 @@ public class SaleServiceImpl implements SaleService {
         return mapper.toResponse(repository.save(entity));
     }
 
+    private void validateStock(Long establishmentId, Long lotId, BigDecimal quantity) {
+        Inventory inventory = inventoryRepository.findByEstablishmentIdAndLotId(establishmentId, lotId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventory not found for lot ID: " + lotId));
+
+        if (inventory.getQuantity().compareTo(quantity) < 0) {
+            throw new StockInsufficientException(
+                    "Insufficient stock for lot: " + inventory.getLot().getLotCode());
+        }
+    }
+
+    private void updateInventory(Sale sale, SaleItem item) {
+        if (item.getLot() == null)
+            return;
+
+        Inventory inventory = inventoryRepository
+                .findByEstablishmentIdAndLotId(sale.getEstablishment().getId(), item.getLot().getId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "No inventory for lot: " + item.getLot().getLotCode()));
+
+        inventory.setQuantity(inventory.getQuantity().subtract(item.getQuantity()));
+        inventory.setLastMovement(LocalDateTime.now());
+        item.setUnitCost(inventory.getCostPrice()); // Record cost at time of sale
+        inventoryRepository.save(inventory);
+
+        // Stock Movement
+        StockMovement movement = new StockMovement();
+        movement.setEstablishment(sale.getEstablishment());
+        movement.setLot(item.getLot());
+        movement.setType(StockMovement.MovementType.SALE);
+        movement.setQuantity(item.getQuantity().multiply(new java.math.BigDecimal("-1")));
+        movement.setBalanceAfter(inventory.getQuantity());
+        movement.setReferenceTable("sales");
+        movement.setReferenceId(sale.getId());
+        movement.setUser(sale.getUser());
+        movement.setCreatedAt(java.time.LocalDateTime.now());
+        stockMovementRepository.save(movement);
+    }
+
+    private Sale calculateTotals(Sale sale) {
+        BigDecimal subTotal = sale.getItems().stream()
+                .map(SaleItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        sale.setSubTotal(subTotal);
+        sale.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
+        sale.setTotal(subTotal); // Assuming inclusive
+        return sale;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<SaleResponse> getAll() {
@@ -138,14 +171,16 @@ public class SaleServiceImpl implements SaleService {
     public SaleResponse getById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sale not found: " + id));
     }
 
     @Override
     @Transactional
     public void cancel(Long id) {
         Sale sale = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sale not found: " + id));
         sale.setStatus(Sale.SaleStatus.CANCELED);
         repository.save(sale);
     }
@@ -170,10 +205,11 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     public SaleResponse createCreditNote(Long id, String reason, Long userId) {
         Sale original = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Original sale not found: " + id));
 
         if (original.getStatus() == Sale.SaleStatus.CANCELED || original.isVoided()) {
-            throw new RuntimeException("Cannot create credit note for a canceled or voided sale");
+            throw new IllegalStateException("Cannot create credit note for a canceled or voided sale");
         }
 
         Sale note = new Sale();
@@ -197,7 +233,8 @@ public class SaleServiceImpl implements SaleService {
                 Inventory inventory = inventoryRepository
                         .findByEstablishmentIdAndLotId(original.getEstablishment().getId(),
                                 originalItem.getLot().getId())
-                        .orElseThrow(() -> new RuntimeException("Inventory not found for lot"));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Inventory not found for lot: " + originalItem.getLot().getLotCode()));
 
                 inventory.setQuantity(inventory.getQuantity().add(originalItem.getQuantity()));
                 inventory.setLastMovement(LocalDateTime.now());
@@ -242,7 +279,8 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     public void invalidate(Long id, String reason, Long userId) {
         Sale sale = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sale not found: " + id));
 
         sale.setVoided(true);
         sale.setVoidedAt(LocalDateTime.now());
@@ -254,7 +292,8 @@ public class SaleServiceImpl implements SaleService {
             if (item.getLot() != null) {
                 Inventory inventory = inventoryRepository
                         .findByEstablishmentIdAndLotId(sale.getEstablishment().getId(), item.getLot().getId())
-                        .orElseThrow(() -> new RuntimeException("Inventory not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Inventory not found for lot: " + item.getLot().getLotCode()));
                 inventory.setQuantity(inventory.getQuantity().add(item.getQuantity()));
                 inventoryRepository.save(inventory);
 
@@ -307,7 +346,8 @@ public class SaleServiceImpl implements SaleService {
             return new ProductForSaleResponse(
                     inventory.getId(),
                     product.getId(),
-                    product.getName(),
+                    product.getTradeName(),
+                    product.getGenericName(),
                     product.getDescription(),
                     product.getPresentation() != null ? product.getPresentation().getDescription() : null,
                     concentration,

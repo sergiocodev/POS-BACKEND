@@ -31,6 +31,15 @@ public class Inventory {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal quantity = BigDecimal.ZERO;
 
+    @Column(name = "min_stock")
+    private Integer minStock = 5;
+
+    @Column(name = "max_stock")
+    private Integer maxStock = 100;
+
+    @Column(name = "location_shelf", length = 50)
+    private String locationShelf;
+
     @Column(name = "cost_price", precision = 12, scale = 4)
     private BigDecimal costPrice;
 

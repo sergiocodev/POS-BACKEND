@@ -67,6 +67,13 @@ public class ProductController {
         return ResponseEntity.ok(ResponseApi.success(service.getLots(id)));
     }
 
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Cambiar estado del producto")
+    public ResponseEntity<ResponseApi<ProductResponse>> toggleStatus(@PathVariable Long id) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.toggleStatus(id), "Estado del producto actualizado exitosamente"));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar producto")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {

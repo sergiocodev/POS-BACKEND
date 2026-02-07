@@ -13,8 +13,10 @@ public interface LaboratoryMapper {
     LaboratoryResponse toResponse(Laboratory entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Laboratory toEntity(LaboratoryRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(LaboratoryRequest request, @MappingTarget Laboratory entity);
 }

@@ -24,6 +24,7 @@ public class CashSession {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @Column(name = "opening_balance", nullable = false, precision = 12, scale = 2)

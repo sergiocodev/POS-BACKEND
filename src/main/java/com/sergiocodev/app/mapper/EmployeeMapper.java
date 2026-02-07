@@ -15,9 +15,11 @@ public interface EmployeeMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Employee toEntity(EmployeeRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(EmployeeRequest request, @MappingTarget Employee entity);
 }

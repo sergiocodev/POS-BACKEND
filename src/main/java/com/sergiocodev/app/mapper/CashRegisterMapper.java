@@ -16,9 +16,11 @@ public interface CashRegisterMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "establishment", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     CashRegister toEntity(CashRegisterRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "establishment", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(CashRegisterRequest request, @MappingTarget CashRegister entity);
 }

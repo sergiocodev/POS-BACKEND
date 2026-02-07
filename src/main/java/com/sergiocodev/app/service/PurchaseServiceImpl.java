@@ -6,6 +6,7 @@ import com.sergiocodev.app.mapper.PurchaseMapper;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 import lombok.RequiredArgsConstructor;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -31,28 +32,21 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Transactional
     public PurchaseResponse create(PurchaseRequest request, Long userId) {
         Purchase entity = purchaseMapper.toEntity(request);
-        entity.setSupplier(supplierRepository.findById(request.supplierId()).orElse(null));
-        entity.setEstablishment(establishmentRepository.findById(request.establishmentId()).orElse(null));
-        entity.setUser(userRepository.findById(userId).orElse(null));
+        entity.setSupplier(supplierRepository.findById(request.supplierId())
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + request.supplierId())));
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Establishment not found: " + request.establishmentId())));
+        entity.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
         entity.setArrivalDate(LocalDateTime.now());
         entity.setStatus(Purchase.PurchaseStatus.RECEIVED);
 
-        BigDecimal subTotal = BigDecimal.ZERO;
         for (var ir : request.items()) {
-            Product product = productRepository.findById(ir.productId()).orElse(null);
+            Product product = productRepository.findById(ir.productId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.productId()));
 
-            // Create or get lot
-            ProductLot lot = lotRepository.findAll().stream()
-                    .filter(l -> l.getProduct().getId().equals(ir.productId())
-                            && l.getLotCode().equals(ir.lotCode()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        ProductLot newLot = new ProductLot();
-                        newLot.setProduct(product);
-                        newLot.setLotCode(ir.lotCode());
-                        newLot.setExpiryDate(ir.expiryDate());
-                        return lotRepository.save(newLot);
-                    });
+            ProductLot lot = findOrCreateLot(product, ir.lotCode(), ir.expiryDate());
 
             PurchaseItem item = purchaseMapper.toItemEntity(ir);
             item.setPurchase(entity);
@@ -62,44 +56,71 @@ public class PurchaseServiceImpl implements PurchaseService {
             item.setTotalCost(itemTotal);
             entity.getItems().add(item);
 
-            subTotal = subTotal.add(itemTotal);
-
-            // Update Inventory
-            Inventory inventory = inventoryRepository
-                    .findByEstablishmentIdAndLotId(request.establishmentId(), lot.getId())
-                    .orElseGet(() -> {
-                        Inventory newInv = new Inventory();
-                        newInv.setEstablishment(entity.getEstablishment());
-                        newInv.setLot(lot);
-                        newInv.setQuantity(BigDecimal.ZERO);
-                        return newInv;
-                    });
-
-            BigDecimal newQty = inventory.getQuantity().add(new BigDecimal(ir.quantity() + ir.bonusQuantity()));
-            inventory.setQuantity(newQty);
-            inventory.setCostPrice(ir.unitCost());
-            inventory.setLastMovement(LocalDateTime.now());
-            inventoryRepository.save(inventory);
-
-            // Stock Movement
-            StockMovement movement = new StockMovement();
-            movement.setEstablishment(entity.getEstablishment());
-            movement.setLot(lot);
-            movement.setType(StockMovement.MovementType.PURCHASE);
-            movement.setQuantity(new java.math.BigDecimal(ir.quantity() + ir.bonusQuantity()));
-            movement.setBalanceAfter(newQty);
-            movement.setReferenceTable("purchases");
-            movement.setReferenceId(entity.getId());
-            movement.setUser(entity.getUser());
-            movement.setCreatedAt(java.time.LocalDateTime.now());
-            stockMovementRepository.save(movement);
+            updateInventory(entity, lot, ir.quantity(), ir.bonusQuantity(), ir.unitCost());
         }
+
+        calculateTotals(entity);
+
+        return purchaseMapper.toResponse(repository.save(entity));
+    }
+
+    private ProductLot findOrCreateLot(Product product, String lotCode, java.time.LocalDate expiryDate) {
+        return lotRepository.findAll().stream()
+                .filter(l -> l.getProduct().getId().equals(product.getId())
+                        && l.getLotCode().equals(lotCode))
+                .findFirst()
+                .orElseGet(() -> {
+                    ProductLot newLot = new ProductLot();
+                    newLot.setProduct(product);
+                    newLot.setLotCode(lotCode);
+                    newLot.setExpiryDate(expiryDate);
+                    return lotRepository.save(newLot);
+                });
+    }
+
+    private void updateInventory(Purchase purchase, ProductLot lot, Integer quantity, Integer bonusQuantity,
+            BigDecimal unitCost) {
+        Inventory inventory = inventoryRepository
+                .findByEstablishmentIdAndLotId(purchase.getEstablishment().getId(), lot.getId())
+                .orElseGet(() -> {
+                    Inventory newInv = new Inventory();
+                    newInv.setEstablishment(purchase.getEstablishment());
+                    newInv.setLot(lot);
+                    newInv.setQuantity(BigDecimal.ZERO);
+                    return newInv;
+                });
+
+        BigDecimal newQty = inventory.getQuantity().add(new BigDecimal(quantity + bonusQuantity));
+        inventory.setQuantity(newQty);
+        inventory.setCostPrice(unitCost);
+        inventory.setLastMovement(LocalDateTime.now());
+        inventoryRepository.save(inventory);
+
+        createStockMovement(purchase, lot, quantity + bonusQuantity, newQty);
+    }
+
+    private void createStockMovement(Purchase purchase, ProductLot lot, Integer quantity, BigDecimal balanceAfter) {
+        StockMovement movement = new StockMovement();
+        movement.setEstablishment(purchase.getEstablishment());
+        movement.setLot(lot);
+        movement.setType(StockMovement.MovementType.PURCHASE);
+        movement.setQuantity(new java.math.BigDecimal(quantity));
+        movement.setBalanceAfter(balanceAfter);
+        movement.setReferenceTable("purchases");
+        movement.setReferenceId(purchase.getId());
+        movement.setUser(purchase.getUser());
+        movement.setCreatedAt(java.time.LocalDateTime.now());
+        stockMovementRepository.save(movement);
+    }
+
+    private void calculateTotals(Purchase entity) {
+        BigDecimal subTotal = entity.getItems().stream()
+                .map(PurchaseItem::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         entity.setSubTotal(subTotal);
         entity.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
         entity.setTotal(subTotal.add(entity.getTax()));
-
-        return purchaseMapper.toResponse(repository.save(entity));
     }
 
     @Override
@@ -115,14 +136,14 @@ public class PurchaseServiceImpl implements PurchaseService {
     public PurchaseResponse getById(Long id) {
         return repository.findById(id)
                 .map(purchaseMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Purchase not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase not found: " + id));
     }
 
     @Override
     @Transactional
     public void cancel(Long id) {
         Purchase purchase = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Purchase not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase not found: " + id));
         purchase.setStatus(Purchase.PurchaseStatus.CANCELED);
         repository.save(purchase);
         // Reverse inventory logic would go here

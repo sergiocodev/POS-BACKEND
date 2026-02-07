@@ -13,8 +13,10 @@ public interface CategoryMapper {
     CategoryResponse toResponse(Category category);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Category toEntity(CategoryRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(CategoryRequest request, @MappingTarget Category category);
 }

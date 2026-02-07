@@ -8,6 +8,8 @@ import com.sergiocodev.app.model.Role;
 import com.sergiocodev.app.repository.PermissionRepository;
 import com.sergiocodev.app.repository.RoleRepository;
 import com.sergiocodev.app.repository.UserRepository;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +42,7 @@ public class RoleService {
      */
     public RoleDetailResponse getById(Long id) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
         return roleMapper.toDetailResponse(role);
     }
 
@@ -51,7 +53,7 @@ public class RoleService {
     public RoleDetailResponse create(CreateRoleRequest request) {
         // Verificar que no exista un rol con el mismo nombre
         if (roleRepository.findByName(request.name()).isPresent()) {
-            throw new RuntimeException("Ya existe un rol con el nombre: " + request.name());
+            throw new BadRequestException("Ya existe un rol con el nombre: " + request.name());
         }
 
         Role role = new Role();
@@ -70,12 +72,12 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse update(Long id, UpdateRoleRequest request) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
 
         // Verificar que no exista otro rol con el mismo nombre
         roleRepository.findByName(request.name()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Ya existe otro rol con el nombre: " + request.name());
+                throw new BadRequestException("Ya existe otro rol con el nombre: " + request.name());
             }
         });
 
@@ -93,11 +95,11 @@ public class RoleService {
     @Transactional
     public void delete(Long id) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
 
         // Verificar que el rol no esté asignado a ningún usuario
         if (userRepository.existsByRoles_Id(id)) {
-            throw new RuntimeException("No se puede eliminar el rol '" + role.getName() +
+            throw new BadRequestException("No se puede eliminar el rol '" + role.getName() +
                     "' porque está asignado a uno o más usuarios");
         }
 
@@ -110,7 +112,7 @@ public class RoleService {
     @Transactional
     public RoleResponse toggleActive(Long id) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
 
         role.setActive(!role.isActive());
         Role updated = roleRepository.save(role);
@@ -122,7 +124,7 @@ public class RoleService {
      */
     public List<PermissionResponse> getPermissions(Long roleId) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));
 
         return role.getPermissions().stream()
                 .map(permission -> new PermissionResponse(
@@ -140,7 +142,7 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse assignPermissions(Long roleId, AssignPermissionsRequest request) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));
 
         return handlePermissions(role, request.permissionIds(), false);
     }
@@ -151,7 +153,7 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse replacePermissions(Long roleId, AssignPermissionsRequest request) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));
 
         return handlePermissions(role, request.permissionIds(), true);
     }
@@ -160,7 +162,7 @@ public class RoleService {
         Set<Permission> permissions = new HashSet<>();
         for (Long permissionId : permissionIds) {
             Permission permission = permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + permissionId));
             permissions.add(permission);
         }
 
@@ -180,10 +182,10 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse removePermission(Long roleId, Long permissionId) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));
 
         Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + permissionId));
 
         role.getPermissions().remove(permission);
         Role updated = roleRepository.save(role);
@@ -196,11 +198,11 @@ public class RoleService {
     @Transactional
     public RoleDetailResponse removePermissions(Long roleId, AssignPermissionsRequest request) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));
 
         for (Long permissionId : request.permissionIds()) {
             Permission permission = permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + permissionId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + permissionId));
             role.getPermissions().remove(permission);
         }
 

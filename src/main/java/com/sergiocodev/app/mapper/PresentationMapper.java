@@ -13,8 +13,10 @@ public interface PresentationMapper {
     PresentationResponse toResponse(Presentation entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Presentation toEntity(PresentationRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(PresentationRequest request, @MappingTarget Presentation entity);
 }

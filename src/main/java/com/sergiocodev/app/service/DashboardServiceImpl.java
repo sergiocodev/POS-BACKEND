@@ -218,7 +218,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .entrySet().stream()
                                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                                 .limit(limit)
-                                .map(e -> new TopProductDashboard(e.getKey().getId(), e.getKey().getName(),
+                                .map(e -> new TopProductDashboard(e.getKey().getId(), e.getKey().getTradeName(),
                                                 e.getValue()))
                                 .collect(Collectors.toList());
         }

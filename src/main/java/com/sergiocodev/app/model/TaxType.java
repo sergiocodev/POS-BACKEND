@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 @Entity
@@ -11,6 +14,8 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE tax_types SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class TaxType {
 
     @Id
@@ -28,4 +33,7 @@ public class TaxType {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

@@ -24,13 +24,17 @@ public class ProductServiceImpl implements ProductService {
     private final TaxTypeRepository taxTypeRepository;
     private final ActiveIngredientRepository activeIngredientRepository;
     private final ProductLotRepository productLotRepository;
+    private final PharmaceuticalFormRepository pharmaceuticalFormRepository;
+    private final TherapeuticActionRepository therapeuticActionRepository;
     private final ProductMapper mapper;
 
     @Override
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Product entity = mapper.toEntity(request);
+
         mapBasicInfo(request, entity);
+        mapTherapeuticActions(request, entity);
         entity = repository.save(entity); // Save first to get the ID
 
         mapIngredients(request, entity);
@@ -59,7 +63,9 @@ public class ProductServiceImpl implements ProductService {
         Product entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         mapper.updateEntity(request, entity);
+
         mapBasicInfo(request, entity);
+        mapTherapeuticActions(request, entity);
         mapIngredients(request, entity);
         return mapper.toResponse(repository.save(entity));
     }
@@ -79,6 +85,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
+    public ProductResponse toggleStatus(Long id) {
+        Product entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        entity.setActive(!entity.isActive());
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<ProductLotResponse> getLots(Long productId) {
         return productLotRepository.findByProductIdOrderByExpiryDateAsc(productId).stream()
@@ -90,6 +105,8 @@ public class ProductServiceImpl implements ProductService {
         entity.setBrand(brandRepository.findById(request.brandId()).orElse(null));
         entity.setCategory(categoryRepository.findById(request.categoryId()).orElse(null));
         entity.setLaboratory(laboratoryRepository.findById(request.laboratoryId()).orElse(null));
+        entity.setPharmaceuticalForm(
+                pharmaceuticalFormRepository.findById(request.pharmaceuticalFormId()).orElse(null));
         entity.setPresentation(presentationRepository.findById(request.presentationId()).orElse(null));
         entity.setTaxType(taxTypeRepository.findById(request.taxTypeId()).orElse(null));
         if (request.unitType() != null) {
@@ -116,6 +133,17 @@ public class ProductServiceImpl implements ProductService {
 
                 entity.getIngredients().add(pi);
             });
+        }
+    }
+
+    private void mapTherapeuticActions(ProductRequest request, Product entity) {
+        if (request.therapeuticActionIds() != null) {
+            entity.getTherapeuticActions().clear();
+            List<TherapeuticAction> actions = therapeuticActionRepository.findAllById(request.therapeuticActionIds());
+            if (actions.size() != request.therapeuticActionIds().size()) {
+                throw new RuntimeException("Some therapeutic actions were not found");
+            }
+            entity.getTherapeuticActions().addAll(actions);
         }
     }
 }

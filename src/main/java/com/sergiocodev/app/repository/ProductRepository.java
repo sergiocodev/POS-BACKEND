@@ -2,6 +2,7 @@ package com.sergiocodev.app.repository;
 
 import com.sergiocodev.app.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -12,15 +13,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
         // Search for POS: Barcode, Name, or Active Ingredient Name
         // Search for POS: Barcode, Name, or Active Ingredient Name
-        @org.springframework.data.jpa.repository.Query("SELECT p FROM Product p LEFT JOIN p.ingredients pi LEFT JOIN pi.activeIngredient ai WHERE "
-                        +
-                        "LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-                        "LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-                        "LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+                        "category", "brand", "laboratory", "presentation", "taxType", "ingredients",
+                        "ingredients.activeIngredient"
+        })
+        @Query("SELECT DISTINCT p FROM Product p " +
+                        "LEFT JOIN p.ingredients pi " +
+                        "LEFT JOIN pi.activeIngredient ai " +
+                        "WHERE LOWER(p.barcode) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%'))")
         java.util.List<Product> searchByQuery(@org.springframework.data.repository.query.Param("query") String query);
 
-        // Filter by category, brand, and active status
-        @org.springframework.data.jpa.repository.Query("SELECT p FROM Product p WHERE " +
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+                        "category", "brand", "laboratory", "presentation", "taxType"
+        })
+        @Query("SELECT p FROM Product p WHERE " +
                         "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
                         "(:brandId IS NULL OR p.brand.id = :brandId) AND " +
                         "(:active IS NULL OR p.active = :active)")

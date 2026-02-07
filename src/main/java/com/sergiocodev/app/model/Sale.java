@@ -6,8 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "sales")
@@ -34,6 +34,7 @@ public class Sale {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -93,6 +94,12 @@ public class Sale {
     @Column(name = "cdr_url", columnDefinition = "TEXT")
     private String cdrUrl;
 
+    @Column(name = "sunat_response_json", columnDefinition = "JSON")
+    private String sunatResponseJson;
+
+    @Column(name = "sunat_error_code", length = 10)
+    private String sunatErrorCode;
+
     // Campos de invalidación/baja
     @Column(name = "is_voided", nullable = false)
     private boolean isVoided = false;
@@ -115,10 +122,10 @@ public class Sale {
     }
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SaleItem> items = new ArrayList<>();
+    private Set<SaleItem> items = new HashSet<>();
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SalePayment> payments = new ArrayList<>();
+    private Set<SalePayment> payments = new HashSet<>();
 
     public enum SaleDocumentType {
         TICKET, BOLETA, FACTURA, NOTA_CREDITO, NOTA_DEBITO

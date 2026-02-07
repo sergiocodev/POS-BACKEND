@@ -4,15 +4,20 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE products SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Product {
 
     @Id
@@ -25,8 +30,14 @@ public class Product {
     @Column(name = "digemid_code", length = 50)
     private String digemidCode;
 
-    @Column(nullable = false, length = 255)
-    private String name;
+    @Column(name = "barcode", length = 50)
+    private String barcode;
+
+    @Column(name = "trade_name", nullable = false, length = 255)
+    private String tradeName;
+
+    @Column(name = "generic_name", length = 255)
+    private String genericName;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -54,6 +65,10 @@ public class Product {
     @JoinColumn(name = "tax_type_id", nullable = false)
     private TaxType taxType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pharmaceutical_form_id", nullable = false)
+    private PharmaceuticalForm pharmaceuticalForm;
+
     @Column(name = "requires_prescription", nullable = false)
     private boolean requiresPrescription = false;
 
@@ -73,8 +88,15 @@ public class Product {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductIngredient> ingredients = new ArrayList<>();
+    private Set<ProductIngredient> ingredients = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "product_therapeutic_actions", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "therapeutic_action_id"))
+    private Set<TherapeuticAction> therapeuticActions = new HashSet<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

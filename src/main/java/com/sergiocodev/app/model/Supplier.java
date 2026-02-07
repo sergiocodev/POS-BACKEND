@@ -4,12 +4,16 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "suppliers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE suppliers SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Supplier {
 
     @Id
@@ -33,4 +37,7 @@ public class Supplier {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
 }

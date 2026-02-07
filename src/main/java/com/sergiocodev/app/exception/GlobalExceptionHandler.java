@@ -108,6 +108,16 @@ public class GlobalExceptionHandler {
         }
 
         /**
+         * Handles PharmaceuticalFormNotFoundException
+         */
+        @ExceptionHandler(PharmaceuticalFormNotFoundException.class)
+        public ResponseEntity<ResponseApi<Object>> handlePharmaceuticalFormNotFound(
+                        PharmaceuticalFormNotFoundException ex, WebRequest request) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
+        }
+
+        /**
          * Handles validation errors (Bean Validation)
          */
         @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -125,10 +135,39 @@ public class GlobalExceptionHandler {
                                 .status(HttpStatus.BAD_REQUEST.value())
                                 .message("Validation failed")
                                 .data(errors)
-                                .timestamp(java.time.LocalDateTime.now())
                                 .build();
 
                 return ResponseEntity.badRequest().body(response);
+        }
+
+        /**
+         * Handles StockInsufficientException
+         */
+        @ExceptionHandler(StockInsufficientException.class)
+        public ResponseEntity<ResponseApi<Object>> handleStockInsufficient(
+                        StockInsufficientException ex, WebRequest request) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+        }
+
+        /**
+         * Handles ResourceNotFoundException
+         */
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ResponseApi<Object>> handleResourceNotFound(
+                        ResourceNotFoundException ex, WebRequest request) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
+        }
+
+        /**
+         * Handles BadRequestException
+         */
+        @ExceptionHandler(BadRequestException.class)
+        public ResponseEntity<ResponseApi<Object>> handleBadRequest(
+                        BadRequestException ex, WebRequest request) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
         }
 
         /**

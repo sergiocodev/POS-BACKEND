@@ -8,29 +8,28 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
-    Optional<Inventory> findByEstablishmentIdAndLotId(Long establishmentId, Long lotId);
+        Optional<Inventory> findByEstablishmentIdAndLotId(Long establishmentId, Long lotId);
 
-    // Low stock: quantity <= 10 (Assuming you might want to add minStock to Product
-    // or Inventory)
-    // For now showing items with quantity < 10
-    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i WHERE i.quantity <= 10")
-    java.util.List<Inventory> findLowStock();
+        // Low stock: quantity <= 10 (Assuming you might want to add minStock to Product
+        // or Inventory)
+        // For now showing items with quantity < 10
+        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i WHERE i.quantity <= 10")
+        java.util.List<Inventory> findLowStock();
 
-    // Expirations: expiryDate between now and date
-    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
-    java.util.List<Inventory> findExpiringSoon(
-            @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
+        // Expirations: expiryDate between now and date
+        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
+        java.util.List<Inventory> findExpiringSoon(
+                        @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
-            "lot",
-            "lot.product",
-            "lot.product.brand",
-            "lot.product.category",
-            "lot.product.laboratory",
-            "lot.product.presentation",
-            "lot.product.taxType",
-            "lot.product.ingredients",
-            "lot.product.ingredients.activeIngredient"
-    })
-    java.util.List<Inventory> findAllByEstablishmentId(Long establishmentId);
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT i FROM Inventory i " +
+                        "JOIN FETCH i.lot l " +
+                        "JOIN FETCH l.product p " +
+                        "LEFT JOIN FETCH p.category " +
+                        "LEFT JOIN FETCH p.laboratory " +
+                        "LEFT JOIN FETCH p.presentation " +
+                        "LEFT JOIN FETCH p.ingredients pi " +
+                        "LEFT JOIN FETCH pi.activeIngredient " +
+                        "WHERE i.establishment.id = :establishmentId")
+        java.util.List<Inventory> findAllByEstablishmentId(
+                        @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
 }
