@@ -22,4 +22,6 @@ public interface ProductService {
     List<ProductLotResponse> getLots(Long productId);
 
     ProductResponse toggleStatus(Long id);
+
+    ProductResponse createNewProduct(ProductRequest request);
 }

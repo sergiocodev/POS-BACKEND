@@ -146,4 +146,10 @@ public class ProductServiceImpl implements ProductService {
             entity.getTherapeuticActions().addAll(actions);
         }
     }
+
+    @Override
+    @Transactional
+    public ProductResponse createNewProduct(ProductRequest request) {
+        return create(request);
+    }
 }

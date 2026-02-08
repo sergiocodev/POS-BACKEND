@@ -76,4 +76,13 @@ public class CustomerServiceImpl implements CustomerService {
         }
         customerRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomerResponse findByDocumentNumber(String documentNumber) {
+        Customer customer = customerRepository.findByDocumentNumber(documentNumber)
+                .orElseThrow(() -> new CustomerNotFoundException(
+                        "Customer not found with document number: " + documentNumber));
+        return customerMapper.toResponse(customer);
+    }
 }

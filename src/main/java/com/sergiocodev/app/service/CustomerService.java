@@ -16,4 +16,6 @@ public interface CustomerService {
     CustomerResponse update(Long id, CustomerRequest request);
 
     void delete(Long id);
+
+    CustomerResponse findByDocumentNumber(String documentNumber);
 }

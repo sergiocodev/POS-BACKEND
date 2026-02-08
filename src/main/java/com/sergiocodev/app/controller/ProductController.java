@@ -33,6 +33,13 @@ public class ProductController {
                 .body(ResponseApi.success(service.create(request), "Producto creado exitosamente"));
     }
 
+    @PostMapping("/CreateNewProduct")
+    @Operation(summary = "Crear nuevo producto (Admin)", description = "Crea un nuevo producto, incluyendo ingredientes si se proporcionan")
+    public ResponseEntity<ResponseApi<ProductResponse>> createNewProduct(@Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.createNewProduct(request), "Producto creado exitosamente"));
+    }
+
     @GetMapping
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
     public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(

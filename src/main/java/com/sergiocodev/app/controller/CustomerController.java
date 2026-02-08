@@ -84,4 +84,16 @@ public class CustomerController {
         customerService.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Cliente eliminado exitosamente"));
     }
+
+    @Operation(summary = "Buscar cliente por documento", description = "Busca un cliente por su número de documento de identidad")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Customer found"),
+            @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
+    @GetMapping("/FindCustomerByIdentityDoc")
+    public ResponseEntity<ResponseApi<CustomerResponse>> getByDocumentNumber(
+            @RequestParam String documentNumber) {
+        CustomerResponse response = customerService.findByDocumentNumber(documentNumber);
+        return ResponseEntity.ok(ResponseApi.success(response));
+    }
 }
