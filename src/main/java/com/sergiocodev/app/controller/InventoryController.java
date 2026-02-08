@@ -65,4 +65,32 @@ public class InventoryController {
     public ResponseEntity<ResponseApi<InventoryResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
+
+    @GetMapping("/GetLowStockAlerts")
+    @Operation(summary = "Reporte de reposición", description = "Retorna la lista de productos que necesitan compra urgente (quantity <= min_stock)")
+    public ResponseEntity<ResponseApi<List<com.sergiocodev.app.dto.inventory.LowStockAlertResponse>>> getLowStockAlerts() {
+        return ResponseEntity.ok(ResponseApi.success(service.getLowStockAlerts()));
+    }
+
+    @GetMapping("/GetExpiringLots")
+    @Operation(summary = "Prevención de pérdidas por vencimiento", description = "Filtra fechas de expiry_date que estén dentro de los próximos 30, 60 o 90 días")
+    public ResponseEntity<ResponseApi<List<com.sergiocodev.app.dto.inventory.ExpiringLotResponse>>> getExpiringLots(
+            @RequestParam(required = false, defaultValue = "90") Integer days) {
+        return ResponseEntity.ok(ResponseApi.success(service.getExpiringLots(days)));
+    }
+
+    @PostMapping("/RegisterStockAdjustment")
+    @Operation(summary = "Corrige el stock manual", description = "Corrige el stock manual (por robo, rotura o error de conteo)")
+    public ResponseEntity<ResponseApi<InventoryResponse>> registerStockAdjustment(
+            @Valid @RequestBody com.sergiocodev.app.dto.inventory.StockAdjustmentRequest request) {
+        return ResponseEntity.ok(ResponseApi.success(service.registerStockAdjustment(request),
+                "Ajuste de stock registrado exitosamente"));
+    }
+
+    @GetMapping("/GetKardexHistoryByProduct")
+    @Operation(summary = "Auditoría de un producto", description = "Muestra la trazabilidad completa filtrando por product_id")
+    public ResponseEntity<ResponseApi<List<com.sergiocodev.app.dto.inventory.KardexHistoryResponse>>> getKardexHistoryByProduct(
+            @RequestParam Long productId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getKardexHistoryByProduct(productId)));
+    }
 }

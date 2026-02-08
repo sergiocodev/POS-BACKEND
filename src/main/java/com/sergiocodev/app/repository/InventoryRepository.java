@@ -21,6 +21,15 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
         java.util.List<Inventory> findExpiringSoon(
                         @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
 
+        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i WHERE i.quantity <= i.minStock")
+        java.util.List<Inventory> findLowStockAlerts();
+
+        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN FETCH i.lot l " +
+                        "WHERE l.expiryDate BETWEEN :startDate AND :endDate")
+        java.util.List<Inventory> findExpiringLotsBetween(
+                        @org.springframework.data.repository.query.Param("startDate") java.time.LocalDate startDate,
+                        @org.springframework.data.repository.query.Param("endDate") java.time.LocalDate endDate);
+
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT i FROM Inventory i " +
                         "JOIN FETCH i.lot l " +
                         "JOIN FETCH l.product p " +
