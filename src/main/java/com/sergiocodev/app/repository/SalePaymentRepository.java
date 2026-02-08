@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface SalePaymentRepository extends JpaRepository<SalePayment, Long> {
     List<SalePayment> findBySaleId(Long saleId);
+
+    java.util.List<SalePayment> findBySaleCashSessionIdAndPaymentMethod(Long cashSessionId,
+            com.sergiocodev.app.model.SalePayment.PaymentMethod paymentMethod);
 }

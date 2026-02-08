@@ -21,4 +21,15 @@ public interface CashSessionService {
     CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance);
 
     List<CashSessionResponse> getHistory(Long userId);
+
+    com.sergiocodev.app.dto.cash.SessionStatusResponse getCurrentSessionStatus(Long userId);
+
+    com.sergiocodev.app.dto.cashsession.CashSessionResponse openDailySession(
+            com.sergiocodev.app.dto.cash.OpenDailySessionRequest request);
+
+    com.sergiocodev.app.model.CashMovement registerCashOutflow(
+            com.sergiocodev.app.dto.cash.CashOutflowRequest request);
+
+    com.sergiocodev.app.dto.cashsession.CashSessionResponse closeSessionAndReport(
+            com.sergiocodev.app.dto.cash.CloseSessionRequest request);
 }
