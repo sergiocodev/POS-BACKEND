@@ -1,7 +1,11 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.inventory.ExpiringLotResponse;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
+import com.sergiocodev.app.dto.inventory.KardexHistoryResponse;
+import com.sergiocodev.app.dto.inventory.LowStockAlertResponse;
+import com.sergiocodev.app.dto.inventory.StockAdjustmentRequest;
 import com.sergiocodev.app.mapper.InventoryMapper;
 import com.sergiocodev.app.model.Inventory;
 import com.sergiocodev.app.model.StockMovement;
@@ -9,6 +13,9 @@ import com.sergiocodev.app.repository.EstablishmentRepository;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.ProductLotRepository;
 import com.sergiocodev.app.repository.StockMovementRepository;
+import com.sergiocodev.app.repository.SaleRepository;
+import com.sergiocodev.app.model.Sale;
+import com.sergiocodev.app.model.SaleItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +31,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final EstablishmentRepository establishmentRepository;
     private final ProductLotRepository lotRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final SaleRepository saleRepository;
     private final InventoryMapper mapper;
 
     @Override
@@ -51,15 +59,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory saved = repository.save(entity);
 
-        // Stock Movement
-        // Determine movement type and quantity difference
         java.math.BigDecimal diff = newQuantity.subtract(oldQuantity);
         if (diff.compareTo(java.math.BigDecimal.ZERO) != 0) {
             StockMovement movement = new StockMovement();
             movement.setLot(entity.getLot());
             movement.setEstablishment(entity.getEstablishment());
 
-            // Default to ADJUSTMENT_IN/OUT if not specified
             StockMovement.MovementType type = diff.compareTo(java.math.BigDecimal.ZERO) > 0
                     ? StockMovement.MovementType.ADJUSTMENT_IN
                     : StockMovement.MovementType.ADJUSTMENT_OUT;
@@ -68,7 +73,7 @@ public class InventoryServiceImpl implements InventoryService {
                 try {
                     type = StockMovement.MovementType.valueOf(request.movementType());
                 } catch (IllegalArgumentException e) {
-                    // ignore, use default
+
                 }
             }
             movement.setType(type);
@@ -112,7 +117,6 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<InventoryResponse> getAlerts() {
-        // Expiry within 3 months (90 days)
         return repository.findExpiringSoon(java.time.LocalDate.now().plusDays(90)).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
@@ -128,9 +132,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.sergiocodev.app.dto.inventory.LowStockAlertResponse> getLowStockAlerts() {
+    public List<LowStockAlertResponse> getLowStockAlerts() {
         return repository.findLowStockAlerts().stream()
-                .map(i -> new com.sergiocodev.app.dto.inventory.LowStockAlertResponse(
+                .map(i -> new LowStockAlertResponse(
                         i.getId(),
                         i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getId() : null,
                         i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getTradeName()
@@ -151,7 +155,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.sergiocodev.app.dto.inventory.ExpiringLotResponse> getExpiringLots(Integer days) {
+    public List<ExpiringLotResponse> getExpiringLots(Integer days) {
         int checkDays = days != null ? days : 90;
         java.time.LocalDate today = java.time.LocalDate.now();
         java.time.LocalDate endDate = today.plusDays(checkDays);
@@ -165,7 +169,7 @@ public class InventoryServiceImpl implements InventoryService {
                     else if (daysUntil <= 60)
                         alertLevel = "WARNING";
 
-                    return new com.sergiocodev.app.dto.inventory.ExpiringLotResponse(
+                    return new ExpiringLotResponse(
                             i.getId(),
                             i.getLot().getProduct().getId(),
                             i.getLot().getProduct().getTradeName(),
@@ -184,7 +188,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public InventoryResponse registerStockAdjustment(com.sergiocodev.app.dto.inventory.StockAdjustmentRequest request) {
+    public InventoryResponse registerStockAdjustment(StockAdjustmentRequest request) {
         Inventory entity = repository.findByEstablishmentIdAndLotId(request.establishmentId(), request.lotId())
                 .orElseGet(() -> {
                     Inventory newInv = new Inventory();
@@ -217,9 +221,6 @@ public class InventoryServiceImpl implements InventoryService {
             movement.setReferenceTable("inventory_adjustment");
             movement.setReferenceId(saved.getId());
             movement.setCreatedAt(LocalDateTime.now());
-            // Note: User handling would go here if we had access to User repository/entity
-            // helper
-            // For now, we rely on what's passed or null
 
             stockMovementRepository.save(movement);
         }
@@ -229,9 +230,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.sergiocodev.app.dto.inventory.KardexHistoryResponse> getKardexHistoryByProduct(Long productId) {
+    public List<KardexHistoryResponse> getKardexHistoryByProduct(Long productId) {
         return stockMovementRepository.findKardexByProductId(productId).stream()
-                .map(sm -> new com.sergiocodev.app.dto.inventory.KardexHistoryResponse(
+                .map(sm -> new KardexHistoryResponse(
                         sm.getId(),
                         sm.getEstablishment().getId(),
                         sm.getEstablishment().getName(),
@@ -251,9 +252,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.sergiocodev.app.dto.inventory.KardexHistoryResponse> getKardexHistoryByLot(Long lotId) {
+    public List<KardexHistoryResponse> getKardexHistoryByLot(Long lotId) {
         return stockMovementRepository.findKardexByLotId(lotId).stream()
-                .map(sm -> new com.sergiocodev.app.dto.inventory.KardexHistoryResponse(
+                .map(sm -> new KardexHistoryResponse(
                         sm.getId(),
                         sm.getEstablishment().getId(),
                         sm.getEstablishment().getName(),
@@ -269,5 +270,48 @@ public class InventoryServiceImpl implements InventoryService {
                         sm.getUser() != null ? sm.getUser().getUsername() : null,
                         sm.getCreatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void reverseStockForSale(Long saleId) {
+        Sale sale = saleRepository.findWithItemsById(saleId)
+                .orElseThrow(() -> new RuntimeException("Venta no encontrada para reversión de stock"));
+
+        for (SaleItem item : sale.getItems()) {
+            if (item.getLot() == null)
+                continue;
+
+            Inventory inventory = repository.findByEstablishmentIdAndLotId(
+                    sale.getEstablishment().getId(),
+                    item.getLot().getId())
+                    .orElseGet(() -> {
+                        Inventory newInv = new Inventory();
+                        newInv.setEstablishment(sale.getEstablishment());
+                        newInv.setLot(item.getLot());
+                        newInv.setQuantity(java.math.BigDecimal.ZERO);
+                        return newInv;
+                    });
+
+            java.math.BigDecimal oldQuantity = inventory.getQuantity();
+            java.math.BigDecimal quantityToReturn = item.getQuantity();
+            java.math.BigDecimal newQuantity = oldQuantity.add(quantityToReturn);
+
+            inventory.setQuantity(newQuantity);
+            inventory.setLastMovement(LocalDateTime.now());
+            repository.save(inventory);
+
+            StockMovement movement = new StockMovement();
+            movement.setLot(item.getLot());
+            movement.setEstablishment(sale.getEstablishment());
+            movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
+            movement.setQuantity(quantityToReturn);
+            movement.setBalanceAfter(newQuantity);
+            movement.setReferenceTable("sales");
+            movement.setReferenceId(sale.getId());
+            movement.setCreatedAt(LocalDateTime.now());
+
+            stockMovementRepository.save(movement);
+        }
     }
 }

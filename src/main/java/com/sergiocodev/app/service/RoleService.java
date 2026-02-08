@@ -97,7 +97,6 @@ public class RoleService {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
 
-        // Verificar que el rol no esté asignado a ningún usuario
         if (userRepository.existsByRoles_Id(id)) {
             throw new BadRequestException("No se puede eliminar el rol '" + role.getName() +
                     "' porque está asignado a uno o más usuarios");

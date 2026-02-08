@@ -40,9 +40,6 @@ public class PharmaceuticalFormServiceImpl implements PharmaceuticalFormService 
     @Override
     @Transactional
     public PharmaceuticalFormResponse create(PharmaceuticalFormRequest request) {
-        // Here you might want to check for duplicates by name if needed, assuming
-        // repository has existsByName
-        // if (pharmaceuticalFormRepository.existsByName(request.name())) { ... }
 
         PharmaceuticalForm pharmaceuticalForm = pharmaceuticalFormMapper.toEntity(request);
         PharmaceuticalForm saved = pharmaceuticalFormRepository.save(pharmaceuticalForm);

@@ -68,7 +68,6 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Purchase savedEntity = repository.save(entity);
 
-        // Update Cash Session if PaymentMethod is EFECTIVO
         if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.EFECTIVO) {
             CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                     .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
@@ -145,7 +144,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         entity.setSubTotal(subTotal);
-        entity.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
+        entity.setTax(subTotal.multiply(new BigDecimal("0.18")));
         entity.setTotal(subTotal.add(entity.getTax()));
     }
 
@@ -172,6 +171,5 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Purchase not found: " + id));
         purchase.setStatus(Purchase.PurchaseStatus.CANCELED);
         repository.save(purchase);
-        // Reverse inventory logic would go here
     }
 }

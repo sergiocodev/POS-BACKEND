@@ -1,35 +1,38 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.cash.CashOutflowRequest;
+import com.sergiocodev.app.dto.cash.CloseSessionRequest;
+import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
+import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cashsession.CashSessionRequest;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
+import com.sergiocodev.app.model.CashMovement;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface CashSessionService {
-    CashSessionResponse openSession(CashSessionRequest request, Long userId);
+        CashSessionResponse openSession(CashSessionRequest request, Long userId);
 
-    CashSessionResponse closeSession(Long id, BigDecimal closingBalance);
+        CashSessionResponse closeSession(Long id, BigDecimal closingBalance);
 
-    List<CashSessionResponse> getAll();
+        List<CashSessionResponse> getAll();
 
-    CashSessionResponse getById(Long id);
+        CashSessionResponse getById(Long id);
 
-    CashSessionResponse getActiveSession(Long userId);
+        CashSessionResponse getActiveSession(Long userId);
 
-    CashSessionResponse getStatus(Long userId);
+        CashSessionResponse getStatus(Long userId);
 
-    CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance);
+        CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance);
 
-    List<CashSessionResponse> getHistory(Long userId);
+        List<CashSessionResponse> getHistory(Long userId);
 
-    com.sergiocodev.app.dto.cash.SessionStatusResponse getCurrentSessionStatus(Long userId);
+        SessionStatusResponse getCurrentSessionStatus(Long userId);
 
-    com.sergiocodev.app.dto.cashsession.CashSessionResponse openDailySession(
-            com.sergiocodev.app.dto.cash.OpenDailySessionRequest request);
+        CashSessionResponse openDailySession(OpenDailySessionRequest request);
 
-    com.sergiocodev.app.model.CashMovement registerCashOutflow(
-            com.sergiocodev.app.dto.cash.CashOutflowRequest request);
+        CashMovement registerCashOutflow(CashOutflowRequest request);
 
-    com.sergiocodev.app.dto.cashsession.CashSessionResponse closeSessionAndReport(
-            com.sergiocodev.app.dto.cash.CloseSessionRequest request);
+        CashSessionResponse closeSessionAndReport(CloseSessionRequest request);
 }

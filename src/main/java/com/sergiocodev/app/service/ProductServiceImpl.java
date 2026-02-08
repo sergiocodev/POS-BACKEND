@@ -35,10 +35,10 @@ public class ProductServiceImpl implements ProductService {
 
         mapBasicInfo(request, entity);
         mapTherapeuticActions(request, entity);
-        entity = repository.save(entity); // Save first to get the ID
+        entity = repository.save(entity);
 
         mapIngredients(request, entity);
-        return mapper.toResponse(repository.save(entity)); // Save again to persist ingredients
+        return mapper.toResponse(repository.save(entity));
     }
 
     @Override

@@ -1,5 +1,9 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.inventory.ExpiringLotResponse;
+import com.sergiocodev.app.dto.inventory.KardexHistoryResponse;
+import com.sergiocodev.app.dto.inventory.StockAdjustmentRequest;
+import com.sergiocodev.app.dto.inventory.LowStockAlertResponse;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
 import java.util.List;
@@ -17,13 +21,15 @@ public interface InventoryService {
 
     List<InventoryResponse> getLowStock();
 
-    List<com.sergiocodev.app.dto.inventory.LowStockAlertResponse> getLowStockAlerts();
+    List<LowStockAlertResponse> getLowStockAlerts();
 
-    List<com.sergiocodev.app.dto.inventory.ExpiringLotResponse> getExpiringLots(Integer days);
+    List<ExpiringLotResponse> getExpiringLots(Integer days);
 
-    InventoryResponse registerStockAdjustment(com.sergiocodev.app.dto.inventory.StockAdjustmentRequest request);
+    InventoryResponse registerStockAdjustment(StockAdjustmentRequest request);
 
-    List<com.sergiocodev.app.dto.inventory.KardexHistoryResponse> getKardexHistoryByProduct(Long productId);
+    List<KardexHistoryResponse> getKardexHistoryByProduct(Long productId);
 
-    List<com.sergiocodev.app.dto.inventory.KardexHistoryResponse> getKardexHistoryByLot(Long lotId);
+    List<KardexHistoryResponse> getKardexHistoryByLot(Long lotId);
+
+    void reverseStockForSale(Long saleId);
 }

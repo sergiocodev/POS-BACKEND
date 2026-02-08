@@ -1,8 +1,14 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
+import com.sergiocodev.app.dto.sale.CartCalculationRequest;
+import com.sergiocodev.app.dto.sale.CartCalculationResponse;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
+import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
+import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
+
 import java.util.List;
 
 public interface SaleService {
@@ -28,14 +34,15 @@ public interface SaleService {
 
     List<ProductForSaleResponse> listProductsForSale(Long establishmentId);
 
-    List<com.sergiocodev.app.dto.sale.ProductSearchResponse> searchProductsForPOS(String query, Long establishmentId);
+    List<ProductSearchResponse> searchProductsForPOS(String query, Long establishmentId);
 
-    com.sergiocodev.app.dto.sale.BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId);
+    BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId);
 
-    com.sergiocodev.app.dto.sale.CartCalculationResponse calculateCartTotals(
-            com.sergiocodev.app.dto.sale.CartCalculationRequest request);
+    CartCalculationResponse calculateCartTotals(CartCalculationRequest request);
 
     SaleResponse processSaleTransaction(SaleRequest request, Long userId);
 
     byte[] getSaleDocumentPDF(Long id, String format);
+
+    EmitInvoiceResponse emitInvoiceToOSE(Long saleId);
 }

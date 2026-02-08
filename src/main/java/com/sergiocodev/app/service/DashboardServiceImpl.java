@@ -33,7 +33,6 @@ public class DashboardServiceImpl implements DashboardService {
                 LocalDateTime now = LocalDateTime.now();
                 LocalDateTime startToday = now.toLocalDate().atStartOfDay();
 
-                // Today up to current hour/minute
                 List<Sale> salesToday = saleRepository.findAll().stream()
                                 .filter(s -> s.getEstablishment().getId().equals(establishmentId)
                                                 && !s.isVoided()
@@ -41,7 +40,6 @@ public class DashboardServiceImpl implements DashboardService {
                                                 && s.getDate().isBefore(now))
                                 .collect(Collectors.toList());
 
-                // Yesterday up to same hour/minute
                 LocalDateTime startYesterday = startToday.minusDays(1);
                 LocalDateTime endYesterday = now.minusDays(1);
                 List<Sale> salesYesterday = saleRepository.findAll().stream()
@@ -61,7 +59,6 @@ public class DashboardServiceImpl implements DashboardService {
                 long countYesterday = salesYesterday.size();
                 String countTrend = calculateTrend(new BigDecimal(countToday), new BigDecimal(countYesterday));
 
-                // Alerts logic
                 LocalDateTime threeMonthsFromNow = now.plusMonths(3);
                 LocalDateTime yesterday = now.minusDays(1);
 
@@ -95,7 +92,6 @@ public class DashboardServiceImpl implements DashboardService {
                                 .filter(inv -> inv.getQuantity().compareTo(BigDecimal.ZERO) <= 0)
                                 .count();
 
-                // Building the structured response
                 DashboardSummaryResponse.ValueTrend salesVT = new DashboardSummaryResponse.ValueTrend(totalToday, "PEN",
                                 salesTrend);
                 DashboardSummaryResponse.ValueTrendLong countVT = new DashboardSummaryResponse.ValueTrendLong(

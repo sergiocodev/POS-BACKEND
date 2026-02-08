@@ -1,5 +1,6 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sunat.VoidInvoiceRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentResponse;
 import com.sergiocodev.app.model.Sale;
@@ -11,6 +12,8 @@ import com.sergiocodev.app.repository.UserRepository;
 import com.sergiocodev.app.repository.VoidedDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.sergiocodev.app.util.XmlUblGenerator;
+import com.sergiocodev.app.util.SunatOseClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -25,6 +28,10 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         private final SaleRepository saleRepository;
         private final EstablishmentRepository establishmentRepository;
         private final UserRepository userRepository;
+        private final InventoryService inventoryService;
+        private final XmlUblGenerator xmlUblGenerator;
+        private final DigitalSignatureService digitalSignatureService;
+        private final SunatOseClient sunatOseClient;
 
         @Override
         @Transactional
@@ -37,18 +44,15 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
                 entity.setIssueDate(request.issueDate());
                 entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.PENDING);
 
-                // Create items and mark sales as voided
                 for (Long saleId : request.saleIds()) {
                         Sale sale = saleRepository.findById(saleId)
                                         .orElseThrow(() -> new RuntimeException("Sale not found: " + saleId));
 
-                        // Mark sale as voided
                         sale.setVoided(true);
                         sale.setVoidedAt(LocalDateTime.now());
                         sale.setVoidReason("Incluido en baja SUNAT");
                         saleRepository.save(sale);
 
-                        // Create voided document item
                         VoidedDocumentItem item = new VoidedDocumentItem();
                         item.setVoidedDocument(entity);
                         item.setSale(sale);
@@ -109,6 +113,70 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
                         doc.setSunatDescription("Aceptado por SUNAT (Simulado)");
                         doc.setTicketSunat("TS-" + System.currentTimeMillis());
                         repository.save(doc);
+                }
+        }
+
+        @Override
+        @Transactional
+        public VoidedDocumentResponse voidInvoice(VoidInvoiceRequest request,
+                        Long userId) {
+                Sale sale = saleRepository.findById(request.getSaleId())
+                                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + request.getSaleId()));
+
+                if (sale.isVoided()) {
+                        throw new RuntimeException("La venta ya está anulada");
+                }
+
+                VoidedDocument entity = new VoidedDocument();
+                entity.setEstablishment(sale.getEstablishment());
+                entity.setUser(userRepository.findById(userId).orElse(sale.getUser()));
+                entity.setIssueDate(java.time.LocalDate.now());
+                entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.PENDING);
+
+                String ticket = "RA-" + System.currentTimeMillis();
+                entity.setTicketSunat(ticket);
+
+                VoidedDocumentItem item = new VoidedDocumentItem();
+                item.setVoidedDocument(entity);
+                item.setSale(sale);
+                item.setDescription(request.getReason());
+                entity.getItems().add(item);
+
+                entity = repository.save(entity);
+
+                try {
+                        String xml = xmlUblGenerator.generateVoidedDocumentXml(entity);
+                        String fileName = ticket + ".xml";
+
+                        String signedXml = digitalSignatureService.signXml(xml);
+                        SunatOseClient.SunatOseResponse oseResponse = sunatOseClient.sendVoidedDocument(signedXml,
+                                        fileName);
+
+                        if ("0".equals(oseResponse.getStatusCode())) {
+                                entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.ACCEPTED);
+                                entity.setSunatDescription(oseResponse.getStatusMessage());
+                                entity.setXmlUrl("mock/voided/" + fileName);
+                                entity.setCdrUrl("mock/voided/R-" + fileName);
+
+                                inventoryService.reverseStockForSale(sale.getId());
+
+                                sale.setVoided(true);
+                                sale.setVoidedAt(LocalDateTime.now());
+                                sale.setVoidReason(request.getReason());
+                                sale.setSunatStatus(Sale.SunatStatus.VOIDED);
+                                saleRepository.save(sale);
+
+                        } else {
+                                entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.REJECTED);
+                                entity.setSunatDescription(oseResponse.getStatusMessage());
+                        }
+
+                        return new VoidedDocumentResponse(repository.save(entity));
+
+                } catch (Exception e) {
+                        entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.REJECTED);
+                        entity.setSunatDescription("Error interno: " + e.getMessage());
+                        return new VoidedDocumentResponse(repository.save(entity));
                 }
         }
 }

@@ -75,7 +75,6 @@ public class ReportServiceImpl implements ReportService {
                         BigDecimal revenue = items.stream().map(SaleItem::getAmount).reduce(BigDecimal.ZERO,
                                         BigDecimal::add);
 
-                        // Calculate cost using recorded unitCost
                         BigDecimal cost = items.stream()
                                         .map(item -> (item.getUnitCost() != null ? item.getUnitCost() : BigDecimal.ZERO)
                                                         .multiply(item.getQuantity()))
@@ -243,13 +242,11 @@ public class ReportServiceImpl implements ReportService {
         public List<LowRotationReport> getLowRotation(int days, Long establishmentId) {
                 LocalDateTime threshold = LocalDateTime.now().minusDays(days);
 
-                // Get all products with stock in establishment
                 List<Inventory> inventoryList = inventoryRepository.findAll().stream()
                                 .filter(inv -> inv.getEstablishment().getId().equals(establishmentId)
                                                 && inv.getQuantity().compareTo(BigDecimal.ZERO) > 0)
                                 .collect(Collectors.toList());
 
-                // Find last sale date for each product
                 return inventoryList.stream()
                                 .collect(Collectors.groupingBy(inv -> inv.getLot().getProduct()))
                                 .entrySet().stream()
@@ -265,7 +262,7 @@ public class ReportServiceImpl implements ReportService {
                                                         .filter(item -> item.getProduct().getId().equals(p.getId()))
                                                         .map(item -> item.getSale().getDate())
                                                         .max(LocalDateTime::compareTo)
-                                                        .orElse(p.getCreatedAt()); // Use creation date if never sold
+                                                        .orElse(p.getCreatedAt());
 
                                         return new LowRotationReport(p.getId(), p.getTradeName(), lastSale, stock);
                                 })

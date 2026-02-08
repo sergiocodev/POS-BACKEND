@@ -1,5 +1,6 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sunat.VoidInvoiceRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentResponse;
 import com.sergiocodev.app.model.VoidedDocument;
@@ -19,4 +20,6 @@ public interface VoidedDocumentService {
     List<VoidedDocumentResponse> getByEstablishment(Long establishmentId);
 
     void processDailyVoids(Long establishmentId);
+
+    VoidedDocumentResponse voidInvoice(VoidInvoiceRequest request, Long userId);
 }

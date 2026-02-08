@@ -87,7 +87,6 @@ public class PermissionService {
      */
     @Transactional
     public PermissionResponse create(CreatePermissionRequest request) {
-        // Verificar que no exista un permiso con el mismo nombre
         if (permissionRepository.findByName(request.name()).isPresent()) {
             throw new BadRequestException("Ya existe un permiso con el nombre: " + request.name());
         }
@@ -109,7 +108,6 @@ public class PermissionService {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Permiso no encontrado con ID: " + id));
 
-        // Verificar que no exista otro permiso con el mismo nombre
         permissionRepository.findByName(request.name()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
                 throw new BadRequestException("Ya existe otro permiso con el nombre: " + request.name());
@@ -132,7 +130,6 @@ public class PermissionService {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + id));
 
-        // Verificar que el permiso no esté asignado a ningún rol
         if (roleRepository.existsByPermissions_Id(id)) {
             throw new BadRequestException("No se puede eliminar el permiso '" + permission.getName() +
                     "' porque está asignado a uno o más roles");

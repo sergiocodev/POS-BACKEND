@@ -42,7 +42,7 @@ public class FileStorageService {
                     .normalize().toAbsolutePath();
 
             if (!destinationFile.getParent().equals(targetFolder.toAbsolutePath())) {
-                // This is a security check
+
                 throw new RuntimeException("Cannot store file outside current directory.");
             }
 

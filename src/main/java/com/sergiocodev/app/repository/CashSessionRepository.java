@@ -11,12 +11,11 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
         Optional<CashSession> findByCashRegisterIdAndUserIdAndStatus(Long cashRegisterId, Long userId,
                         CashSession.SessionStatus status);
 
-        java.util.Optional<CashSession> findByUserIdAndStatus(Long userId,
-                        com.sergiocodev.app.model.CashSession.SessionStatus status);
+        Optional<CashSession> findByUserIdAndStatus(Long userId, CashSession.SessionStatus status);
 
         java.util.List<CashSession> findByUserIdAndStatusOrderByOpenedAtDesc(Long userId,
-                        com.sergiocodev.app.model.CashSession.SessionStatus status);
+                        CashSession.SessionStatus status);
 
         java.util.Optional<CashSession> findByCashRegisterIdAndStatus(Long cashRegisterId,
-                        com.sergiocodev.app.model.CashSession.SessionStatus status);
+                        CashSession.SessionStatus status);
 }

@@ -10,6 +10,5 @@ import java.util.List;
 public interface CashMovementRepository extends JpaRepository<CashMovement, Long> {
     List<CashMovement> findByCashSessionId(Long cashSessionId);
 
-    List<CashMovement> findByCashSessionIdAndType(Long cashSessionId,
-            com.sergiocodev.app.model.CashMovement.MovementType type);
+    List<CashMovement> findByCashSessionIdAndType(Long cashSessionId, CashMovement.MovementType type);
 }

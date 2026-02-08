@@ -1,6 +1,12 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
+import com.sergiocodev.app.dto.sale.CartCalculationRequest;
+import com.sergiocodev.app.dto.sale.CartCalculationResponse;
+import com.sergiocodev.app.dto.sale.CartItemCalculation;
+import com.sergiocodev.app.dto.sale.CartItemRequest;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
+import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
 import com.sergiocodev.app.mapper.SaleMapper;
@@ -21,8 +27,13 @@ import com.sergiocodev.app.repository.ProductLotRepository;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.CashSessionRepository;
+import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
+import com.sergiocodev.app.util.XmlUblGenerator;
+import com.sergiocodev.app.util.SunatOseClient;
+import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
+import com.sergiocodev.app.model.Sale.SunatStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +56,9 @@ public class SaleServiceImpl implements SaleService {
     private final StockMovementRepository stockMovementRepository;
     private final CashSessionRepository cashSessionRepository;
     private final SaleMapper mapper;
+    private final XmlUblGenerator xmlUblGenerator;
+    private final DigitalSignatureService digitalSignatureService;
+    private final SunatOseClient sunatOseClient;
 
     @Override
     @Transactional
@@ -58,14 +72,13 @@ public class SaleServiceImpl implements SaleService {
         }
         entity.setUser(userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
-        entity.setSeries("B001"); // Dummy
-        entity.setNumber("000001"); // Dummy
+        entity.setSeries("B001");
+        entity.setNumber("000001");
         entity.setDate(LocalDateTime.now());
         entity.setStatus(Sale.SaleStatus.COMPLETED);
 
-        // Find active cash session
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                .orElseThrow(() -> new com.sergiocodev.app.exception.BadRequestException(
+                .orElseThrow(() -> new BadRequestException(
                         "No specific active cash session found for user. Please open a cash session before making a sale."));
         entity.setCashSession(session);
 
@@ -101,7 +114,6 @@ public class SaleServiceImpl implements SaleService {
             payment.setSale(entity);
             entity.getPayments().add(payment);
 
-            // Update cash session calculated balance if Cash
             if (session != null && pr.paymentMethod() == SalePayment.PaymentMethod.EFECTIVO) {
                 session.setCalculatedBalance(session.getCalculatedBalance().add(pr.amount()));
                 cashSessionRepository.save(session);
@@ -134,10 +146,9 @@ public class SaleServiceImpl implements SaleService {
 
         inventory.setQuantity(inventory.getQuantity().subtract(item.getQuantity()));
         inventory.setLastMovement(LocalDateTime.now());
-        item.setUnitCost(inventory.getCostPrice()); // Record cost at time of sale
+        item.setUnitCost(inventory.getCostPrice());
         inventoryRepository.save(inventory);
 
-        // Stock Movement
         StockMovement movement = new StockMovement();
         movement.setEstablishment(sale.getEstablishment());
         movement.setLot(item.getLot());
@@ -157,8 +168,8 @@ public class SaleServiceImpl implements SaleService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         sale.setSubTotal(subTotal);
-        sale.setTax(subTotal.multiply(new BigDecimal("0.18"))); // Simplified
-        sale.setTotal(subTotal); // Assuming inclusive
+        sale.setTax(subTotal.multiply(new BigDecimal("0.18")));
+        sale.setTotal(subTotal);
         return sale;
     }
 
@@ -191,7 +202,6 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public byte[] getPdf(Long id) {
-        // Mock PDF generation
         return "PDF Content Placeholder".getBytes();
     }
 
@@ -231,7 +241,6 @@ public class SaleServiceImpl implements SaleService {
         note.setTotal(original.getTotal().negate());
         note.setStatus(Sale.SaleStatus.COMPLETED);
 
-        // Update Inventory & log StockMovement for each item
         for (SaleItem originalItem : original.getItems()) {
             if (originalItem.getLot() != null) {
                 Inventory inventory = inventoryRepository
@@ -247,7 +256,7 @@ public class SaleServiceImpl implements SaleService {
                 StockMovement movement = new StockMovement();
                 movement.setLot(originalItem.getLot());
                 movement.setEstablishment(original.getEstablishment());
-                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN); // RETURN/CREDIT_NOTE type would be better
+                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
                 movement.setQuantity(originalItem.getQuantity());
                 movement.setBalanceAfter(inventory.getQuantity());
                 movement.setReferenceTable("sales");
@@ -258,7 +267,6 @@ public class SaleServiceImpl implements SaleService {
             }
         }
 
-        // Update Cash Session if applicable (Refund from CURRENT user's session)
         CashSession currentSession = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .orElse(null);
 
@@ -295,7 +303,6 @@ public class SaleServiceImpl implements SaleService {
         sale.setVoidReason(reason);
         repository.save(sale);
 
-        // Logical reverse of inventory
         for (SaleItem item : sale.getItems()) {
             if (item.getLot() != null) {
                 Inventory inventory = inventoryRepository
@@ -319,7 +326,6 @@ public class SaleServiceImpl implements SaleService {
             }
         }
 
-        // Update Cash Session if applicable (Refund from CURRENT user's session)
         CashSession currentSession = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .orElse(null);
 
@@ -373,7 +379,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.sergiocodev.app.dto.sale.ProductSearchResponse> searchProductsForPOS(String query,
+    public List<ProductSearchResponse> searchProductsForPOS(String query,
             Long establishmentId) {
         List<Inventory> inventoryList = inventoryRepository.searchProductsForPOS(query, establishmentId);
         return inventoryList.stream().map(inventory -> {
@@ -388,7 +394,7 @@ public class SaleServiceImpl implements SaleService {
                         .collect(Collectors.joining(", "));
             }
 
-            return new com.sergiocodev.app.dto.sale.ProductSearchResponse(
+            return new ProductSearchResponse(
                     inventory.getId(),
                     product.getId(),
                     product.getTradeName(),
@@ -408,31 +414,26 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public com.sergiocodev.app.dto.sale.BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId) {
+    public BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId) {
         Product product = productRepository.findByBarcodeAndActiveTrue(barcode)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with barcode: " + barcode));
 
-        // FEFO: Find lot with nearest expiry date having > 0 stock in this
-        // establishment
         Inventory inventory = inventoryRepository
                 .findFirstByEstablishmentIdAndLotProductIdAndQuantityGreaterThanOrderByLotExpiryDateAsc(
                         establishmentId, product.getId(), BigDecimal.ZERO)
                 .orElse(null);
 
         if (inventory == null) {
-            // Product exists but no stock
-            return new com.sergiocodev.app.dto.sale.BarcodeScanResponse(
+            return new BarcodeScanResponse(
                     product.getId(),
                     product.getTradeName(),
                     product.getBarcode(),
                     product.getPurchaseFactor() != null ? new BigDecimal(product.getPurchaseFactor())
-                            : BigDecimal.ZERO, // Fallback price? NO, we need sales price from inventory usually.
-                                               // But no inventory means no price?
-                                               // Let's return blank details or handle gracefully.
+                            : BigDecimal.ZERO,
                     null, null, null, BigDecimal.ZERO, "No stock available");
         }
 
-        return new com.sergiocodev.app.dto.sale.BarcodeScanResponse(
+        return new BarcodeScanResponse(
                 product.getId(),
                 product.getTradeName(),
                 product.getBarcode(),
@@ -446,16 +447,16 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public com.sergiocodev.app.dto.sale.CartCalculationResponse calculateCartTotals(
-            com.sergiocodev.app.dto.sale.CartCalculationRequest request) {
+    public CartCalculationResponse calculateCartTotals(
+            CartCalculationRequest request) {
         BigDecimal subTotal = BigDecimal.ZERO;
         BigDecimal totalTax = BigDecimal.ZERO;
         BigDecimal totalDiscount = BigDecimal.ZERO;
         BigDecimal total = BigDecimal.ZERO;
         java.util.Map<String, BigDecimal> taxBreakdown = new java.util.HashMap<>();
-        List<com.sergiocodev.app.dto.sale.CartItemCalculation> itemCalculations = new java.util.ArrayList<>();
+        List<CartItemCalculation> itemCalculations = new java.util.ArrayList<>();
 
-        for (com.sergiocodev.app.dto.sale.CartItemRequest itemReq : request.items()) {
+        for (CartItemRequest itemReq : request.items()) {
             Product product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + itemReq.productId()));
 
@@ -519,7 +520,7 @@ public class SaleServiceImpl implements SaleService {
             String taxName = product.getTaxType() != null ? product.getTaxType().getName() : "IGV";
             taxBreakdown.merge(taxName, infoTaxAmount, BigDecimal::add);
 
-            itemCalculations.add(new com.sergiocodev.app.dto.sale.CartItemCalculation(
+            itemCalculations.add(new CartItemCalculation(
                     product.getId(),
                     quantity,
                     unitPrice,
@@ -532,15 +533,12 @@ public class SaleServiceImpl implements SaleService {
             BigDecimal glDisc = request.globalDiscount();
             totalDiscount = totalDiscount.add(glDisc);
             subTotal = subTotal.subtract(glDisc);
-            // Recalculate tax? Complex. Let's apply global discount proportionally or just
-            // subtract from total.
-            // For simplicity, just subtract from total/subtotal.
         }
 
-        total = subTotal; // Inclusive
+        total = subTotal;
 
-        return new com.sergiocodev.app.dto.sale.CartCalculationResponse(
-                subTotal.subtract(totalTax), // Net Subtotal
+        return new CartCalculationResponse(
+                subTotal.subtract(totalTax),
                 totalTax,
                 totalDiscount,
                 total,
@@ -551,10 +549,6 @@ public class SaleServiceImpl implements SaleService {
     @Override
     @Transactional
     public SaleResponse processSaleTransaction(SaleRequest request, Long userId) {
-        // Reuse create logic or duplicate for safety/customization
-        // Since logic is identical for now, let's call create.
-        // User requested "Cierra la venta... Resta cantidad... Inserta movimiento...".
-        // create() already does this.
         return create(request, userId);
     }
 
@@ -563,12 +557,64 @@ public class SaleServiceImpl implements SaleService {
         Sale sale = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + id));
 
-        // Mock generation based on format
         String content = "SALE DOCUMENT: " + sale.getSeries() + "-" + sale.getNumber() + "\n" +
                 "FORMAT: " + (format != null ? format : "A4") + "\n" +
                 "DATE: " + sale.getDate() + "\n" +
                 "TOTAL: " + sale.getTotal();
 
         return content.getBytes();
+    }
+
+    @Override
+    @Transactional
+    public EmitInvoiceResponse emitInvoiceToOSE(Long saleId) {
+        Sale sale = repository.findWithItemsById(saleId)
+                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+
+        if (sale.getSunatStatus() == SunatStatus.ACCEPTED) {
+            throw new RuntimeException("La venta ya fue aceptada por SUNAT");
+        }
+
+        try {
+            // 1. Generate XML
+            String xml = xmlUblGenerator.generateInvoiceXml(sale);
+            String fileName = sale.getSeries() + "-" + sale.getNumber() + ".xml";
+
+            // 2. Sign XML
+            String signedXml = digitalSignatureService.signXml(xml);
+
+            // 3. Send to OSE
+            SunatOseClient.SunatOseResponse oseResponse = sunatOseClient.sendInvoice(signedXml, fileName);
+
+            // 4. Update Sale
+            if ("0".equals(oseResponse.getStatusCode())) {
+                sale.setSunatStatus(SunatStatus.ACCEPTED);
+            } else {
+                sale.setSunatStatus(SunatStatus.REJECTED);
+            }
+
+            sale.setSunatMessage(oseResponse.getStatusMessage());
+            sale.setXmlUrl("mock/path/" + fileName);
+            sale.setCdrUrl("mock/path/R-" + fileName);
+            sale.setHashCpe("MOCK_HASH");
+            sale.setSunatResponseJson("{\"ticket\": \"" + oseResponse.getTicket() + "\"}");
+
+            repository.save(sale);
+
+            return EmitInvoiceResponse.builder()
+                    .saleId(sale.getId())
+                    .sunatStatus(sale.getSunatStatus().name())
+                    .sunatMessage(sale.getSunatMessage())
+                    .xmlUrl(sale.getXmlUrl())
+                    .cdrUrl(sale.getCdrUrl())
+                    .hashCpe(sale.getHashCpe())
+                    .build();
+
+        } catch (Exception e) {
+            sale.setSunatStatus(SunatStatus.REJECTED);
+            sale.setSunatMessage(e.getMessage());
+            repository.save(sale);
+            throw new RuntimeException("Error emitiendo a SUNAT: " + e.getMessage());
+        }
     }
 }

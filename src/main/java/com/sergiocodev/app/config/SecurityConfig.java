@@ -23,20 +23,6 @@ public class SecurityConfig {
                 this.jwtAuthFilter = jwtAuthFilter;
         }
 
-        /**
-         * Security filter chain configuration
-         * 
-         * PUBLIC ENDPOINTS (no authentication):
-         * - /api/auth/login - To obtain the JWT token
-         * - /api/auth/register - To register new users
-         * - /swagger-ui/** - API Documentation
-         * 
-         * PROTECTED ENDPOINTS (require JWT token in Authorization header):
-         * - All other endpoints (/api/customers/**, /api/users/**, etc.)
-         * 
-         * To use protected endpoints, include in the header:
-         * Authorization: Bearer {token_obtained_from_login}
-         */
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http

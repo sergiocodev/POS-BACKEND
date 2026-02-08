@@ -47,9 +47,6 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
     }
 
-    // Returning User for internal use if needed, but usually we return Response
-    // Let's refactor to return UserResponse for the service layer used by
-    // controllers
     @Transactional
     public UserResponse create(UserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
