@@ -1,5 +1,9 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.dto.sale.ProductSearchResponse;
+import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
+import com.sergiocodev.app.dto.sale.CartCalculationRequest;
+import com.sergiocodev.app.dto.sale.CartCalculationResponse;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
@@ -112,5 +116,49 @@ public class SaleController {
     public ResponseEntity<ResponseApi<List<ProductForSaleResponse>>> listProductsForSale(
             @RequestParam Long establishmentId) {
         return ResponseEntity.ok(ResponseApi.success(service.listProductsForSale(establishmentId)));
+    }
+
+    @GetMapping("/SearchProductsForPOS")
+    @Operation(summary = "Busca productos por nombre o código para POS")
+    public ResponseEntity<ResponseApi<List<ProductSearchResponse>>> searchProductsForPOS(
+            @RequestParam String query,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.searchProductsForPOS(query, establishmentId)));
+    }
+
+    @GetMapping("/GetProductByBarcodeScan")
+    @Operation(summary = "Obtener producto por escaneo de código de barras (FEFO)")
+    public ResponseEntity<ResponseApi<BarcodeScanResponse>> getProductByBarcodeScan(
+            @RequestParam String barcode,
+            @RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getProductByBarcode(barcode, establishmentId)));
+    }
+
+    @PostMapping("/CalculateCartTotals")
+    @Operation(summary = "Calcular totales del carrito (impuestos, descuentos)")
+    public ResponseEntity<ResponseApi<CartCalculationResponse>> calculateCartTotals(
+            @Valid @RequestBody CartCalculationRequest request) {
+        return ResponseEntity.ok(ResponseApi.success(service.calculateCartTotals(request)));
+    }
+
+    @PostMapping("/ProcessSaleTransaction")
+    @Operation(summary = "Procesar transacción de venta (POS)")
+    public ResponseEntity<ResponseApi<SaleResponse>> processSaleTransaction(
+            @Valid @RequestBody SaleRequest request,
+            @RequestParam Long userId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseApi.success(service.processSaleTransaction(request, userId),
+                        "Venta procesada exitosamente"));
+    }
+
+    @GetMapping("/GetSaleDocumentPDF")
+    @Operation(summary = "Obtener documento de venta (Ticket, A4, 80mm)")
+    public ResponseEntity<byte[]> getSaleDocumentPDF(
+            @RequestParam Long id,
+            @RequestParam(defaultValue = "A4") String format) {
+        byte[] pdf = service.getSaleDocumentPDF(id, format);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=sale-" + id + "-" + format + ".pdf")
+                .body(pdf);
     }
 }

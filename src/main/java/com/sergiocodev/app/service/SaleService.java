@@ -27,4 +27,15 @@ public interface SaleService {
     void invalidate(Long id, String reason, Long userId);
 
     List<ProductForSaleResponse> listProductsForSale(Long establishmentId);
+
+    List<com.sergiocodev.app.dto.sale.ProductSearchResponse> searchProductsForPOS(String query, Long establishmentId);
+
+    com.sergiocodev.app.dto.sale.BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId);
+
+    com.sergiocodev.app.dto.sale.CartCalculationResponse calculateCartTotals(
+            com.sergiocodev.app.dto.sale.CartCalculationRequest request);
+
+    SaleResponse processSaleTransaction(SaleRequest request, Long userId);
+
+    byte[] getSaleDocumentPDF(Long id, String format);
 }

@@ -32,4 +32,25 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                         "WHERE i.establishment.id = :establishmentId")
         java.util.List<Inventory> findAllByEstablishmentId(
                         @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
+
+        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i " +
+                        "JOIN FETCH i.lot l " +
+                        "JOIN FETCH l.product p " +
+                        "LEFT JOIN FETCH p.category " +
+                        "LEFT JOIN FETCH p.laboratory " +
+                        "LEFT JOIN FETCH p.presentation " +
+                        "LEFT JOIN FETCH p.ingredients pi " +
+                        "LEFT JOIN FETCH pi.activeIngredient " +
+                        "WHERE i.establishment.id = :establishmentId " +
+                        "AND p.active = true " +
+                        "AND i.quantity > 0 " +
+                        "AND (LOWER(p.barcode) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')))")
+        java.util.List<Inventory> searchProductsForPOS(
+                        @org.springframework.data.repository.query.Param("query") String query,
+                        @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
+
+        java.util.Optional<Inventory> findFirstByEstablishmentIdAndLotProductIdAndQuantityGreaterThanOrderByLotExpiryDateAsc(
+                        Long establishmentId, Long productId, java.math.BigDecimal quantity);
 }

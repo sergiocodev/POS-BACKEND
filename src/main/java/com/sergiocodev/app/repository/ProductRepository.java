@@ -36,4 +36,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                         @org.springframework.data.repository.query.Param("categoryId") Long categoryId,
                         @org.springframework.data.repository.query.Param("brandId") Long brandId,
                         @org.springframework.data.repository.query.Param("active") Boolean active);
+
+        java.util.Optional<Product> findByBarcodeAndActiveTrue(String barcode);
 }
