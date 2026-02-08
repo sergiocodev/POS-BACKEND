@@ -50,11 +50,14 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     public SaleResponse create(SaleRequest request, Long userId) {
         Sale entity = mapper.toEntity(request);
-        entity.setEstablishment(establishmentRepository.findById(request.establishmentId()).orElse(null));
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Establishment not found: " + request.establishmentId())));
         if (request.customerId() != null) {
             entity.setCustomer(customerRepository.findById(request.customerId()).orElse(null));
         }
-        entity.setUser(userRepository.findById(userId).orElse(null));
+        entity.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
         entity.setSeries("B001"); // Dummy
         entity.setNumber("000001"); // Dummy
         entity.setDate(LocalDateTime.now());
@@ -62,7 +65,8 @@ public class SaleServiceImpl implements SaleService {
 
         // Find active cash session
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                .orElse(null);
+                .orElseThrow(() -> new com.sergiocodev.app.exception.BadRequestException(
+                        "No specific active cash session found for user. Please open a cash session before making a sale."));
         entity.setCashSession(session);
 
         for (var ir : request.items()) {
@@ -254,16 +258,20 @@ public class SaleServiceImpl implements SaleService {
             }
         }
 
-        // Update Cash Session if applicable
-        CashSession session = original.getCashSession();
-        if (session != null && session.getStatus() == CashSession.SessionStatus.OPEN) {
+        // Update Cash Session if applicable (Refund from CURRENT user's session)
+        CashSession currentSession = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                .orElse(null);
+
+        if (currentSession != null) {
             BigDecimal refundAmount = original.getPayments().stream()
                     .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
                     .map(SalePayment::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            session.setCalculatedBalance(session.getCalculatedBalance().subtract(refundAmount));
-            cashSessionRepository.save(session);
+            if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+                currentSession.setCalculatedBalance(currentSession.getCalculatedBalance().subtract(refundAmount));
+                cashSessionRepository.save(currentSession);
+            }
         }
 
         return mapper.toResponse(repository.save(note));
@@ -311,17 +319,19 @@ public class SaleServiceImpl implements SaleService {
             }
         }
 
-        // Update Cash Session if applicable
-        CashSession session = sale.getCashSession();
-        if (session != null && session.getStatus() == CashSession.SessionStatus.OPEN) {
+        // Update Cash Session if applicable (Refund from CURRENT user's session)
+        CashSession currentSession = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                .orElse(null);
+
+        if (currentSession != null) {
             BigDecimal refundAmount = sale.getPayments().stream()
                     .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
                     .map(SalePayment::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-                session.setCalculatedBalance(session.getCalculatedBalance().subtract(refundAmount));
-                cashSessionRepository.save(session);
+                currentSession.setCalculatedBalance(currentSession.getCalculatedBalance().subtract(refundAmount));
+                cashSessionRepository.save(currentSession);
             }
         }
     }

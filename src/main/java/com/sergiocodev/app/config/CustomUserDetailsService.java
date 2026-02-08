@@ -19,9 +19,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findActiveByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "User not found: " + username));
+                        "User not found or deleted: " + username));
 
         if (!user.isActive()) {
             throw new org.springframework.security.authentication.DisabledException("The user is inactive");

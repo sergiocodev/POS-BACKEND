@@ -9,6 +9,18 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    java.util.List<User> findAllActive();
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.username = :username AND u.deletedAt IS NULL")
+    java.util.Optional<User> findActiveByUsername(String username);
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
+    java.util.Optional<User> findActiveByEmail(String email);
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE (u.username = :username OR u.email = :email) AND u.deletedAt IS NULL")
+    java.util.Optional<User> findActiveByUsernameOrEmail(String username, String email);
+
     /**
      * Busca un usuario por su nombre de usuario
      */

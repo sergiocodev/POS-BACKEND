@@ -26,42 +26,68 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final ProductLotRepository lotRepository;
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final CashSessionRepository cashSessionRepository;
+    private final CashMovementRepository cashMovementRepository;
     private final PurchaseMapper purchaseMapper;
 
     @Override
     @Transactional
     public PurchaseResponse create(PurchaseRequest request, Long userId) {
         Purchase entity = purchaseMapper.toEntity(request);
-        entity.setSupplier(supplierRepository.findById(request.supplierId())
-                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + request.supplierId())));
-        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
+        entity.setSupplier(supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + request.getSupplierId())));
+        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId())
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Establishment not found: " + request.establishmentId())));
+                        () -> new ResourceNotFoundException(
+                                "Establishment not found: " + request.getEstablishmentId())));
         entity.setUser(userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
         entity.setArrivalDate(LocalDateTime.now());
         entity.setStatus(Purchase.PurchaseStatus.RECEIVED);
 
-        for (var ir : request.items()) {
-            Product product = productRepository.findById(ir.productId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.productId()));
+        entity.setPaymentMethod(request.getPaymentMethod());
 
-            ProductLot lot = findOrCreateLot(product, ir.lotCode(), ir.expiryDate());
+        for (var ir : request.getItems()) {
+            Product product = productRepository.findById(ir.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.getProductId()));
+
+            ProductLot lot = findOrCreateLot(product, ir.getLotCode(), ir.getExpiryDate());
 
             PurchaseItem item = purchaseMapper.toItemEntity(ir);
             item.setPurchase(entity);
             item.setProduct(product);
 
-            BigDecimal itemTotal = ir.unitCost().multiply(new BigDecimal(ir.quantity()));
+            BigDecimal itemTotal = ir.getUnitCost().multiply(new BigDecimal(ir.getQuantity()));
             item.setTotalCost(itemTotal);
             entity.getItems().add(item);
 
-            updateInventory(entity, lot, ir.quantity(), ir.bonusQuantity(), ir.unitCost());
+            updateInventory(entity, lot, ir.getQuantity(), ir.getBonusQuantity(), ir.getUnitCost());
         }
 
         calculateTotals(entity);
 
-        return purchaseMapper.toResponse(repository.save(entity));
+        Purchase savedEntity = repository.save(entity);
+
+        // Update Cash Session if PaymentMethod is EFECTIVO
+        if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.EFECTIVO) {
+            CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                    .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
+                            "No active cash session found for user: " + userId));
+
+            session.setCalculatedBalance(session.getCalculatedBalance().subtract(savedEntity.getTotal()));
+            cashSessionRepository.save(session);
+
+            CashMovement movement = new CashMovement();
+            movement.setCashSession(session);
+            movement.setAmount(savedEntity.getTotal());
+            movement.setType(CashMovement.MovementType.EXPENSE);
+            movement.setReferenceTable("purchases");
+            movement.setReferenceId(savedEntity.getId());
+            movement.setDescription("Compra / Purchase - Supplier: " + savedEntity.getSupplier().getName());
+            cashMovementRepository.save(movement);
+        }
+
+        return purchaseMapper.toResponse(savedEntity);
     }
 
     private ProductLot findOrCreateLot(Product product, String lotCode, java.time.LocalDate expiryDate) {

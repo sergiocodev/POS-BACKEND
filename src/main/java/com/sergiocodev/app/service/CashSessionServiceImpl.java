@@ -26,8 +26,12 @@ public class CashSessionServiceImpl implements CashSessionService {
     @Transactional
     public CashSessionResponse openSession(CashSessionRequest request, Long userId) {
         CashSession entity = new CashSession();
-        entity.setCashRegister(registerRepository.findById(request.cashRegisterId()).orElse(null));
-        entity.setUser(userRepository.findById(userId).orElse(null));
+        entity.setCashRegister(registerRepository.findById(request.cashRegisterId())
+                .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
+                        "Cash register not found: " + request.cashRegisterId())));
+        entity.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
+                        "User not found: " + userId)));
         entity.setOpeningBalance(request.openingBalance());
         entity.setCalculatedBalance(request.openingBalance());
         entity.setStatus(CashSession.SessionStatus.OPEN);
@@ -40,7 +44,8 @@ public class CashSessionServiceImpl implements CashSessionService {
     @Transactional
     public CashSessionResponse closeSession(Long id, BigDecimal closingBalance) {
         CashSession entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(
+                        () -> new com.sergiocodev.app.exception.ResourceNotFoundException("Session not found: " + id));
         entity.setClosingBalance(closingBalance);
         entity.setClosedAt(LocalDateTime.now());
         entity.setStatus(CashSession.SessionStatus.CLOSED);
@@ -66,7 +71,8 @@ public class CashSessionServiceImpl implements CashSessionService {
     public CashSessionResponse getById(Long id) {
         return repository.findById(id)
                 .map(CashSessionResponse::new)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(
+                        () -> new com.sergiocodev.app.exception.ResourceNotFoundException("Session not found: " + id));
     }
 
     @Override
@@ -88,7 +94,8 @@ public class CashSessionServiceImpl implements CashSessionService {
     @Transactional
     public CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance) {
         CashSession entity = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                .orElseThrow(() -> new RuntimeException("No active session found for user"));
+                .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
+                        "No active session found for user: " + userId));
 
         entity.setClosingBalance(closingBalance);
         entity.setClosedAt(LocalDateTime.now());

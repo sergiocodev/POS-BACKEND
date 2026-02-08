@@ -20,8 +20,8 @@ public record CashSessionResponse(
     public CashSessionResponse(CashSession session) {
         this(
                 session.getId(),
-                session.getCashRegister().getName(),
-                session.getUser().getUsername(),
+                session.getCashRegister() != null ? session.getCashRegister().getName() : "N/A",
+                session.getUser() != null ? session.getUser().getUsername() : "Unknown",
                 session.getOpeningBalance(),
                 session.getClosingBalance(),
                 session.getCalculatedBalance(),
@@ -30,6 +30,8 @@ public record CashSessionResponse(
                 session.getClosedAt(),
                 session.getNotes(),
                 session.getStatus(),
-                session.getCashRegister().getEstablishment().getId());
+                (session.getCashRegister() != null && session.getCashRegister().getEstablishment() != null)
+                        ? session.getCashRegister().getEstablishment().getId()
+                        : null);
     }
 }

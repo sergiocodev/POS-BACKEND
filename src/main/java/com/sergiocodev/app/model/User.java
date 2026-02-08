@@ -14,7 +14,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @org.hibernate.annotations.SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
-@org.hibernate.annotations.SQLRestriction("deleted_at IS NULL")
 public class User {
 
     @Id

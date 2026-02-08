@@ -4,6 +4,7 @@ import com.sergiocodev.app.dto.stockmovement.StockMovementRequest;
 import com.sergiocodev.app.dto.stockmovement.StockMovementResponse;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +24,11 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Transactional
     public StockMovementResponse create(StockMovementRequest request) {
         StockMovement entity = new StockMovement();
-        entity.setEstablishment(establishmentRepository.findById(request.establishmentId()).orElse(null));
-        entity.setLot(lotRepository.findById(request.lotId()).orElse(null));
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Establishment not found: " + request.establishmentId())));
+        entity.setLot(lotRepository.findById(request.lotId())
+                .orElseThrow(() -> new ResourceNotFoundException("Lot not found: " + request.lotId())));
         entity.setType(request.type());
         entity.setQuantity(request.quantity());
         entity.setBalanceAfter(request.balanceAfter());

@@ -30,7 +30,7 @@ public class UserService {
     private final UserMapper mapper;
 
     public List<UserResponse> getAll() {
-        return userRepository.findAll().stream()
+        return userRepository.findAllActive().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -42,7 +42,7 @@ public class UserService {
     }
 
     public UserResponse getByUsername(String username) {
-        return userRepository.findByUsername(username)
+        return userRepository.findActiveByUsername(username)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
     }
@@ -111,10 +111,9 @@ public class UserService {
 
     @Transactional
     public void delete(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found with id: " + id);
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        userRepository.delete(user);
     }
 
     @Transactional

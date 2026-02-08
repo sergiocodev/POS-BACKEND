@@ -41,10 +41,10 @@ public class AuthService {
         public LoginResponse login(LoginRequest request) {
                 String usernameOrEmail = request.usernameOrEmail();
 
-                // Find user by username or email
-                User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
+                // Find active user by username or email
+                User user = userRepository.findActiveByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                                 .orElseThrow(() -> new UserNotFoundException(
-                                                "User not found: " + usernameOrEmail));
+                                                "User not found or deleted: " + usernameOrEmail));
 
                 // Check if user is active
                 if (!user.isActive()) {
@@ -151,8 +151,8 @@ public class AuthService {
                         throw new RuntimeException("Invalid refresh token");
                 }
 
-                User user = userRepository.findByUsernameOrEmail(username, username)
-                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                User user = userRepository.findActiveByUsernameOrEmail(username, username)
+                                .orElseThrow(() -> new UserNotFoundException("User not found or deleted"));
 
                 String newToken = jwtUtil.generateToken(username);
                 // Optionally generate a new refresh token or return the same one
@@ -196,7 +196,7 @@ public class AuthService {
          */
         public User getCurrentUser() {
                 String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return userRepository.findByUsernameOrEmail(username, username)
-                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                return userRepository.findActiveByUsernameOrEmail(username, username)
+                                .orElseThrow(() -> new UserNotFoundException("User not found or deleted"));
         }
 }
