@@ -23,7 +23,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryResponse create(CategoryRequest request) {
+    public CategoryResponse createNewCategory(CategoryRequest request) {
         if (categoryRepository.existsByName(request.name())) {
             throw new DuplicateCategoryException("Category already exists with name: " + request.name());
         }
@@ -35,7 +35,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getAll() {
+    public List<CategoryResponse> getAllCategory() {
         return categoryRepository.findAll()
                 .stream()
                 .map(categoryMapper::toResponse)
@@ -44,7 +44,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoryResponse getById(Long id) {
+    public CategoryResponse getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found with ID: " + id));
         return categoryMapper.toResponse(category);
@@ -52,7 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryResponse update(Long id, CategoryRequest request) {
+    public CategoryResponse updateCategoryById(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found with ID: " + id));
 
@@ -68,7 +68,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
+    public void deleteCategoryById(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new CategoryNotFoundException("Category not found with ID: " + id);
         }

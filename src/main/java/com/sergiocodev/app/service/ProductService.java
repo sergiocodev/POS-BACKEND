@@ -7,6 +7,7 @@ import java.util.List;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 
 public interface ProductService {
+
     ProductResponse create(ProductRequest request);
 
     List<ProductResponse> getAll(Long categoryId, Long brandId, Boolean active);

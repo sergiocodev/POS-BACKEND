@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/api/v1/category")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Categories", description = "Endpoints para la gestión de categorías")
@@ -33,18 +33,19 @@ public class CategoryController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
-    @PostMapping
-    public ResponseEntity<ResponseApi<CategoryResponse>> create(@Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.create(request);
+    @PostMapping("/CreateNewCategory")
+    public ResponseEntity<ResponseApi<CategoryResponse>> createNewCategory(
+            @Valid @RequestBody CategoryRequest request) {
+        CategoryResponse response = categoryService.createNewCategory(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(response, "Categoría creada exitosamente"));
     }
 
     @Operation(summary = "Listar categorías", description = "Obtiene la lista de todas las categorías registradas")
     @ApiResponse(responseCode = "200", description = "List of categories obtained successfully")
-    @GetMapping
-    public ResponseEntity<ResponseApi<List<CategoryResponse>>> getAll() {
-        List<CategoryResponse> categories = categoryService.getAll();
+    @GetMapping("/GetAllCategory")
+    public ResponseEntity<ResponseApi<List<CategoryResponse>>> getAllCategory() {
+        List<CategoryResponse> categories = categoryService.getAllCategory();
         return ResponseEntity.ok(ResponseApi.success(categories));
     }
 
@@ -53,9 +54,9 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category found"),
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseApi<CategoryResponse>> getById(@PathVariable Long id) {
-        CategoryResponse response = categoryService.getById(id);
+    @GetMapping("/GetCategoryById/{id}")
+    public ResponseEntity<ResponseApi<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+        CategoryResponse response = categoryService.getCategoryById(id);
         return ResponseEntity.ok(ResponseApi.success(response));
     }
 
@@ -66,11 +67,11 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Category not found"),
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
-    @PutMapping("/{id}")
-    public ResponseEntity<ResponseApi<CategoryResponse>> update(
+    @PutMapping("/UpdateCategoryById/{id}")
+    public ResponseEntity<ResponseApi<CategoryResponse>> updateCategoryById(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request) {
-        CategoryResponse response = categoryService.update(id, request);
+        CategoryResponse response = categoryService.updateCategoryById(id, request);
         return ResponseEntity.ok(ResponseApi.success(response, "Categoría actualizada exitosamente"));
     }
 
@@ -79,9 +80,9 @@ public class CategoryController {
             @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
-        categoryService.delete(id);
+    @DeleteMapping("/DeleteCategoryById/{id}")
+    public ResponseEntity<ResponseApi<Void>> deleteCategoryById(@PathVariable Long id) {
+        categoryService.deleteCategoryById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Categoría eliminada exitosamente"));
     }
 }

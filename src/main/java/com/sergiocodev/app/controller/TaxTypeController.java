@@ -24,26 +24,26 @@ public class TaxTypeController {
 
     private final TaxTypeService service;
 
-    @PostMapping
+    @PostMapping("/CreateNewTaxType")
     @Operation(summary = "Crear tipo de impuesto")
     public ResponseEntity<ResponseApi<TaxTypeResponse>> create(@Valid @RequestBody TaxTypeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Tipo de impuesto creado exitosamente"));
     }
 
-    @GetMapping
+    @GetMapping("/GetAllTaxTypes")
     @Operation(summary = "Listar todos los tipos de impuesto")
     public ResponseEntity<ResponseApi<List<TaxTypeResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/GetTaxTypeById/{id}")
     @Operation(summary = "Obtener el tipo de impuesto por ID")
     public ResponseEntity<ResponseApi<TaxTypeResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/UpdateTaxTypeById/{id}")
     @Operation(summary = "Actualizar tipo de impuesto")
     public ResponseEntity<ResponseApi<TaxTypeResponse>> update(@PathVariable Long id,
             @Valid @RequestBody TaxTypeRequest request) {
@@ -51,7 +51,7 @@ public class TaxTypeController {
                 .ok(ResponseApi.success(service.update(id, request), "Tipo de impuesto actualizado exitosamente"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeleteTaxTypeById/{id}")
     @Operation(summary = "Eliminar tipo de impuesto")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);

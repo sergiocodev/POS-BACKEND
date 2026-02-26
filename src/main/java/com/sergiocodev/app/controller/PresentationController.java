@@ -24,26 +24,26 @@ public class PresentationController {
 
     private final PresentationService service;
 
-    @PostMapping
+    @PostMapping("/CreateNewPresentation")
     @Operation(summary = "Crear presentación")
     public ResponseEntity<ResponseApi<PresentationResponse>> create(@Valid @RequestBody PresentationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Presentación creada exitosamente"));
     }
 
-    @GetMapping
+    @GetMapping("/GetAllPresentations")
     @Operation(summary = "Listar presentaciones")
     public ResponseEntity<ResponseApi<List<PresentationResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/GetPresentationById/{id}")
     @Operation(summary = "Obtener presentación por ID")
     public ResponseEntity<ResponseApi<PresentationResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/UpdatePresentationById/{id}")
     @Operation(summary = "Actualizar presentación")
     public ResponseEntity<ResponseApi<PresentationResponse>> update(@PathVariable Long id,
             @Valid @RequestBody PresentationRequest request) {
@@ -51,7 +51,7 @@ public class PresentationController {
                 .ok(ResponseApi.success(service.update(id, request), "Presentación actualizada exitosamente"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeletePresentationById/{id}")
     @Operation(summary = "Eliminar presentación")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);

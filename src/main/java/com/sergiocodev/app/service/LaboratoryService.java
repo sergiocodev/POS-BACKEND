@@ -5,13 +5,13 @@ import com.sergiocodev.app.dto.laboratory.LaboratoryResponse;
 import java.util.List;
 
 public interface LaboratoryService {
-    LaboratoryResponse create(LaboratoryRequest request);
+    LaboratoryResponse createNewLaboratory(LaboratoryRequest request);
 
-    List<LaboratoryResponse> getAll();
+    List<LaboratoryResponse> getAllLaboratory();
 
-    LaboratoryResponse getById(Long id);
+    LaboratoryResponse getLaboratoryById(Long id);
 
-    LaboratoryResponse update(Long id, LaboratoryRequest request);
+    LaboratoryResponse updateLaboratoryById(Long id, LaboratoryRequest request);
 
-    void delete(Long id);
+    void deleteLaboratoryById(Long id);
 }

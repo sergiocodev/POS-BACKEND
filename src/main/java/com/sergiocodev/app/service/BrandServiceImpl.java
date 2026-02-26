@@ -23,7 +23,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
-    public BrandResponse create(BrandRequest request) {
+    public BrandResponse createNewBrand(BrandRequest request) {
         if (brandRepository.existsByName(request.name())) {
             throw new DuplicateBrandException("Brand already exists with name: " + request.name());
         }
@@ -35,7 +35,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BrandResponse> getAll() {
+    public List<BrandResponse> getAllBrands() {
         return brandRepository.findAll()
                 .stream()
                 .map(mapper::toResponse)
@@ -44,7 +44,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional(readOnly = true)
-    public BrandResponse getById(Long id) {
+    public BrandResponse getBrandById(Long id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Brand not found with ID: " + id));
         return mapper.toResponse(brand);
@@ -52,7 +52,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
-    public BrandResponse update(Long id, BrandRequest request) {
+    public BrandResponse updateBrandById(Long id, BrandRequest request) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Brand not found with ID: " + id));
 
@@ -69,7 +69,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
+    public void deleteBrandById(Long id) {
         if (!brandRepository.existsById(id)) {
             throw new BrandNotFoundException("Brand not found with ID: " + id);
         }

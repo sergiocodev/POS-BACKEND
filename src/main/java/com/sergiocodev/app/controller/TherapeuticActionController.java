@@ -28,21 +28,21 @@ public class TherapeuticActionController {
     private final TherapeuticActionService service;
 
     @Operation(summary = "List all therapeutic actions")
-    @GetMapping
+    @GetMapping("/GetAllTherapeuticActions")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<List<TherapeuticActionResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.findAll()));
     }
 
     @Operation(summary = "Get therapeutic action by ID")
-    @GetMapping("/{id}")
+    @GetMapping("/GetTherapeuticActionById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.findById(id)));
     }
 
     @Operation(summary = "Create new therapeutic action")
-    @PostMapping
+    @PostMapping("/CreateNewTherapeuticAction")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> create(
             @Valid @RequestBody TherapeuticActionRequest request) {
@@ -52,7 +52,7 @@ public class TherapeuticActionController {
     }
 
     @Operation(summary = "Update therapeutic action")
-    @PutMapping("/{id}")
+    @PutMapping("/UpdateTherapeuticActionById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> update(
             @PathVariable Long id,
@@ -62,7 +62,7 @@ public class TherapeuticActionController {
     }
 
     @Operation(summary = "Delete therapeutic action")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeleteTherapeuticActionById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);

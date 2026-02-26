@@ -20,14 +20,14 @@ public class LaboratoryServiceImpl implements LaboratoryService {
 
     @Override
     @Transactional
-    public LaboratoryResponse create(LaboratoryRequest request) {
+    public LaboratoryResponse createNewLaboratory(LaboratoryRequest request) {
         Laboratory entity = mapper.toEntity(request);
         return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<LaboratoryResponse> getAll() {
+    public List<LaboratoryResponse> getAllLaboratory() {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
@@ -35,7 +35,7 @@ public class LaboratoryServiceImpl implements LaboratoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public LaboratoryResponse getById(Long id) {
+    public LaboratoryResponse getLaboratoryById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Laboratory not found"));
@@ -43,7 +43,7 @@ public class LaboratoryServiceImpl implements LaboratoryService {
 
     @Override
     @Transactional
-    public LaboratoryResponse update(Long id, LaboratoryRequest request) {
+    public LaboratoryResponse updateLaboratoryById(Long id, LaboratoryRequest request) {
         Laboratory entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Laboratory not found"));
         mapper.updateEntity(request, entity);
@@ -52,7 +52,7 @@ public class LaboratoryServiceImpl implements LaboratoryService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
+    public void deleteLaboratoryById(Long id) {
         repository.deleteById(id);
     }
 }

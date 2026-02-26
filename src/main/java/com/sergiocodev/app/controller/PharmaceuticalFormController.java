@@ -28,21 +28,21 @@ public class PharmaceuticalFormController {
     private final PharmaceuticalFormService pharmaceuticalFormService;
 
     @Operation(summary = "List all pharmaceutical forms")
-    @GetMapping
+    @GetMapping("/GetAllPharmaceuticalForms")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<List<PharmaceuticalFormResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findAll()));
     }
 
     @Operation(summary = "Get pharmaceutical form by ID")
-    @GetMapping("/{id}")
+    @GetMapping("/GetPharmaceuticalFormById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findById(id)));
     }
 
     @Operation(summary = "Create new pharmaceutical form")
-    @PostMapping
+    @PostMapping("/CreateNewPharmaceuticalForm")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> create(
             @Valid @RequestBody PharmaceuticalFormRequest request) {
@@ -52,7 +52,7 @@ public class PharmaceuticalFormController {
     }
 
     @Operation(summary = "Update pharmaceutical form")
-    @PutMapping("/{id}")
+    @PutMapping("/UpdatePharmaceuticalFormById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> update(
             @PathVariable Long id,
@@ -62,7 +62,7 @@ public class PharmaceuticalFormController {
     }
 
     @Operation(summary = "Delete pharmaceutical form")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeletePharmaceuticalFormById/{id}")
     @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         pharmaceuticalFormService.delete(id);

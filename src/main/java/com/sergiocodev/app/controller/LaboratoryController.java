@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/laboratories")
+@RequestMapping("/api/v1/laboratory")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Laboratories", description = "Endpoints para la gestión del laboratorio")
@@ -24,37 +24,39 @@ public class LaboratoryController {
 
     private final LaboratoryService service;
 
-    @PostMapping
+    @PostMapping("/CreateNewLaboratory")
     @Operation(summary = "Crear laboratorio")
-    public ResponseEntity<ResponseApi<LaboratoryResponse>> create(@Valid @RequestBody LaboratoryRequest request) {
+    public ResponseEntity<ResponseApi<LaboratoryResponse>> createNewLaboratory(
+            @Valid @RequestBody LaboratoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseApi.success(service.create(request), "Laboratorio creado exitosamente"));
+                .body(ResponseApi.success(service.createNewLaboratory(request), "Laboratorio creado exitosamente"));
     }
 
-    @GetMapping
+    @GetMapping("/GetAllLaboratory")
     @Operation(summary = "Listar laboratorios")
-    public ResponseEntity<ResponseApi<List<LaboratoryResponse>>> getAll() {
-        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    public ResponseEntity<ResponseApi<List<LaboratoryResponse>>> getAllLaboratory() {
+        return ResponseEntity.ok(ResponseApi.success(service.getAllLaboratory()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/GetLaboratoryById/{id}")
     @Operation(summary = "Obtener laboratorio por ID")
-    public ResponseEntity<ResponseApi<LaboratoryResponse>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
+    public ResponseEntity<ResponseApi<LaboratoryResponse>> getLaboratoryById(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(service.getLaboratoryById(id)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/UpdateLaboratoryById/{id}")
     @Operation(summary = "Actualizar laboratorio")
-    public ResponseEntity<ResponseApi<LaboratoryResponse>> update(@PathVariable Long id,
+    public ResponseEntity<ResponseApi<LaboratoryResponse>> updateLaboratoryById(@PathVariable Long id,
             @Valid @RequestBody LaboratoryRequest request) {
         return ResponseEntity
-                .ok(ResponseApi.success(service.update(id, request), "Laboratorio actualizado exitosamente"));
+                .ok(ResponseApi.success(service.updateLaboratoryById(id, request),
+                        "Laboratorio actualizado exitosamente"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeleteLaboratoryById/{id}")
     @Operation(summary = "Eliminar laboratorio")
-    public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<ResponseApi<Void>> deleteLaboratoryById(@PathVariable Long id) {
+        service.deleteLaboratoryById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Laboratorio eliminado exitosamente"));
     }
 }

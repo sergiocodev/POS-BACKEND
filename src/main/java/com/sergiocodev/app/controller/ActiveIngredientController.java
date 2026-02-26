@@ -24,7 +24,7 @@ public class ActiveIngredientController {
 
     private final ActiveIngredientService service;
 
-    @PostMapping
+    @PostMapping("/CreateNewActiveIngredient")
     @Operation(summary = "Crear ingrediente activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
             @Valid @RequestBody ActiveIngredientRequest request) {
@@ -32,7 +32,7 @@ public class ActiveIngredientController {
                 .body(ResponseApi.success(service.create(request), "Ingrediente activo creado exitosamente"));
     }
 
-    @GetMapping
+    @GetMapping("/GetAllActiveIngredients")
     @Operation(summary = "Listar ingredientes activos")
     public ResponseEntity<ResponseApi<List<ActiveIngredientResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
@@ -44,13 +44,13 @@ public class ActiveIngredientController {
         return ResponseEntity.ok(ResponseApi.success(service.search(query)));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/GetActiveIngredientById/{id}")
     @Operation(summary = "Obtener ingrediente activo por ID")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/UpdateActiveIngredientById/{id}")
     @Operation(summary = "Actualizar ingrediente activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> update(@PathVariable Long id,
             @Valid @RequestBody ActiveIngredientRequest request) {
@@ -58,7 +58,7 @@ public class ActiveIngredientController {
                 .ok(ResponseApi.success(service.update(id, request), "Ingrediente activo actualizado exitosamente"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/DeleteActiveIngredientById/{id}")
     @Operation(summary = "Eliminar ingrediente activo")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
