@@ -40,7 +40,7 @@ public class ProductController {
                 .body(ResponseApi.success(service.createNewProduct(request), "Producto creado exitosamente"));
     }
 
-    @GetMapping
+    @GetMapping("/GetAllProducts")
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
     public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(
             @RequestParam(required = false) Long categoryId,

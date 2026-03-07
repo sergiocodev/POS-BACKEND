@@ -347,34 +347,43 @@ public class SaleServiceImpl implements SaleService {
     public List<ProductForSaleResponse> listProductsForSale(Long establishmentId) {
         List<Inventory> inventoryList = inventoryRepository.findAllByEstablishmentId(establishmentId);
 
-        return inventoryList.stream().map(inventory -> {
-            ProductLot lot = inventory.getLot();
-            Product product = lot.getProduct();
+        return inventoryList.stream()
+                .filter(inventory -> inventory.getSalesPrice() != null
+                        && inventory.getSalesPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
+                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
+                .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
+                .map(inventory -> {
+                    ProductLot lot = inventory.getLot();
+                    Product product = lot.getProduct();
 
-            String concentration = "";
-            if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                concentration = product.getIngredients().stream()
-                        .map(pi -> pi.getActiveIngredient().getName() + " "
-                                + (pi.getConcentration() != null ? pi.getConcentration() : ""))
-                        .collect(Collectors.joining(", "));
-            }
+                    String concentration = "";
+                    if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
+                        concentration = product.getIngredients().stream()
+                                .map(pi -> pi.getActiveIngredient().getName() + " "
+                                        + (pi.getConcentration() != null ? pi.getConcentration() : ""))
+                                .collect(Collectors.joining(", "));
+                    }
 
-            return new ProductForSaleResponse(
-                    inventory.getId(),
-                    product.getId(),
-                    product.getTradeName(),
-                    product.getGenericName(),
-                    product.getDescription(),
-                    product.getPresentation() != null ? product.getPresentation().getDescription() : null,
-                    concentration,
-                    product.getCategory() != null ? product.getCategory().getName() : null,
-                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
-                    inventory.getSalesPrice(),
-                    inventory.getQuantity(),
-                    lot.getExpiryDate(),
-                    lot.getLotCode(),
-                    lot.getId());
-        }).collect(Collectors.toList());
+                    return new ProductForSaleResponse(
+                            inventory.getId(),
+                            product.getId(),
+                            product.getTradeName(),
+                            product.getGenericName(),
+                            product.getDescription(),
+                            product.getPresentation() != null ? product.getPresentation().getDescription() : null,
+                            concentration,
+                            product.getCategory() != null ? product.getCategory().getName() : null,
+                            product.getLaboratory() != null ? product.getLaboratory().getName() : null,
+                            inventory.getSalesPrice(),
+                            inventory.getQuantity(),
+                            lot.getExpiryDate(),
+                            lot.getLotCode(),
+                            lot.getId(),
+                            product.getImageUrl(),
+                            product.getBarcode(),
+                            inventory.getLocationShelf());
+                }).collect(Collectors.toList());
     }
 
     @Override
@@ -382,34 +391,43 @@ public class SaleServiceImpl implements SaleService {
     public List<ProductSearchResponse> searchProductsForPOS(String query,
             Long establishmentId) {
         List<Inventory> inventoryList = inventoryRepository.searchProductsForPOS(query, establishmentId);
-        return inventoryList.stream().map(inventory -> {
-            ProductLot lot = inventory.getLot();
-            Product product = lot.getProduct();
+        return inventoryList.stream()
+                .filter(inventory -> inventory.getSalesPrice() != null
+                        && inventory.getSalesPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
+                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
+                .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
+                .map(inventory -> {
+                    ProductLot lot = inventory.getLot();
+                    Product product = lot.getProduct();
 
-            String concentration = "";
-            if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                concentration = product.getIngredients().stream()
-                        .map(pi -> pi.getActiveIngredient().getName() + " "
-                                + (pi.getConcentration() != null ? pi.getConcentration() : ""))
-                        .collect(Collectors.joining(", "));
-            }
+                    String concentration = "";
+                    if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
+                        concentration = product.getIngredients().stream()
+                                .map(pi -> pi.getActiveIngredient().getName() + " "
+                                        + (pi.getConcentration() != null ? pi.getConcentration() : ""))
+                                .collect(Collectors.joining(", "));
+                    }
 
-            return new ProductSearchResponse(
-                    inventory.getId(),
-                    product.getId(),
-                    product.getTradeName(),
-                    product.getGenericName(),
-                    product.getDescription(),
-                    product.getPresentation() != null ? product.getPresentation().getDescription() : null,
-                    concentration,
-                    product.getCategory() != null ? product.getCategory().getName() : null,
-                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
-                    inventory.getSalesPrice(),
-                    inventory.getQuantity(),
-                    lot.getExpiryDate(),
-                    lot.getLotCode(),
-                    lot.getId());
-        }).collect(Collectors.toList());
+                    return new ProductSearchResponse(
+                            inventory.getId(),
+                            product.getId(),
+                            product.getTradeName(),
+                            product.getGenericName(),
+                            product.getDescription(),
+                            product.getPresentation() != null ? product.getPresentation().getDescription() : null,
+                            concentration,
+                            product.getCategory() != null ? product.getCategory().getName() : null,
+                            product.getLaboratory() != null ? product.getLaboratory().getName() : null,
+                            inventory.getSalesPrice(),
+                            inventory.getQuantity(),
+                            lot.getExpiryDate(),
+                            lot.getLotCode(),
+                            lot.getId(),
+                            product.getImageUrl(),
+                            product.getBarcode(),
+                            inventory.getLocationShelf());
+                }).collect(Collectors.toList());
     }
 
     @Override
@@ -430,7 +448,7 @@ public class SaleServiceImpl implements SaleService {
                     product.getBarcode(),
                     product.getPurchaseFactor() != null ? new BigDecimal(product.getPurchaseFactor())
                             : BigDecimal.ZERO,
-                    null, null, null, BigDecimal.ZERO, "No stock available");
+                    null, null, null, BigDecimal.ZERO, "No stock available", product.getImageUrl());
         }
 
         return new BarcodeScanResponse(
@@ -442,7 +460,8 @@ public class SaleServiceImpl implements SaleService {
                 inventory.getLot().getLotCode(),
                 inventory.getLot().getExpiryDate(),
                 inventory.getQuantity(),
-                "Stock available");
+                "Stock available",
+                product.getImageUrl());
     }
 
     @Override
