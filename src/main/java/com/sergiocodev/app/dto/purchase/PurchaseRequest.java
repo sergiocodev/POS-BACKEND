@@ -39,4 +39,8 @@ public class PurchaseRequest {
 
     @NotNull(message = "Items are required")
     private List<PurchaseItemRequest> items;
+
+    private java.math.BigDecimal amountPaid = java.math.BigDecimal.ZERO;
+
+    private LocalDate dueDate;
 }

@@ -28,6 +28,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final StockMovementRepository stockMovementRepository;
     private final CashSessionRepository cashSessionRepository;
     private final CashMovementRepository cashMovementRepository;
+    private final AccountPayableRepository accountPayableRepository;
     private final PurchaseMapper purchaseMapper;
 
     @Override
@@ -68,21 +69,56 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Purchase savedEntity = repository.save(entity);
 
+        // Handle Payment and Account Payable
+        BigDecimal total = savedEntity.getTotal();
+        BigDecimal amountPaid = request.getAmountPaid() != null ? request.getAmountPaid() : BigDecimal.ZERO;
+
         if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.EFECTIVO) {
+            amountPaid = total; // Fully paid
+        } else if (amountPaid.compareTo(total) > 0) {
+            throw new IllegalArgumentException(
+                    "Amount paid (" + amountPaid + ") cannot be greater than total (" + total + ")");
+        }
+
+        // If it's a credit purchase OR a partial payment, create an AccountPayable
+        if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.CREDITO || amountPaid.compareTo(total) < 0) {
+            AccountPayable payable = new AccountPayable();
+            payable.setPurchase(savedEntity);
+            payable.setSupplier(savedEntity.getSupplier());
+            payable.setTotalAmount(total);
+            payable.setAmountPaid(amountPaid);
+            payable.setPendingBalance(total.subtract(amountPaid));
+            payable.setDueDate(request.getDueDate());
+
+            if (payable.getPendingBalance().compareTo(BigDecimal.ZERO) == 0) {
+                payable.setStatus(AccountPayable.PayableStatus.PAID);
+            } else if (amountPaid.compareTo(BigDecimal.ZERO) > 0) {
+                payable.setStatus(AccountPayable.PayableStatus.PARTIAL);
+            } else {
+                payable.setStatus(AccountPayable.PayableStatus.PENDING);
+            }
+
+            accountPayableRepository.save(payable);
+        }
+
+        // If any amount was paid right now (cash or partial credit upfront), register
+        // the cash movement
+        if (amountPaid.compareTo(BigDecimal.ZERO) > 0) {
             CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                     .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
                             "No active cash session found for user: " + userId));
 
-            session.setCalculatedBalance(session.getCalculatedBalance().subtract(savedEntity.getTotal()));
+            session.setCalculatedBalance(session.getCalculatedBalance().subtract(amountPaid));
             cashSessionRepository.save(session);
 
             CashMovement movement = new CashMovement();
             movement.setCashSession(session);
-            movement.setAmount(savedEntity.getTotal());
+            movement.setAmount(amountPaid);
             movement.setType(CashMovement.MovementType.EXPENSE);
             movement.setReferenceTable("purchases");
             movement.setReferenceId(savedEntity.getId());
-            movement.setDescription("Compra / Purchase - Supplier: " + savedEntity.getSupplier().getName());
+            movement.setDescription("Compra / Purchase - Supplier: " + savedEntity.getSupplier().getName() +
+                    (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.CREDITO ? " (Partial payment)" : ""));
             cashMovementRepository.save(movement);
         }
 
