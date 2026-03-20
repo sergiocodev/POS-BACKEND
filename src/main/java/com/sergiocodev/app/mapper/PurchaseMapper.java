@@ -32,11 +32,14 @@ public interface PurchaseMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "items", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Purchase toEntity(PurchaseRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "productUnit", ignore = true)
     @Mapping(target = "purchase", ignore = true)
+    @Mapping(target = "bonusQuantity", ignore = true)
     @Mapping(target = "totalCost", ignore = true)
     PurchaseItem toItemEntity(PurchaseItemRequest request);
 
@@ -51,5 +54,6 @@ public interface PurchaseMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "items", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntity(PurchaseRequest request, @MappingTarget Purchase entity);
 }

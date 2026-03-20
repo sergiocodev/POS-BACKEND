@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -29,7 +30,11 @@ public class SaleItem {
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lot_id")
+    @JoinColumn(name = "product_unit_id", nullable = false)
+    private ProductUnit productUnit;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lot_id", nullable = false)
     private ProductLot lot;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -40,9 +45,6 @@ public class SaleItem {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
-
-    @Column(name = "unit_cost", precision = 12, scale = 4)
-    private BigDecimal unitCost;
 
     @Column(name = "applied_tax_rate", nullable = false, precision = 6, scale = 4)
     private BigDecimal appliedTaxRate = BigDecimal.ZERO;

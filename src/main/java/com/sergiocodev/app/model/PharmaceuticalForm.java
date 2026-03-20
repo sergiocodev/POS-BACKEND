@@ -27,9 +27,6 @@ public class PharmaceuticalForm {
     @Column(length = 255)
     private String description;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

@@ -31,9 +31,6 @@ public class TaxType {
     @Column(name = "code_sunat", length = 10)
     private String codeSunat;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

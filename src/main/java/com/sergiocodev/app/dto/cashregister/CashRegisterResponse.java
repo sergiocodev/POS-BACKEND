@@ -6,14 +6,12 @@ public record CashRegisterResponse(
         Long id,
         String name,
         Long establishmentId,
-        String establishmentName,
-        boolean active) {
+        String establishmentName) {
     public CashRegisterResponse(CashRegister register) {
         this(
                 register.getId(),
                 register.getName(),
                 register.getEstablishment().getId(),
-                register.getEstablishment().getName(),
-                register.isActive());
+                register.getEstablishment().getName());
     }
 }

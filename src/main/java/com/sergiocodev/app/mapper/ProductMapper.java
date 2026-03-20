@@ -25,7 +25,6 @@ public interface ProductMapper {
     @Mapping(target = "taxTypeName", source = "taxType.name")
     @Mapping(target = "tradeName", source = "tradeName")
     @Mapping(target = "genericName", source = "genericName")
-    @Mapping(target = "unitType", source = "unitType", qualifiedByName = "enumToString")
 
     @Mapping(target = "isGeneric", source = "generic")
     @Mapping(target = "therapeuticActionNames", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActions")
@@ -40,7 +39,6 @@ public interface ProductMapper {
     @Mapping(target = "presentation", ignore = true)
     @Mapping(target = "taxType", ignore = true)
     @Mapping(target = "ingredients", ignore = true)
-    @Mapping(target = "unitType", ignore = true)
     @Mapping(target = "generic", source = "isGeneric")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -56,7 +54,6 @@ public interface ProductMapper {
     @Mapping(target = "presentation", ignore = true)
     @Mapping(target = "taxType", ignore = true)
     @Mapping(target = "ingredients", ignore = true)
-    @Mapping(target = "unitType", ignore = true)
     @Mapping(target = "generic", source = "isGeneric")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -67,11 +64,6 @@ public interface ProductMapper {
     @Mapping(target = "activeIngredientId", source = "id.ingredientId")
     @Mapping(target = "activeIngredientName", source = "activeIngredient.name")
     ProductIngredientResponse toIngredientResponse(ProductIngredient entity);
-
-    @Named("enumToString")
-    default String enumToString(Product.UnitType unitType) {
-        return unitType != null ? unitType.name() : null;
-    }
 
     @Named("mapTherapeuticActions")
     default List<String> mapTherapeuticActions(Set<TherapeuticAction> therapeuticActions) {

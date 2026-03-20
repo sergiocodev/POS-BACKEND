@@ -25,7 +25,6 @@ public class SupplierServiceImpl implements SupplierService {
         entity.setPhone(request.phone());
         entity.setEmail(request.email());
         entity.setAddress(request.address());
-        entity.setActive(request.active());
         return new SupplierResponse(repository.save(entity));
     }
 
@@ -55,7 +54,6 @@ public class SupplierServiceImpl implements SupplierService {
         entity.setPhone(request.phone());
         entity.setEmail(request.email());
         entity.setAddress(request.address());
-        entity.setActive(request.active());
         return new SupplierResponse(repository.save(entity));
     }
 

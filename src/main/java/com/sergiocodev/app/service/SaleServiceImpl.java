@@ -27,6 +27,8 @@ import com.sergiocodev.app.repository.ProductLotRepository;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.CashSessionRepository;
+import com.sergiocodev.app.repository.ProductUnitRepository;
+import com.sergiocodev.app.model.ProductUnit;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
@@ -55,6 +57,7 @@ public class SaleServiceImpl implements SaleService {
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final CashSessionRepository cashSessionRepository;
+    private final ProductUnitRepository productUnitRepository;
     private final SaleMapper mapper;
     private final XmlUblGenerator xmlUblGenerator;
     private final DigitalSignatureService digitalSignatureService;
@@ -104,7 +107,9 @@ public class SaleServiceImpl implements SaleService {
             item.setAppliedTaxRate(new BigDecimal("0.18"));
             entity.getItems().add(item);
 
-            updateInventory(entity, item);
+            if (lot != null) {
+                updateInventory(entity, item);
+            }
         }
 
         calculateTotals(entity);
@@ -146,7 +151,6 @@ public class SaleServiceImpl implements SaleService {
 
         inventory.setQuantity(inventory.getQuantity().subtract(item.getQuantity()));
         inventory.setLastMovement(LocalDateTime.now());
-        item.setUnitCost(inventory.getCostPrice());
         inventoryRepository.save(inventory);
 
         StockMovement movement = new StockMovement();
@@ -348,12 +352,10 @@ public class SaleServiceImpl implements SaleService {
         List<Inventory> inventoryList = inventoryRepository.findAllByEstablishmentId(establishmentId);
 
         return inventoryList.stream()
-                .filter(inventory -> inventory.getSalesPrice() != null
-                        && inventory.getSalesPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
                 .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
                         && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
                 .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
-                .map(inventory -> {
+                .flatMap(inventory -> {
                     ProductLot lot = inventory.getLot();
                     Product product = lot.getProduct();
 
@@ -364,25 +366,29 @@ public class SaleServiceImpl implements SaleService {
                                         + (pi.getConcentration() != null ? pi.getConcentration() : ""))
                                 .collect(Collectors.joining(", "));
                     }
+                    final String finalConcentration = concentration;
 
-                    return new ProductForSaleResponse(
-                            inventory.getId(),
-                            product.getId(),
-                            product.getTradeName(),
-                            product.getGenericName(),
-                            product.getDescription(),
-                            product.getPresentation() != null ? product.getPresentation().getDescription() : null,
-                            concentration,
-                            product.getCategory() != null ? product.getCategory().getName() : null,
-                            product.getLaboratory() != null ? product.getLaboratory().getName() : null,
-                            inventory.getSalesPrice(),
-                            inventory.getQuantity(),
-                            lot.getExpiryDate(),
-                            lot.getLotCode(),
-                            lot.getId(),
-                            product.getImageUrl(),
-                            product.getBarcode(),
-                            inventory.getLocationShelf());
+                    return product.getUnits().stream()
+                            .filter(pu -> !pu.isBaseUnit() || product.getUnits().size() == 1)
+                            .map(pu -> new ProductForSaleResponse(
+                                    inventory.getId(),
+                                    product.getId(),
+                                    product.getTradeName(),
+                                    product.getGenericName(),
+                                    product.getDescription(),
+                                    product.getPresentation() != null ? product.getPresentation().getDescription()
+                                            : null,
+                                    finalConcentration,
+                                    product.getCategory() != null ? product.getCategory().getName() : null,
+                                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
+                                    pu.getPrice(),
+                                    inventory.getQuantity(),
+                                    lot.getExpiryDate(),
+                                    lot.getLotCode(),
+                                    lot.getId(),
+                                    product.getImageUrl(),
+                                    pu.getBarcode(),
+                                    inventory.getLocationShelf()));
                 }).collect(Collectors.toList());
     }
 
@@ -392,12 +398,10 @@ public class SaleServiceImpl implements SaleService {
             Long establishmentId) {
         List<Inventory> inventoryList = inventoryRepository.searchProductsForPOS(query, establishmentId);
         return inventoryList.stream()
-                .filter(inventory -> inventory.getSalesPrice() != null
-                        && inventory.getSalesPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
                 .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
                         && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
                 .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
-                .map(inventory -> {
+                .flatMap(inventory -> {
                     ProductLot lot = inventory.getLot();
                     Product product = lot.getProduct();
 
@@ -408,54 +412,69 @@ public class SaleServiceImpl implements SaleService {
                                         + (pi.getConcentration() != null ? pi.getConcentration() : ""))
                                 .collect(Collectors.joining(", "));
                     }
+                    final String finalConcentration = concentration;
 
-                    return new ProductSearchResponse(
-                            inventory.getId(),
-                            product.getId(),
-                            product.getTradeName(),
-                            product.getGenericName(),
-                            product.getDescription(),
-                            product.getPresentation() != null ? product.getPresentation().getDescription() : null,
-                            concentration,
-                            product.getCategory() != null ? product.getCategory().getName() : null,
-                            product.getLaboratory() != null ? product.getLaboratory().getName() : null,
-                            inventory.getSalesPrice(),
-                            inventory.getQuantity(),
-                            lot.getExpiryDate(),
-                            lot.getLotCode(),
-                            lot.getId(),
-                            product.getImageUrl(),
-                            product.getBarcode(),
-                            inventory.getLocationShelf());
+                    return product.getUnits().stream()
+                            .filter(pu -> !pu.isBaseUnit() || product.getUnits().size() == 1)
+                            .map(pu -> new ProductSearchResponse(
+                                    inventory.getId(),
+                                    product.getId(),
+                                    product.getTradeName(),
+                                    product.getGenericName(),
+                                    product.getDescription(),
+                                    product.getPresentation() != null ? product.getPresentation().getDescription()
+                                            : null,
+                                    finalConcentration,
+                                    product.getCategory() != null ? product.getCategory().getName() : null,
+                                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
+                                    pu.getPrice(),
+                                    inventory.getQuantity(),
+                                    lot.getExpiryDate(),
+                                    lot.getLotCode(),
+                                    lot.getId(),
+                                    product.getImageUrl(),
+                                    pu.getBarcode(),
+                                    inventory.getLocationShelf()));
                 }).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId) {
-        Product product = productRepository.findByBarcodeAndActiveTrue(barcode)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with barcode: " + barcode));
+        ProductUnit pu = productUnitRepository.findByBarcode(barcode).orElse(null);
+        if (pu == null) {
+            return new BarcodeScanResponse(
+                    null,
+                    "Producto no encontrado",
+                    barcode,
+                    BigDecimal.ZERO,
+                    null, null, null, BigDecimal.ZERO, "No stock available", null);
+        }
 
-        Inventory inventory = inventoryRepository
-                .findFirstByEstablishmentIdAndLotProductIdAndQuantityGreaterThanOrderByLotExpiryDateAsc(
-                        establishmentId, product.getId(), BigDecimal.ZERO)
-                .orElse(null);
+        Product product = pu.getProduct();
+        Inventory inventory = inventoryRepository.findAllByEstablishmentId(establishmentId).stream()
+                .filter(inv -> inv.getLot() != null && inv.getLot().getProduct().getId().equals(product.getId())
+                        && (inv.getLot().getExpiryDate() == null
+                                || !inv.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
+                        && inv.getQuantity().compareTo(BigDecimal.ZERO) > 0)
+                .findFirst().orElse(null);
 
         if (inventory == null) {
             return new BarcodeScanResponse(
-                    product.getId(),
-                    product.getTradeName(),
-                    product.getBarcode(),
-                    product.getPurchaseFactor() != null ? new BigDecimal(product.getPurchaseFactor())
-                            : BigDecimal.ZERO,
-                    null, null, null, BigDecimal.ZERO, "No stock available", product.getImageUrl());
+                    null,
+                    "Producto no encontrado",
+                    barcode,
+                    BigDecimal.ZERO,
+                    null, null, null, BigDecimal.ZERO, "No stock available", null);
         }
+
+        java.math.BigDecimal price = pu.getPrice();
 
         return new BarcodeScanResponse(
                 product.getId(),
                 product.getTradeName(),
-                product.getBarcode(),
-                inventory.getSalesPrice(),
+                barcode,
+                price,
                 inventory.getLot().getId(),
                 inventory.getLot().getLotCode(),
                 inventory.getLot().getExpiryDate(),

@@ -17,6 +17,9 @@ public class PurchaseItemRequest {
     @NotNull(message = "Product ID is required")
     private Long productId;
 
+    @NotNull(message = "Product unit ID is required")
+    private Long productUnitId;
+
     @NotBlank(message = "Lot code is required")
     @Size(max = 100, message = "Lot code cannot exceed 100 characters")
     private String lotCode;

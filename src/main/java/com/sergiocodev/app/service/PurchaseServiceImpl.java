@@ -23,11 +23,10 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final EstablishmentRepository establishmentRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ProductUnitRepository productUnitRepository;
     private final ProductLotRepository lotRepository;
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
-    private final CashSessionRepository cashSessionRepository;
-    private final CashMovementRepository cashMovementRepository;
     private final AccountPayableRepository accountPayableRepository;
     private final PurchaseMapper purchaseMapper;
 
@@ -46,17 +45,20 @@ public class PurchaseServiceImpl implements PurchaseService {
         entity.setArrivalDate(LocalDateTime.now());
         entity.setStatus(Purchase.PurchaseStatus.RECEIVED);
 
-        entity.setPaymentMethod(request.getPaymentMethod());
-
         for (var ir : request.getItems()) {
             Product product = productRepository.findById(ir.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.getProductId()));
+
+            ProductUnit productUnit = productUnitRepository.findById(ir.getProductUnitId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("ProductUnit not found: " + ir.getProductUnitId()));
 
             ProductLot lot = findOrCreateLot(product, ir.getLotCode(), ir.getExpiryDate());
 
             PurchaseItem item = purchaseMapper.toItemEntity(ir);
             item.setPurchase(entity);
             item.setProduct(product);
+            item.setProductUnit(productUnit);
 
             BigDecimal itemTotal = ir.getUnitCost().multiply(new BigDecimal(ir.getQuantity()));
             item.setTotalCost(itemTotal);
@@ -69,67 +71,21 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Purchase savedEntity = repository.save(entity);
 
-        // Handle Payment and Account Payable
-        BigDecimal total = savedEntity.getTotal();
-        BigDecimal amountPaid = request.getAmountPaid() != null ? request.getAmountPaid() : BigDecimal.ZERO;
-
-        if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.EFECTIVO) {
-            amountPaid = total; // Fully paid
-        } else if (amountPaid.compareTo(total) > 0) {
-            throw new IllegalArgumentException(
-                    "Amount paid (" + amountPaid + ") cannot be greater than total (" + total + ")");
-        }
-
-        // If it's a credit purchase OR a partial payment, create an AccountPayable
-        if (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.CREDITO || amountPaid.compareTo(total) < 0) {
-            AccountPayable payable = new AccountPayable();
-            payable.setPurchase(savedEntity);
-            payable.setSupplier(savedEntity.getSupplier());
-            payable.setTotalAmount(total);
-            payable.setAmountPaid(amountPaid);
-            payable.setPendingBalance(total.subtract(amountPaid));
-            payable.setDueDate(request.getDueDate());
-
-            if (payable.getPendingBalance().compareTo(BigDecimal.ZERO) == 0) {
-                payable.setStatus(AccountPayable.PayableStatus.PAID);
-            } else if (amountPaid.compareTo(BigDecimal.ZERO) > 0) {
-                payable.setStatus(AccountPayable.PayableStatus.PARTIAL);
-            } else {
-                payable.setStatus(AccountPayable.PayableStatus.PENDING);
-            }
-
-            accountPayableRepository.save(payable);
-        }
-
-        // If any amount was paid right now (cash or partial credit upfront), register
-        // the cash movement
-        if (amountPaid.compareTo(BigDecimal.ZERO) > 0) {
-            CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                    .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException(
-                            "No active cash session found for user: " + userId));
-
-            session.setCalculatedBalance(session.getCalculatedBalance().subtract(amountPaid));
-            cashSessionRepository.save(session);
-
-            CashMovement movement = new CashMovement();
-            movement.setCashSession(session);
-            movement.setAmount(amountPaid);
-            movement.setType(CashMovement.MovementType.EXPENSE);
-            movement.setReferenceTable("purchases");
-            movement.setReferenceId(savedEntity.getId());
-            movement.setDescription("Compra / Purchase - Supplier: " + savedEntity.getSupplier().getName() +
-                    (savedEntity.getPaymentMethod() == Purchase.PaymentMethod.CREDITO ? " (Partial payment)" : ""));
-            cashMovementRepository.save(movement);
-        }
+        // Siempre crear AccountPayable con estado PENDING (el pago ES separado)
+        AccountPayable payable = new AccountPayable();
+        payable.setPurchase(savedEntity);
+        payable.setSupplier(savedEntity.getSupplier());
+        payable.setTotalAmount(savedEntity.getTotal());
+        payable.setAmountPaid(BigDecimal.ZERO);
+        payable.setPendingBalance(savedEntity.getTotal());
+        payable.setStatus(AccountPayable.PayableStatus.PENDING);
+        accountPayableRepository.save(payable);
 
         return purchaseMapper.toResponse(savedEntity);
     }
 
     private ProductLot findOrCreateLot(Product product, String lotCode, java.time.LocalDate expiryDate) {
-        return lotRepository.findAll().stream()
-                .filter(l -> l.getProduct().getId().equals(product.getId())
-                        && l.getLotCode().equals(lotCode))
-                .findFirst()
+        return lotRepository.findByProductIdAndLotCode(product.getId(), lotCode)
                 .orElseGet(() -> {
                     ProductLot newLot = new ProductLot();
                     newLot.setProduct(product);
@@ -165,7 +121,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         movement.setEstablishment(purchase.getEstablishment());
         movement.setLot(lot);
         movement.setType(StockMovement.MovementType.PURCHASE);
-        movement.setQuantity(new java.math.BigDecimal(quantity));
+        movement.setQuantity(new BigDecimal(quantity));
         movement.setBalanceAfter(balanceAfter);
         movement.setReferenceTable("purchases");
         movement.setReferenceId(purchase.getId());

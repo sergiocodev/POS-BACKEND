@@ -59,7 +59,6 @@ public class RoleService {
         Role role = new Role();
         role.setName(request.name());
         role.setDescription(request.description());
-        role.setActive(request.active());
         role.setPermissions(new HashSet<>());
 
         Role saved = roleRepository.save(role);
@@ -83,7 +82,6 @@ public class RoleService {
 
         role.setName(request.name());
         role.setDescription(request.description());
-        role.setActive(request.active());
 
         Role updated = roleRepository.save(role);
         return roleMapper.toDetailResponse(updated);
@@ -113,7 +111,11 @@ public class RoleService {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
 
-        role.setActive(!role.isActive());
+        if (role.getDeletedAt() == null) {
+            role.setDeletedAt(java.time.LocalDateTime.now());
+        } else {
+            role.setDeletedAt(null);
+        }
         Role updated = roleRepository.save(role);
         return roleMapper.toResponse(updated);
     }

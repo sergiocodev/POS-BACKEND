@@ -35,9 +35,6 @@ public class User {
     @Column(name = "profile_picture", length = 255)
     private String profilePicture;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 

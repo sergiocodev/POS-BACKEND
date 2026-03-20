@@ -28,9 +28,6 @@ public class CashConcept {
     @Column(nullable = false, length = 20)
     private ConceptType type;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

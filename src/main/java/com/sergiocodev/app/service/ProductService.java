@@ -10,7 +10,7 @@ public interface ProductService {
 
     ProductResponse create(ProductRequest request);
 
-    List<ProductResponse> getAll(Long categoryId, Long brandId, Boolean active);
+    List<ProductResponse> getAll(Long categoryId, Long brandId);
 
     ProductResponse getById(Long id);
 

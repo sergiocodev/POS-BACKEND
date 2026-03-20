@@ -7,15 +7,13 @@ public record EmployeeResponse(
         String firstName,
         String lastName,
         String documentNumber,
-        String username,
-        boolean active) {
+        String username) {
     public EmployeeResponse(Employee employee) {
         this(
                 employee.getId(),
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getDocumentNumber(),
-                employee.getUser() != null ? employee.getUser().getUsername() : null,
-                employee.isActive());
+                employee.getUser() != null ? employee.getUser().getUsername() : null);
     }
 }

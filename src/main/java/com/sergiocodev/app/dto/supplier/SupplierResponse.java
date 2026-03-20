@@ -8,8 +8,7 @@ public record SupplierResponse(
         String ruc,
         String phone,
         String email,
-        String address,
-        boolean active) {
+        String address) {
     public SupplierResponse(Supplier supplier) {
         this(
                 supplier.getId(),
@@ -17,7 +16,6 @@ public record SupplierResponse(
                 supplier.getRuc(),
                 supplier.getPhone(),
                 supplier.getEmail(),
-                supplier.getAddress(),
-                supplier.isActive());
+                supplier.getAddress());
     }
 }

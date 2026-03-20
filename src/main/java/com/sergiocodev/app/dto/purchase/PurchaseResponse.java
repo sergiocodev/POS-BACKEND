@@ -19,7 +19,6 @@ public class PurchaseResponse {
     private String establishmentName;
     private String username;
     private Purchase.PurchaseDocumentType documentType;
-    private Purchase.PaymentMethod paymentMethod;
     private String series;
     private String number;
     private LocalDate issueDate;
@@ -29,5 +28,6 @@ public class PurchaseResponse {
     private BigDecimal total;
     private Purchase.PurchaseStatus status;
     private String notes;
+    private LocalDateTime createdAt;
     private List<PurchaseItemResponse> items;
 }

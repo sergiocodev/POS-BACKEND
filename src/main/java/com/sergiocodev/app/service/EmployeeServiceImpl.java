@@ -29,7 +29,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             entity.setUser(userRepository.findById(request.userId())
                     .orElseThrow(() -> new RuntimeException("User not found")));
         }
-        entity.setActive(request.active());
         return new EmployeeResponse(repository.save(entity));
     }
 
@@ -63,7 +62,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         } else {
             entity.setUser(null);
         }
-        entity.setActive(request.active());
         return new EmployeeResponse(repository.save(entity));
     }
 

@@ -43,8 +43,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAll(Long categoryId, Long brandId, Boolean active) {
-        return repository.findAllWithFilters(categoryId, brandId, active).stream()
+    public List<ProductResponse> getAll(Long categoryId, Long brandId) {
+        return repository.findAllWithFilters(categoryId, brandId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -89,7 +89,8 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse toggleStatus(Long id) {
         Product entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
-        entity.setActive(!entity.isActive());
+        // status is managed via deleted_at or in product_units now (active was removed
+        // from Product)
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -109,9 +110,6 @@ public class ProductServiceImpl implements ProductService {
                 pharmaceuticalFormRepository.findById(request.pharmaceuticalFormId()).orElse(null));
         entity.setPresentation(presentationRepository.findById(request.presentationId()).orElse(null));
         entity.setTaxType(taxTypeRepository.findById(request.taxTypeId()).orElse(null));
-        if (request.unitType() != null) {
-            entity.setUnitType(Product.UnitType.valueOf(request.unitType()));
-        }
     }
 
     private void mapIngredients(ProductRequest request, Product entity) {

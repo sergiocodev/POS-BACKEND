@@ -61,15 +61,17 @@ public interface SaleMapper {
     @Mapping(target = "sale", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "lot", ignore = true)
+    @Mapping(target = "productUnit", ignore = true)
     @Mapping(target = "amount", ignore = true)
     @Mapping(target = "appliedTaxRate", ignore = true)
-    @Mapping(target = "unitCost", ignore = true)
     @Mapping(target = "discountAmount", ignore = true)
     @Mapping(target = "discountReason", ignore = true)
     SaleItem toItemEntity(SaleItemRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "sale", ignore = true)
+    @Mapping(target = "cashSession", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     SalePayment toPaymentEntity(SalePaymentRequest request);
 }

@@ -44,9 +44,8 @@ public class ProductController {
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
     public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long brandId,
-            @RequestParam(required = false) Boolean active) {
-        return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId, brandId, active)));
+            @RequestParam(required = false) Long brandId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId, brandId)));
     }
 
     @GetMapping("/search")

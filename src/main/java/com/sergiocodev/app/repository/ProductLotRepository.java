@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ProductLotRepository extends JpaRepository<ProductLot, Long> {
     List<ProductLot> findByProductIdOrderByExpiryDateAsc(Long productId);
+
+    java.util.Optional<ProductLot> findByProductIdAndLotCode(Long productId, String lotCode);
 }

@@ -34,9 +34,6 @@ public class Employee {
     @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private java.time.LocalDateTime deletedAt;
 }

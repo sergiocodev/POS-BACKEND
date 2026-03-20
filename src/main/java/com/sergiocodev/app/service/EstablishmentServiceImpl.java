@@ -23,7 +23,6 @@ public class EstablishmentServiceImpl implements EstablishmentService {
         entity.setName(request.name());
         entity.setAddress(request.address());
         entity.setCodeSunat(request.codeSunat());
-        entity.setActive(request.active());
         return new EstablishmentResponse(repository.save(entity));
     }
 
@@ -51,7 +50,6 @@ public class EstablishmentServiceImpl implements EstablishmentService {
         entity.setName(request.name());
         entity.setAddress(request.address());
         entity.setCodeSunat(request.codeSunat());
-        entity.setActive(request.active());
         return new EstablishmentResponse(repository.save(entity));
     }
 

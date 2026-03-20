@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,10 +14,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "purchases")
+@Table(name = "purchases", uniqueConstraints = @UniqueConstraint(name = "ux_purchases_doc", columnNames = {
+        "supplier_id", "document_type", "series", "number" }))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE purchases SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Purchase {
 
     @Id
@@ -63,15 +69,14 @@ public class Purchase {
     @Column(length = 20)
     private PurchaseStatus status = PurchaseStatus.RECEIVED;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", length = 30)
-    private PaymentMethod paymentMethod;
-
     @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PurchaseItem> items = new HashSet<>();
@@ -82,9 +87,5 @@ public class Purchase {
 
     public enum PurchaseStatus {
         PENDING, RECEIVED, CANCELED
-    }
-
-    public enum PaymentMethod {
-        EFECTIVO, TRANSFERENCIA, CREDITO
     }
 }

@@ -8,7 +8,9 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -29,9 +31,6 @@ public class Product {
 
     @Column(name = "digemid_code", length = 50)
     private String digemidCode;
-
-    @Column(name = "barcode", length = 50)
-    private String barcode;
 
     @Column(name = "trade_name", nullable = false, length = 255)
     private String tradeName;
@@ -75,19 +74,6 @@ public class Product {
     @Column(name = "is_generic", nullable = false)
     private boolean isGeneric = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "unit_type")
-    private UnitType unitType = UnitType.UNI;
-
-    @Column(name = "purchase_factor")
-    private Integer purchaseFactor = 1;
-
-    @Column(name = "fraction_label", length = 50)
-    private String fractionLabel;
-
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -98,6 +84,9 @@ public class Product {
     @JoinTable(name = "product_therapeutic_actions", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "therapeutic_action_id"))
     private Set<TherapeuticAction> therapeuticActions = new HashSet<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductUnit> units = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -107,9 +96,5 @@ public class Product {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public enum UnitType {
-        UNI, ML, GR, AMPOLLA, TABLETA
     }
 }

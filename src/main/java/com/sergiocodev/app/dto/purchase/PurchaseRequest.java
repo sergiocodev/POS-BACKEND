@@ -23,9 +23,6 @@ public class PurchaseRequest {
     @NotNull(message = "Document type is required")
     private Purchase.PurchaseDocumentType documentType;
 
-    @NotNull(message = "Payment method is required")
-    private Purchase.PaymentMethod paymentMethod;
-
     @Size(max = 20, message = "Series cannot exceed 20 characters")
     private String series;
 
@@ -39,8 +36,4 @@ public class PurchaseRequest {
 
     @NotNull(message = "Items are required")
     private List<PurchaseItemRequest> items;
-
-    private java.math.BigDecimal amountPaid = java.math.BigDecimal.ZERO;
-
-    private LocalDate dueDate;
 }

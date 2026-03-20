@@ -10,11 +10,5 @@ public record EmployeeRequest(
 
         @Size(max = 20, message = "Document number cannot exceed 20 characters") String documentNumber,
 
-        Long userId,
-        Boolean active) {
-    public EmployeeRequest {
-        if (active == null) {
-            active = true;
-        }
-    }
+        Long userId) {
 }

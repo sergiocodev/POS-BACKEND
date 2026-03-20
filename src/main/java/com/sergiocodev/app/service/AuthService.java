@@ -46,11 +46,6 @@ public class AuthService {
                                 .orElseThrow(() -> new UserNotFoundException(
                                                 "User not found or deleted: " + usernameOrEmail));
 
-                // Check if user is active
-                if (!user.isActive()) {
-                        throw new RuntimeException("User is inactive");
-                }
-
                 // Authenticate with Spring Security
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
@@ -112,7 +107,6 @@ public class AuthService {
                 newUser.setFullName(request.fullName());
                 newUser.setProfilePicture(request.profilePicture());
                 newUser.setPasswordHash(passwordEncoder.encode(request.password()));
-                newUser.setActive(true);
 
                 // Save to database
                 User savedUser = userRepository.save(newUser);

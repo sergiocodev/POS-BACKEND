@@ -27,9 +27,6 @@ public class CashRegister {
     @JoinColumn(name = "establishment_id", nullable = false)
     private Establishment establishment;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private java.time.LocalDateTime deletedAt;
 }

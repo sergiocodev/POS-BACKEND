@@ -8,15 +8,10 @@ public record EstablishmentRequest(
 
         @Size(max = 255, message = "Address cannot exceed 255 characters") String address,
 
-        @Size(max = 10, message = "SUNAT code cannot exceed 10 characters") String codeSunat,
-
-        Boolean active) {
+        @Size(max = 10, message = "SUNAT code cannot exceed 10 characters") String codeSunat) {
     public EstablishmentRequest {
         if (codeSunat == null) {
             codeSunat = "0000";
-        }
-        if (active == null) {
-            active = true;
         }
     }
 }

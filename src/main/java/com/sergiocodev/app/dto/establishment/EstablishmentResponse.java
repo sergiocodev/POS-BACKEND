@@ -6,14 +6,12 @@ public record EstablishmentResponse(
         Long id,
         String name,
         String address,
-        String codeSunat,
-        boolean active) {
+        String codeSunat) {
     public EstablishmentResponse(Establishment establishment) {
         this(
                 establishment.getId(),
                 establishment.getName(),
                 establishment.getAddress(),
-                establishment.getCodeSunat(),
-                establishment.isActive());
+                establishment.getCodeSunat());
     }
 }

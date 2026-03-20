@@ -12,12 +12,5 @@ public record SupplierRequest(
 
         @Size(max = 255, message = "Email cannot exceed 255 characters") String email,
 
-        @Size(max = 255, message = "Address cannot exceed 255 characters") String address,
-
-        Boolean active) {
-    public SupplierRequest {
-        if (active == null) {
-            active = true;
-        }
-    }
+        @Size(max = 255, message = "Address cannot exceed 255 characters") String address) {
 }

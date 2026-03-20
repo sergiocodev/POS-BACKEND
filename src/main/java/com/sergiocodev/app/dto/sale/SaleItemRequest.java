@@ -4,11 +4,13 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record SaleItemRequest(
-        @NotNull(message = "Product ID is required") Long productId,
+                @NotNull(message = "Product ID is required") Long productId,
 
-        Long lotId,
+                @NotNull(message = "Lot ID is required") Long lotId,
 
-        @NotNull(message = "Quantity is required") BigDecimal quantity,
+                @NotNull(message = "Product unit ID is required") Long productUnitId,
 
-        @NotNull(message = "Unit price is required") BigDecimal unitPrice) {
+                @NotNull(message = "Quantity is required") BigDecimal quantity,
+
+                @NotNull(message = "Unit price is required") BigDecimal unitPrice) {
 }

@@ -35,9 +35,6 @@ public class Supplier {
     @Column(length = 255)
     private String address;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private java.time.LocalDateTime deletedAt;
 }

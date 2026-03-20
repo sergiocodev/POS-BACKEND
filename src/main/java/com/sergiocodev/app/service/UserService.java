@@ -62,7 +62,6 @@ public class UserService {
         user.setFullName(request.fullName());
         user.setProfilePicture(request.profilePicture());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setActive(request.active() != null ? request.active() : true);
 
         if (request.roleIds() != null && !request.roleIds().isEmpty()) {
             Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.roleIds()));
@@ -90,10 +89,6 @@ public class UserService {
         user.setFullName(request.fullName());
         user.setProfilePicture(request.profilePicture());
 
-        if (request.active() != null) {
-            user.setActive(request.active());
-        }
-
         if (request.password() != null && !request.password().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(request.password()));
         }
@@ -117,7 +112,11 @@ public class UserService {
     public UserResponse toggleActive(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-        user.setActive(!user.isActive());
+        if (user.getDeletedAt() == null) {
+            user.setDeletedAt(java.time.LocalDateTime.now());
+        } else {
+            user.setDeletedAt(null);
+        }
         return mapper.toResponse(userRepository.save(user));
     }
 }

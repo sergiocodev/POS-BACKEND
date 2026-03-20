@@ -128,7 +128,7 @@ public class Sale {
     private Set<SalePayment> payments = new HashSet<>();
 
     public enum SaleDocumentType {
-        TICKET, BOLETA, FACTURA, NOTA_CREDITO, NOTA_DEBITO
+        TICKET, BOLETA, FACTURA, NOTA_DE_VENTA, NOTA_CREDITO, NOTA_DEBITO
     }
 
     public enum SaleStatus {

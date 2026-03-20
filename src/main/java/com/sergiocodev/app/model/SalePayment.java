@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -25,6 +26,10 @@ public class SalePayment {
     @JoinColumn(name = "sale_id", nullable = false)
     private Sale sale;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_session_id", nullable = false)
+    private CashSession cashSession;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 30)
     private PaymentMethod paymentMethod;
@@ -38,7 +43,10 @@ public class SalePayment {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public enum PaymentMethod {
-        EFECTIVO, VISA, MASTERCARD, YAPE, PLIN, TRANSFERENCIA
+        EFECTIVO, VISA, MASTERCARD, YAPE, PLIN, TRANSFERENCIA, CREDITO
     }
 }

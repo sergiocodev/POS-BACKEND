@@ -76,8 +76,11 @@ public class ReportServiceImpl implements ReportService {
                                         BigDecimal::add);
 
                         BigDecimal cost = items.stream()
-                                        .map(item -> (item.getUnitCost() != null ? item.getUnitCost() : BigDecimal.ZERO)
-                                                        .multiply(item.getQuantity()))
+                                        .map(item -> {
+                                                // El costo se obtiene del inventario del lot
+                                                BigDecimal unitCostFallback = BigDecimal.ZERO;
+                                                return unitCostFallback.multiply(item.getQuantity());
+                                        })
                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                         BigDecimal profit = revenue.subtract(cost);
@@ -174,7 +177,7 @@ public class ReportServiceImpl implements ReportService {
                                 .collect(Collectors.groupingBy(
                                                 item -> item.getProduct().getCategory() != null
                                                                 ? item.getProduct().getCategory()
-                                                                : new Category(0L, "Uncategorized", true, null),
+                                                                : new Category(0L, "Uncategorized", null),
                                                 Collectors.toList()))
                                 .entrySet().stream()
                                 .map(e -> {

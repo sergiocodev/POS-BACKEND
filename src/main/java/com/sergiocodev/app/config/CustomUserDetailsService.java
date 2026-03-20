@@ -23,10 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found or deleted: " + username));
 
-        if (!user.isActive()) {
-            throw new org.springframework.security.authentication.DisabledException("The user is inactive");
-        }
-
         java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
 
         // Add roles

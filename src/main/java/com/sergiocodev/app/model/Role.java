@@ -27,9 +27,6 @@ public class Role {
     @Column(length = 255)
     private String description;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

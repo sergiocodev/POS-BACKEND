@@ -47,11 +47,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                         "LEFT JOIN FETCH p.ingredients pi " +
                         "LEFT JOIN FETCH pi.activeIngredient " +
                         "WHERE i.establishment.id = :establishmentId " +
-                        "AND p.active = true " +
                         "AND i.quantity > 0 " +
-                        "AND (LOWER(p.barcode) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "AND (LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
                         "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-                        "OR LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')))")
+                        "OR LOWER(p.genericName) LIKE LOWER(CONCAT('%', :query, '%')))")
         java.util.List<Inventory> searchProductsForPOS(
                         @org.springframework.data.repository.query.Param("query") String query,
                         @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);

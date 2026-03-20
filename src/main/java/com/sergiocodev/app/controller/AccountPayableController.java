@@ -51,6 +51,6 @@ public class AccountPayableController {
             @Valid @RequestBody AccountPayablePaymentRequest request,
             @RequestParam Long userId) {
         return ResponseEntity.ok(
-                ResponseApi.success(service.pay(id, request.getAmount(), userId), "Pago registrado exitosamente"));
+                ResponseApi.success(service.pay(id, request.amount(), userId), "Pago registrado exitosamente"));
     }
 }

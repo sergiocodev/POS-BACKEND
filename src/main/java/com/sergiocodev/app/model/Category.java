@@ -24,9 +24,6 @@ public class Category {
     @Column(nullable = false, unique = true, length = 150)
     private String name;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

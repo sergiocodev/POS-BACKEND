@@ -4,9 +4,12 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "account_payables")
@@ -20,7 +23,7 @@ public class AccountPayable {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "purchase_id", nullable = false)
+    @JoinColumn(name = "purchase_id", nullable = false, unique = true)
     private Purchase purchase;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,10 +46,24 @@ public class AccountPayable {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "accountPayable", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AccountPayablePayment> payments = new ArrayList<>();
+
     public enum PayableStatus {
-        PENDING, PARTIAL, PAID
+        PENDING, PARTIAL, PAID, CANCELED
     }
 }

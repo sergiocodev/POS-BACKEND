@@ -53,8 +53,6 @@ public class InventoryServiceImpl implements InventoryService {
         entity.setQuantity(newQuantity);
         if (request.costPrice() != null)
             entity.setCostPrice(request.costPrice());
-        if (request.salesPrice() != null)
-            entity.setSalesPrice(request.salesPrice());
         entity.setLastMovement(LocalDateTime.now());
 
         Inventory saved = repository.save(entity);
@@ -139,8 +137,7 @@ public class InventoryServiceImpl implements InventoryService {
                         i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getId() : null,
                         i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getTradeName()
                                 : null,
-                        i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getBarcode()
-                                : null,
+                        null,
                         i.getLot() != null && i.getLot().getProduct() != null ? i.getLot().getProduct().getCode()
                                 : null,
                         i.getQuantity(),
@@ -173,7 +170,7 @@ public class InventoryServiceImpl implements InventoryService {
                             i.getId(),
                             i.getLot().getProduct().getId(),
                             i.getLot().getProduct().getTradeName(),
-                            i.getLot().getProduct().getBarcode(),
+                            null, // barcode ahora en product_units
                             i.getLot().getId(),
                             i.getLot().getLotCode(),
                             i.getLot().getExpiryDate(),

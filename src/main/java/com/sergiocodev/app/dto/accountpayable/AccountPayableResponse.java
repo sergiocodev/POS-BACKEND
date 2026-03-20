@@ -21,5 +21,7 @@ public class AccountPayableResponse {
     private BigDecimal pendingBalance;
     private AccountPayable.PayableStatus status;
     private LocalDate dueDate;
+    private String notes;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

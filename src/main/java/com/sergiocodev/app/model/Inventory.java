@@ -43,9 +43,6 @@ public class Inventory {
     @Column(name = "cost_price", precision = 12, scale = 4)
     private BigDecimal costPrice;
 
-    @Column(name = "sales_price", precision = 12, scale = 2)
-    private BigDecimal salesPrice;
-
     @Column(name = "last_movement")
     private LocalDateTime lastMovement = LocalDateTime.now();
 }
