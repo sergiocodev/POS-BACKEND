@@ -8,13 +8,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reports")
+@CrossOrigin(origins = "*")
 @Tag(name = "Reports", description = "API para generación de reportes de negocio")
+@SecurityRequirement(name = "bearerAuth")
 public class ReportController {
 
     private final ReportService service;
@@ -25,6 +30,7 @@ public class ReportController {
 
     @GetMapping("/sales-daily")
     @Operation(summary = "Reporte de ventas del día")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<DailySalesReport>> getDailySales(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam Long establishmentId) {
@@ -33,6 +39,7 @@ public class ReportController {
 
     @GetMapping("/profitability")
     @Operation(summary = "Reporte de utilidad y rentabilidad")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<ProfitabilityReport>>> getProfitability(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -42,12 +49,14 @@ public class ReportController {
 
     @GetMapping("/sunat-status")
     @Operation(summary = "Estado de comprobantes SUNAT")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_COMPROBANTES + "')")
     public ResponseEntity<ResponseApi<List<SunatStatusReport>>> getSunatStatus(@RequestParam Long establishmentId) {
         return ResponseEntity.ok(ResponseApi.success(service.getSunatStatus(establishmentId)));
     }
 
     @GetMapping("/top-products")
     @Operation(summary = "Ranking de Productos (Pareto)")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<TopProductReport>>> getTopProducts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -60,6 +69,7 @@ public class ReportController {
 
     @GetMapping("/sales-by-category")
     @Operation(summary = "Ventas por Familia/Categoría")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<CategorySalesReport>>> getSalesByCategory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -69,6 +79,7 @@ public class ReportController {
 
     @GetMapping("/sales-by-employee")
     @Operation(summary = "Rendimiento de Vendedores")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<EmployeeSalesReport>>> getSalesByEmployee(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -78,6 +89,7 @@ public class ReportController {
 
     @GetMapping("/hourly-heat")
     @Operation(summary = "Mapa de Calor por Horas")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<HourlyHeatReport>>> getHourlyHeat(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -87,6 +99,7 @@ public class ReportController {
 
     @GetMapping("/low-rotation")
     @Operation(summary = "Productos de Baja Rotación (Huesos)")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<LowRotationReport>>> getLowRotation(
             @RequestParam(defaultValue = "90") int days,
             @RequestParam Long establishmentId) {
@@ -95,6 +108,7 @@ public class ReportController {
 
     @GetMapping("/purchases")
     @Operation(summary = "Reporte de compras por período")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<PurchaseReport>>> getPurchases(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -104,6 +118,7 @@ public class ReportController {
 
     @GetMapping("/sales")
     @Operation(summary = "Reporte de ventas detallado por período")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<List<SalesReport>>> getSales(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -113,6 +128,7 @@ public class ReportController {
 
     @GetMapping("/sales/summary")
     @Operation(summary = "Resumen agregado de ventas por período")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
     public ResponseEntity<ResponseApi<SalesSummaryReport>> getSalesSummary(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,

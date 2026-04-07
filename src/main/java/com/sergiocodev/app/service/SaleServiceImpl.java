@@ -316,8 +316,15 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SaleResponse> getAll() {
-        return repository.findAllByOrderByDateDesc().stream()
+    public List<SaleResponse> getAll(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
+        List<Sale> sales;
+        if (startDate != null && endDate != null) {
+            sales = repository.findByDateBetweenOrderByDateDesc(startDate, endDate);
+        } else {
+            sales = repository.findAllByOrderByDateDesc();
+        }
+
+        return sales.stream()
                 .map(mapper::toResponse)
                 .map(this::addCompanyInfo)
                 .collect(Collectors.toList());

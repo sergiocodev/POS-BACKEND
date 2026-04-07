@@ -26,6 +26,9 @@ public class Permission {
     @Column(length = 50)
     private String module;
 
+    @Column(length = 50)
+    private String submodule;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

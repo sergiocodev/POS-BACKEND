@@ -9,7 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 @RestController
@@ -18,6 +19,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @Tag(name = "Cash Concepts", description = "Endpoints para la gestión de conceptos de caja")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_MOVIMIENTOS + "')")
 public class CashConceptController {
 
     private final CashConceptRepository repository;

@@ -19,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 @RestController
@@ -35,6 +37,7 @@ public class UserController {
     @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
     @GetMapping
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<List<UserResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(userService.getAll()));
     }
@@ -57,12 +60,14 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<UserResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(userService.getById(id)));
     }
 
     @Operation(summary = "Crear usuario", description = "Crea un nuevo usuario (ADMIN)")
     @PostMapping
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<UserResponse>> create(@Valid @RequestBody UserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(userService.create(request), "Usuario creado exitosamente"));
@@ -70,6 +75,7 @@ public class UserController {
 
     @Operation(summary = "Actualizar usuario", description = "Actualiza un usuario existente")
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<UserResponse>> update(@PathVariable Long id,
             @Valid @RequestBody UserRequest request) {
         return ResponseEntity
@@ -78,6 +84,7 @@ public class UserController {
 
     @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su ID")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Usuario eliminado exitosamente"));
@@ -89,6 +96,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
     public ResponseEntity<ResponseApi<UserResponse>> toggleActive(@PathVariable Long id) {
         return ResponseEntity
                 .ok(ResponseApi.success(userService.toggleActive(id), "Estado de usuario actualizado exitosamente"));

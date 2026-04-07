@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 @RestController
@@ -26,6 +28,7 @@ public class PurchaseController {
 
     @PostMapping
     @Operation(summary = "Procesar una nueva compra")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_NUEVA + "')")
     public ResponseEntity<ResponseApi<PurchaseResponse>> create(@Valid @RequestBody PurchaseRequest request,
             @RequestParam Long userId) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -34,18 +37,21 @@ public class PurchaseController {
 
     @GetMapping
     @Operation(summary = "Listar todas las compras")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_LISTA + "')")
     public ResponseEntity<ResponseApi<List<PurchaseResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener compra por ID")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_LISTA + "')")
     public ResponseEntity<ResponseApi<PurchaseResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancelar una compra")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_NUEVA + "')")
     public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id) {
         service.cancel(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Compra cancelada exitosamente"));

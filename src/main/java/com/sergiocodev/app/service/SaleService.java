@@ -14,7 +14,7 @@ import java.util.List;
 public interface SaleService {
     SaleResponse create(SaleRequest request, Long userId);
 
-    List<SaleResponse> getAll();
+    List<SaleResponse> getAll(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     SaleResponse getById(Long id);
 

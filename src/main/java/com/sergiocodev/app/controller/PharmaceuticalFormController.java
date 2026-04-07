@@ -23,27 +23,28 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @Tag(name = "Pharmaceutical Forms", description = "Endpoints for managing pharmaceutical forms")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_FORMAS + "')")
 public class PharmaceuticalFormController {
 
     private final PharmaceuticalFormService pharmaceuticalFormService;
 
     @Operation(summary = "List all pharmaceutical forms")
     @GetMapping("/GetAllPharmaceuticalForms")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<List<PharmaceuticalFormResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findAll()));
     }
 
     @Operation(summary = "Get pharmaceutical form by ID")
     @GetMapping("/GetPharmaceuticalFormById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findById(id)));
     }
 
     @Operation(summary = "Create new pharmaceutical form")
     @PostMapping("/CreateNewPharmaceuticalForm")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> create(
             @Valid @RequestBody PharmaceuticalFormRequest request) {
         PharmaceuticalFormResponse created = pharmaceuticalFormService.create(request);
@@ -53,7 +54,7 @@ public class PharmaceuticalFormController {
 
     @Operation(summary = "Update pharmaceutical form")
     @PutMapping("/UpdatePharmaceuticalFormById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody PharmaceuticalFormRequest request) {
@@ -63,7 +64,7 @@ public class PharmaceuticalFormController {
 
     @Operation(summary = "Delete pharmaceutical form")
     @DeleteMapping("/DeletePharmaceuticalFormById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         pharmaceuticalFormService.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Pharmaceutical form deleted successfully"));

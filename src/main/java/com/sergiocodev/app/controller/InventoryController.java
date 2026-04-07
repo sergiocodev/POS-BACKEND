@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 @RestController
@@ -19,6 +21,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @Tag(name = "Inventory", description = "Endpoints para la gestión de inventario")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_ACTUAL + "')")
 public class InventoryController {
 
     private final InventoryService service;

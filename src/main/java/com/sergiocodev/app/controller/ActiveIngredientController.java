@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 @RestController
@@ -20,6 +22,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS + "')")
 public class ActiveIngredientController {
 
     private final ActiveIngredientService service;

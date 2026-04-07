@@ -16,14 +16,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/account-payable-payments")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Account Payable Payments", description = "Endpoints para la gestión de pagos de cuentas por pagar")
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_CUENTAS_PAGAR + "')")
 public class AccountPayablePaymentController {
 
     private final AccountPayablePaymentService service;

@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ public class SunatController {
 
     @PostMapping("/EmitInvoiceToOSE")
     @Operation(summary = "Emit Invoice to OSE/SUNAT")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_COMPROBANTES + "')")
     public ResponseEntity<ResponseApi<EmitInvoiceResponse>> emitInvoiceToOSE(
             @Valid @RequestBody EmitInvoiceRequest request) {
         EmitInvoiceResponse response = saleService.emitInvoiceToOSE(request.getSaleId());
@@ -35,6 +38,7 @@ public class SunatController {
 
     @PostMapping("/VoidInvoice")
     @Operation(summary = "Void Invoice and Reverse Stock")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_BAJAS + "')")
     public ResponseEntity<ResponseApi<VoidedDocumentResponse>> voidInvoice(
             @Valid @RequestBody VoidInvoiceRequest request,
             @RequestParam Long userId) {

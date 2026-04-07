@@ -8,12 +8,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/document-sequences")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+@Tag(name = "Document Sequences", description = "Endpoints para la gestión de series y correlativos de documentos")
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_IMPUESTOS + "')")
 public class DocumentSequenceController {
 
     private final DocumentSequenceService service;

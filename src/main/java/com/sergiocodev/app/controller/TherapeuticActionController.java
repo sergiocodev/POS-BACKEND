@@ -23,27 +23,28 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @Tag(name = "Therapeutic Actions", description = "Endpoints for managing therapeutic actions")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_ACCIONES + "')")
 public class TherapeuticActionController {
 
     private final TherapeuticActionService service;
 
     @Operation(summary = "List all therapeutic actions")
     @GetMapping("/GetAllTherapeuticActions")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<List<TherapeuticActionResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.findAll()));
     }
 
     @Operation(summary = "Get therapeutic action by ID")
     @GetMapping("/GetTherapeuticActionById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.findById(id)));
     }
 
     @Operation(summary = "Create new therapeutic action")
     @PostMapping("/CreateNewTherapeuticAction")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> create(
             @Valid @RequestBody TherapeuticActionRequest request) {
         TherapeuticActionResponse created = service.create(request);
@@ -53,7 +54,7 @@ public class TherapeuticActionController {
 
     @Operation(summary = "Update therapeutic action")
     @PutMapping("/UpdateTherapeuticActionById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody TherapeuticActionRequest request) {
@@ -63,7 +64,7 @@ public class TherapeuticActionController {
 
     @Operation(summary = "Delete therapeutic action")
     @DeleteMapping("/DeleteTherapeuticActionById/{id}")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA + "')")
+
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Therapeutic action deleted successfully"));

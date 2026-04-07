@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
@@ -22,6 +24,7 @@ import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 @CrossOrigin(origins = "*")
 @Tag(name = "Products", description = "Endpoints para la gestión de productos")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_CATALOGO + "')")
 public class ProductController {
 
     private final ProductService service;

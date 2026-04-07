@@ -8,10 +8,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.sergiocodev.app.util.PermissionConstants;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/company")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+@Tag(name = "Company", description = "Endpoints para la gestión de la empresa")
+@SecurityRequirement(name = "bearerAuth")
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -22,7 +28,7 @@ public class CompanyController {
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS + "')")
     public ResponseEntity<CompanyResponse> updateCompany(@Valid @RequestBody CompanyRequest request) {
         return ResponseEntity.ok(companyService.updateCompany(request));
     }

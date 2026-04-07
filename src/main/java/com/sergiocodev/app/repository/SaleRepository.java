@@ -20,6 +20,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                         "establishment", "user" })
         List<Sale> findAllByOrderByDateDesc();
 
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "payments", "customer",
+                        "establishment", "user" })
+        List<Sale> findByDateBetweenOrderByDateDesc(java.time.LocalDateTime start, java.time.LocalDateTime end);
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "items.productLot",
                         "items.productLot.product", "establishment", "customer" })
