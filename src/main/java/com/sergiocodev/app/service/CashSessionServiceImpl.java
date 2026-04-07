@@ -3,15 +3,23 @@ package com.sergiocodev.app.service;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.dto.cashsession.CashSessionRequest;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
+import com.sergiocodev.app.dto.cash.CashInflowRequest;
+import com.sergiocodev.app.dto.cash.CashOutflowRequest;
 import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
 import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cash.CloseSessionRequest;
-import com.sergiocodev.app.dto.cash.CashOutflowRequest;
-import com.sergiocodev.app.model.CashMovement.MovementType;
+import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
+import com.sergiocodev.app.model.AccountPayablePayment;
+import com.sergiocodev.app.model.AccountReceivablePayment;
+import com.sergiocodev.app.model.CashConcept.ConceptType;
 import com.sergiocodev.app.model.SalePayment.PaymentMethod;
 import com.sergiocodev.app.model.SalePayment;
+import com.sergiocodev.app.model.CashConcept;
+import com.sergiocodev.app.model.User;
 import com.sergiocodev.app.model.CashMovement;
 import com.sergiocodev.app.model.CashSession;
+import com.sergiocodev.app.repository.AccountPayablePaymentRepository;
+import com.sergiocodev.app.repository.AccountReceivablePaymentRepository;
 import com.sergiocodev.app.repository.CashConceptRepository;
 import com.sergiocodev.app.repository.CashMovementRepository;
 import com.sergiocodev.app.repository.CashRegisterRepository;
@@ -37,6 +45,9 @@ public class CashSessionServiceImpl implements CashSessionService {
         private final SalePaymentRepository salePaymentRepository;
         private final CashMovementRepository cashMovementRepository;
         private final CashConceptRepository cashConceptRepository;
+        private final CashMovementService cashMovementService;
+        private final AccountReceivablePaymentRepository arPaymentRepository;
+        private final AccountPayablePaymentRepository apPaymentRepository;
 
         @Override
         @Transactional
@@ -163,69 +174,139 @@ public class CashSessionServiceImpl implements CashSessionService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "No active session found for user: " + userId));
 
-                BigDecimal totalSales = salePaymentRepository.findBySaleCashSessionIdAndPaymentMethod(
-                                session.getId(), PaymentMethod.EFECTIVO).stream()
-                                .map(SalePayment::getAmount)
+                Long sessionId = session.getId();
+
+                // ── Entradas de efectivo ──────────────────────────────────────────────
+                // 1. Ventas cobradas en efectivo
+                BigDecimal totalCashSales = salePaymentRepository
+                                .sumByCashSessionIdAndPaymentMethod(sessionId, PaymentMethod.EFECTIVO);
+
+                // 2. Cobros de CxC (cuenta por cobrar) en efectivo durante este turno
+                BigDecimal totalArCashPayments = arPaymentRepository
+                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
+                                                sessionId, AccountReceivablePayment.PaymentMethod.EFECTIVO)
+                                .stream()
+                                .map(AccountReceivablePayment::getAmount)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal totalIncome = cashMovementRepository.findByCashSessionIdAndType(
-                                session.getId(), MovementType.INCOME).stream()
+                // 3. Ingresos manuales (CashMovements tipo IN)
+                BigDecimal totalCashInflows = cashMovementRepository
+                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.IN)
+                                .stream()
+                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
                                 .map(CashMovement::getAmount)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal totalExpenses = cashMovementRepository.findByCashSessionIdAndType(
-                                session.getId(), MovementType.EXPENSE).stream()
+                // ── Salidas de efectivo ───────────────────────────────────────────────
+                // 4. Pagos a proveedores (CxP) en efectivo durante este turno
+                BigDecimal totalApCashPayments = apPaymentRepository
+                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
+                                                sessionId, AccountPayablePayment.PaymentMethod.EFECTIVO)
+                                .stream()
+                                .map(AccountPayablePayment::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                // 5. Egresos manuales (CashMovements tipo OUT)
+                BigDecimal totalCashOutflows = cashMovementRepository
+                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.OUT)
+                                .stream()
+                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
                                 .map(CashMovement::getAmount)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal totalPurchases = BigDecimal.ZERO;
+                // ── Métodos digitales de venta (solo visualización) ───────────────────
+                BigDecimal totalSalesYape = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
+                                PaymentMethod.YAPE);
+                BigDecimal totalSalesPlin = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
+                                PaymentMethod.PLIN);
+                BigDecimal totalSalesTarjeta = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
+                                PaymentMethod.TARJETA);
+                BigDecimal totalSalesTransferencia = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
+                                PaymentMethod.TRANSFERENCIA);
 
+                BigDecimal totalDigital = totalSalesYape
+                                .add(totalSalesPlin)
+                                .add(totalSalesTarjeta)
+                                .add(totalSalesTransferencia);
+
+                // ── Saldo teórico ─────────────────────────────────────────────────────
+                // Apertura + entradas en efectivo - salidas en efectivo
                 BigDecimal calculatedBalance = session.getOpeningBalance()
-                                .add(totalSales)
-                                .add(totalIncome)
-                                .subtract(totalExpenses);
+                                .add(totalCashSales)
+                                .add(totalArCashPayments)
+                                .add(totalCashInflows)
+                                .subtract(totalApCashPayments)
+                                .subtract(totalCashOutflows);
 
                 return new SessionStatusResponse(
-                                session.getId(),
+                                sessionId,
                                 session.getCashRegister().getName(),
+                                session.getOpenedAt(),
+                                session.getStatus(),
                                 session.getOpeningBalance(),
                                 calculatedBalance,
-                                totalSales,
-                                totalIncome,
-                                totalExpenses,
-                                totalPurchases,
-                                session.getOpenedAt(),
-                                session.getStatus());
+                                totalCashSales,
+                                totalArCashPayments,
+                                totalCashInflows,
+                                totalApCashPayments,
+                                totalCashOutflows,
+                                totalSalesYape,
+                                totalSalesPlin,
+                                totalSalesTarjeta,
+                                totalSalesTransferencia,
+                                totalDigital);
         }
 
         @Override
         @Transactional
-        public CashMovement registerCashOutflow(
+        public CashMovementResponse registerCashOutflow(
                         CashOutflowRequest request) {
                 CashSession session = repository.findByUserIdAndStatus(request.userId(), CashSession.SessionStatus.OPEN)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "No active session found for user: " + request.userId()));
 
-                CashMovement movement = new CashMovement();
-                movement.setCashSession(session);
-                movement.setAmount(request.amount());
-                movement.setType(MovementType.EXPENSE);
-                movement.setDescription(request.description());
+                User user = session.getUser();
+                CashConcept concept = null;
 
                 if (request.conceptId() != null) {
-                        movement.setCashConcept(cashConceptRepository.findById(request.conceptId())
-                                        .orElseThrow(
-                                                        () -> new ResourceNotFoundException("Concept not found")));
+                        concept = cashConceptRepository.findById(request.conceptId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Concept not found"));
+                } else {
+                        // Fallback to a default OUT concept or throw error
+                        concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                                        .findFirst()
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "No se encontró un concepto de egreso por defecto"));
                 }
 
-                CashMovement saved = cashMovementRepository.save(movement);
+                return cashMovementService.registerInternalMovement(
+                                session, user, concept, request.amount(), request.reference(), request.description());
+        }
 
-                BigDecimal currentCalc = session.getCalculatedBalance() != null ? session.getCalculatedBalance()
-                                : BigDecimal.ZERO;
-                session.setCalculatedBalance(currentCalc.subtract(request.amount()));
-                repository.save(session);
+        @Override
+        @Transactional
+        public CashMovementResponse registerCashInflow(
+                        CashInflowRequest request) {
+                CashSession session = repository.findByUserIdAndStatus(request.userId(), CashSession.SessionStatus.OPEN)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "No active session found for user: " + request.userId()));
 
-                return saved;
+                User user = session.getUser();
+                CashConcept concept = null;
+
+                if (request.conceptId() != null) {
+                        concept = cashConceptRepository.findById(request.conceptId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Concept not found"));
+                } else {
+                        // Fallback to a default IN concept or throw error
+                        concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
+                                        .findFirst()
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "No se encontró un concepto de ingreso por defecto"));
+                }
+
+                return cashMovementService.registerInternalMovement(
+                                session, user, concept, request.amount(), request.reference(), request.description());
         }
 
         @Override

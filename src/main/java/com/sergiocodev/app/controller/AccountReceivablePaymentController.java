@@ -1,38 +1,58 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.config.UserPrincipal;
+import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentResponse;
 import com.sergiocodev.app.service.AccountReceivablePaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/account-receivable-payments")
 @RequiredArgsConstructor
+@Tag(name = "Account Receivable Payments", description = "Endpoints para la gestión de pagos de cuentas por cobrar")
 public class AccountReceivablePaymentController {
 
     private final AccountReceivablePaymentService service;
 
     @PostMapping
-    public ResponseEntity<AccountReceivablePaymentResponse> create(
+    public ResponseEntity<ResponseApi<AccountReceivablePaymentResponse>> create(
             @Valid @RequestBody AccountReceivablePaymentRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        // En una app real se extrae el userId del UserDetails, aquí simulamos con ID 1
-        Long userId = 1L;
-        return new ResponseEntity<>(service.create(request, userId), HttpStatus.CREATED);
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return new ResponseEntity<>(
+                ResponseApi.success(service.create(request, principal.getId()), "Cobro registrado exitosamente"),
+                HttpStatus.CREATED);
     }
 
     @GetMapping("/receivable/{accountReceivableId}")
-    public ResponseEntity<List<AccountReceivablePaymentResponse>> getByAccountReceivableId(
+    public ResponseEntity<ResponseApi<List<AccountReceivablePaymentResponse>>> getByAccountReceivableId(
             @PathVariable Long accountReceivableId) {
-        return ResponseEntity.ok(service.getByAccountReceivableId(accountReceivableId));
+        return ResponseEntity.ok(ResponseApi.success(service.getByAccountReceivableId(accountReceivableId)));
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Obtener historial de cobros con filtros y paginación")
+    public ResponseEntity<ResponseApi<Page<AccountReceivablePaymentResponse>>> getHistory(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String paymentMethod,
+            Pageable pageable) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.getHistory(startDate, endDate, customerId, paymentMethod, pageable)));
     }
 
     @DeleteMapping("/{id}")

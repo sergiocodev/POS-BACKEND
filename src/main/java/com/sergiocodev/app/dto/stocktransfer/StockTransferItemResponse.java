@@ -9,5 +9,8 @@ public record StockTransferItemResponse(
         String productName,
         Long lotId,
         String lotCode,
+        Long unitId,
+        String unitName,
+        Integer unitFactor,
         BigDecimal quantity) {
 }

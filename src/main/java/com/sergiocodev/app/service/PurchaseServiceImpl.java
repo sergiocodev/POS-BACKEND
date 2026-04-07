@@ -28,7 +28,11 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final AccountPayableRepository accountPayableRepository;
+    private final AccountPayablePaymentRepository accountPayablePaymentRepository;
     private final PurchaseMapper purchaseMapper;
+    private final CashSessionRepository cashSessionRepository;
+    private final CashConceptRepository cashConceptRepository;
+    private final CashMovementService cashMovementService;
 
     @Override
     @Transactional
@@ -64,22 +68,79 @@ public class PurchaseServiceImpl implements PurchaseService {
             item.setTotalCost(itemTotal);
             entity.getItems().add(item);
 
-            updateInventory(entity, lot, ir.getQuantity(), ir.getBonusQuantity(), ir.getUnitCost());
+            updateInventory(entity, lot, ir.getQuantity(), ir.getBonusQuantity(), ir.getUnitCost(), productUnit);
         }
 
         calculateTotals(entity);
 
         Purchase savedEntity = repository.save(entity);
 
-        // Siempre crear AccountPayable con estado PENDING (el pago ES separado)
+        BigDecimal totalAmount = savedEntity.getTotal();
+        BigDecimal initialPayment = BigDecimal.ZERO;
+
+        if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH) {
+            initialPayment = totalAmount;
+        } else if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CREDIT && request.getInitialPayment() != null) {
+            initialPayment = request.getInitialPayment();
+        }
+
+        BigDecimal pendingBalance = totalAmount.subtract(initialPayment);
+        AccountPayable.PayableStatus status = AccountPayable.PayableStatus.PENDING;
+
+        if (pendingBalance.compareTo(BigDecimal.ZERO) <= 0) {
+            status = AccountPayable.PayableStatus.PAID;
+            pendingBalance = BigDecimal.ZERO;
+        } else if (initialPayment.compareTo(BigDecimal.ZERO) > 0) {
+            status = AccountPayable.PayableStatus.PARTIAL;
+        }
+
         AccountPayable payable = new AccountPayable();
         payable.setPurchase(savedEntity);
         payable.setSupplier(savedEntity.getSupplier());
-        payable.setTotalAmount(savedEntity.getTotal());
-        payable.setAmountPaid(BigDecimal.ZERO);
-        payable.setPendingBalance(savedEntity.getTotal());
-        payable.setStatus(AccountPayable.PayableStatus.PENDING);
-        accountPayableRepository.save(payable);
+        payable.setTotalAmount(totalAmount);
+        payable.setAmountPaid(initialPayment);
+        payable.setPendingBalance(pendingBalance);
+        payable.setStatus(status);
+        if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CREDIT && request.getDueDate() != null) {
+            payable.setDueDate(request.getDueDate());
+        }
+        AccountPayable savedPayable = accountPayableRepository.save(payable);
+
+        if (initialPayment.compareTo(BigDecimal.ZERO) > 0) {
+            if (request.getPaymentMethod() == null) {
+                throw new IllegalArgumentException("Payment method is required when there is an initial payment.");
+            }
+
+            CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                    .orElseThrow(() -> new RuntimeException("Debe tener una sesión de caja abierta para realizar compras al contado o abonar pagos iniciales."));
+
+            AccountPayablePayment payment = new AccountPayablePayment();
+            payment.setAccountPayable(savedPayable);
+            payment.setUser(savedEntity.getUser());
+            payment.setCashSession(session);
+            payment.setAmount(initialPayment);
+            payment.setPaymentMethod(request.getPaymentMethod());
+            payment.setPaymentDate(LocalDateTime.now());
+            accountPayablePaymentRepository.save(payment);
+
+            String methodStr = request.getPaymentMethod().name().toUpperCase();
+            CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                    .filter(c -> (c.getName().toLowerCase().contains("pago") || c.getName().toLowerCase().contains("compra") || c.getName().toLowerCase().contains("proveedor")) 
+                            && c.getName().toUpperCase().contains(methodStr))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        CashConcept newConcept = new CashConcept();
+                        newConcept.setName("COMPRA PROVEEDOR " + methodStr);
+                        newConcept.setType(CashConcept.ConceptType.OUT);
+                        return cashConceptRepository.save(newConcept);
+                    });
+
+            String description = "Compra " + (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH ? "al contado" : "con pago inicial") 
+                    + " (" + request.getPaymentMethod().name() + ") - Proveedor: " + savedEntity.getSupplier().getName();
+            
+            cashMovementService.registerInternalMovement(session, savedEntity.getUser(), concept, initialPayment, 
+                    "COMPRA-" + savedEntity.getId(), description);
+        }
 
         return purchaseMapper.toResponse(savedEntity);
     }
@@ -96,7 +157,13 @@ public class PurchaseServiceImpl implements PurchaseService {
     }
 
     private void updateInventory(Purchase purchase, ProductLot lot, Integer quantity, Integer bonusQuantity,
-            BigDecimal unitCost) {
+            BigDecimal unitCost, ProductUnit productUnit) {
+
+        // Convertir a unidad base multiplicando por el factor de la unidad comprada
+        // Ejemplo: 5 cajas × factor 100 = 500 tabletas
+        int factor = productUnit.getFactor() != null ? productUnit.getFactor() : 1;
+        int totalBaseUnits = (quantity + bonusQuantity) * factor;
+
         Inventory inventory = inventoryRepository
                 .findByEstablishmentIdAndLotId(purchase.getEstablishment().getId(), lot.getId())
                 .orElseGet(() -> {
@@ -107,13 +174,13 @@ public class PurchaseServiceImpl implements PurchaseService {
                     return newInv;
                 });
 
-        BigDecimal newQty = inventory.getQuantity().add(new BigDecimal(quantity + bonusQuantity));
+        BigDecimal newQty = inventory.getQuantity().add(new BigDecimal(totalBaseUnits));
         inventory.setQuantity(newQty);
         inventory.setCostPrice(unitCost);
         inventory.setLastMovement(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
-        createStockMovement(purchase, lot, quantity + bonusQuantity, newQty);
+        createStockMovement(purchase, lot, totalBaseUnits, newQty);
     }
 
     private void createStockMovement(Purchase purchase, ProductLot lot, Integer quantity, BigDecimal balanceAfter) {

@@ -1,12 +1,13 @@
 package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
+import com.sergiocodev.app.dto.cash.CashInflowRequest;
 import com.sergiocodev.app.dto.cash.CashOutflowRequest;
 import com.sergiocodev.app.dto.cash.CloseSessionRequest;
 import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
 import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
-import com.sergiocodev.app.model.CashMovement;
+import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
 import com.sergiocodev.app.service.CashSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,10 +44,18 @@ public class CashController {
 
     @PostMapping("/RegisterCashOutflow")
     @Operation(summary = "Retiro de dinero", description = "Registra un egreso de caja.")
-    public ResponseEntity<ResponseApi<CashMovement>> registerCashOutflow(
+    public ResponseEntity<ResponseApi<CashMovementResponse>> registerCashOutflow(
             @Valid @RequestBody CashOutflowRequest request) {
         return ResponseEntity
                 .ok(ResponseApi.success(service.registerCashOutflow(request), "Egreso registrado exitosamente"));
+    }
+
+    @PostMapping("/RegisterCashInflow")
+    @Operation(summary = "Ingreso de dinero", description = "Registra un ingreso a caja que no provenga de una venta directa (ej. saldo rotativo).")
+    public ResponseEntity<ResponseApi<CashMovementResponse>> registerCashInflow(
+            @Valid @RequestBody CashInflowRequest request) {
+        return ResponseEntity
+                .ok(ResponseApi.success(service.registerCashInflow(request), "Ingreso registrado exitosamente"));
     }
 
     @PostMapping("/CloseSessionAndReport")

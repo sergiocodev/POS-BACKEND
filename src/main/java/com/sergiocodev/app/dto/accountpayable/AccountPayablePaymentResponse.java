@@ -6,6 +6,10 @@ import java.time.LocalDateTime;
 public record AccountPayablePaymentResponse(
         Long id,
         Long accountPayableId,
+        String supplierName,
+        BigDecimal totalAmount,
+        BigDecimal amountPaid,
+        BigDecimal pendingBalance,
         Long userId,
         String username,
         BigDecimal amount,

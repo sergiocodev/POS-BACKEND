@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface AccountReceivableService {
     AccountReceivableResponse create(AccountReceivableRequest request);
-
+    List<AccountReceivableResponse> getAll();
     List<AccountReceivableResponse> getByCustomerId(Long customerId);
 
     AccountReceivableResponse getById(Long id);

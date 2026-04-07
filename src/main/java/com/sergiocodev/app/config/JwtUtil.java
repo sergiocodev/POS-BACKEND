@@ -83,8 +83,9 @@ public class JwtUtil {
      */
     public String generateRefreshToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        // Refresh token expiration: 7 days (604800000 ms) or default 1 day
-        long refreshExpiration = 604800000;
+        // Refresh token expiration: default 20 horas (72000000 ms)
+        Long refreshExpiration = jwtProperties.getRefreshExpiration() != null ? jwtProperties.getRefreshExpiration()
+                : 72000000L;
         return createToken(claims, username, refreshExpiration);
     }
 

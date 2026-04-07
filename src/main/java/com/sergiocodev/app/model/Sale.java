@@ -74,6 +74,10 @@ public class Sale {
     @Column(nullable = false, length = 20)
     private SaleStatus status = SaleStatus.COMPLETED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_condition", nullable = false, length = 20)
+    private PaymentCondition paymentCondition = PaymentCondition.CONTADO;
+
     // SUNAT fields
     @Enumerated(EnumType.STRING)
     @Column(name = "sunat_status", length = 30)
@@ -137,5 +141,9 @@ public class Sale {
 
     public enum SunatStatus {
         PENDING, SENT, ACCEPTED, OBSERVED, REJECTED, VOIDED
+    }
+
+    public enum PaymentCondition {
+        CONTADO, CREDITO
     }
 }

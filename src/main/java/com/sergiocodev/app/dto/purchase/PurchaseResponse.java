@@ -27,7 +27,9 @@ public class PurchaseResponse {
     private BigDecimal tax;
     private BigDecimal total;
     private Purchase.PurchaseStatus status;
+    private Purchase.PaymentCondition paymentCondition;
     private String notes;
     private LocalDateTime createdAt;
     private List<PurchaseItemResponse> items;
+    private com.sergiocodev.app.dto.company.CompanyMinimalResponse company;
 }

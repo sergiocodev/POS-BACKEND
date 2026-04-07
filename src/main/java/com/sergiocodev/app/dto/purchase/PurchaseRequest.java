@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.math.BigDecimal;
+import com.sergiocodev.app.model.AccountPayablePayment;
 
 @Data
 @NoArgsConstructor
@@ -36,4 +38,17 @@ public class PurchaseRequest {
 
     @NotNull(message = "Items are required")
     private List<PurchaseItemRequest> items;
+
+    @NotNull(message = "Payment condition is required")
+    private PaymentCondition paymentCondition;
+
+    private BigDecimal initialPayment;
+
+    private AccountPayablePayment.PaymentMethod paymentMethod;
+
+    private LocalDate dueDate;
+
+    public enum PaymentCondition {
+        CASH, CREDIT
+    }
 }

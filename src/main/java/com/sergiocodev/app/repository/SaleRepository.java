@@ -18,7 +18,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "payments", "customer",
                         "establishment", "user" })
-        List<Sale> findAll();
+        List<Sale> findAllByOrderByDateDesc();
+
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "items", "items.productLot",
                         "items.productLot.product", "establishment", "customer" })

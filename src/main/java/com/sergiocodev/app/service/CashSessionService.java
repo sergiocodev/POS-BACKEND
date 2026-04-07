@@ -1,12 +1,13 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.cash.CashInflowRequest;
 import com.sergiocodev.app.dto.cash.CashOutflowRequest;
 import com.sergiocodev.app.dto.cash.CloseSessionRequest;
 import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
 import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cashsession.CashSessionRequest;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
-import com.sergiocodev.app.model.CashMovement;
+import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,7 +33,9 @@ public interface CashSessionService {
 
         CashSessionResponse openDailySession(OpenDailySessionRequest request);
 
-        CashMovement registerCashOutflow(CashOutflowRequest request);
+        CashMovementResponse registerCashOutflow(CashOutflowRequest request);
+
+        CashMovementResponse registerCashInflow(CashInflowRequest request);
 
         CashSessionResponse closeSessionAndReport(CloseSessionRequest request);
 }

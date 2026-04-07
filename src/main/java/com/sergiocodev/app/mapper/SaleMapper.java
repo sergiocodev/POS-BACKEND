@@ -16,6 +16,10 @@ public interface SaleMapper {
     @Mapping(target = "relatedSaleId", source = "relatedSale.id")
     @Mapping(target = "sunatResponseJson", source = "sunatResponseJson")
     @Mapping(target = "sunatErrorCode", source = "sunatErrorCode")
+    @Mapping(target = "customerDocumentType", source = "customer.documentType")
+    @Mapping(target = "customerDocumentNumber", source = "customer.documentNumber")
+    @Mapping(target = "customerAddress", source = "customer.address")
+    @Mapping(target = "userFullName", source = "user.fullName")
     SaleResponse toResponse(Sale entity);
 
     @Mapping(target = "productName", source = "product.tradeName")

@@ -7,12 +7,27 @@ import java.time.LocalDateTime;
 public record SessionStatusResponse(
         Long sessionId,
         String cashRegisterName,
-        BigDecimal openingBalance,
-        BigDecimal calculatedBalance,
-        BigDecimal totalSales, // Pagos en efectivo
-        BigDecimal totalIncome, // Ingresos (CashMovements)
-        BigDecimal totalExpenses, // Egresos (CashMovements)
-        BigDecimal totalPurchases, // Compras en efectivo
         LocalDateTime openedAt,
-        SessionStatus status) {
+        SessionStatus status,
+
+        // ── Saldos ──────────────────────────────────
+        BigDecimal openingBalance,
+        BigDecimal calculatedBalance,       // saldo teórico = lo que debería haber
+
+        // ── Entradas de efectivo (+) ─────────────────
+        BigDecimal totalCashSales,          // ventas cobradas en EFECTIVO
+        BigDecimal totalArCashPayments,     // cobros de CxC en EFECTIVO
+        BigDecimal totalCashInflows,        // ingresos manuales (CashMovements IN)
+
+        // ── Salidas de efectivo (-) ──────────────────
+        BigDecimal totalApCashPayments,     // pagos a proveedores en EFECTIVO
+        BigDecimal totalCashOutflows,       // egresos manuales (CashMovements OUT)
+
+        // ── Métodos digitales (solo visualización) ───
+        BigDecimal totalSalesYape,
+        BigDecimal totalSalesPlin,
+        BigDecimal totalSalesTarjeta,
+        BigDecimal totalSalesTransferencia,
+        BigDecimal totalDigital            // suma de todos los digitales (sin efectivo)
+) {
 }

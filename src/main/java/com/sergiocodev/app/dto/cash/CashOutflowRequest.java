@@ -7,5 +7,6 @@ public record CashOutflowRequest(
         @NotNull(message = "User ID is required") Long userId,
         @NotNull(message = "Amount is required") BigDecimal amount,
         @NotNull(message = "Concept ID is required") Long conceptId,
-        String description) {
+        String description,
+        String reference) {
 }

@@ -47,6 +47,6 @@ public class SalePayment {
     private LocalDateTime deletedAt;
 
     public enum PaymentMethod {
-        EFECTIVO, VISA, MASTERCARD, YAPE, PLIN, TRANSFERENCIA, CREDITO
+        EFECTIVO, TRANSFERENCIA, YAPE, PLIN, TARJETA
     }
 }

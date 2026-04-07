@@ -29,6 +29,7 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         private final EstablishmentRepository establishmentRepository;
         private final UserRepository userRepository;
         private final InventoryService inventoryService;
+        private final com.sergiocodev.app.repository.CompanyRepository companyRepository;
         private final XmlUblGenerator xmlUblGenerator;
         private final DigitalSignatureService digitalSignatureService;
         private final SunatOseClient sunatOseClient;
@@ -145,7 +146,10 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
                 entity = repository.save(entity);
 
                 try {
-                        String xml = xmlUblGenerator.generateVoidedDocumentXml(entity);
+                        com.sergiocodev.app.model.Company company = companyRepository.findMainCompany()
+                                        .orElseThrow(() -> new RuntimeException("Company not configured"));
+
+                        String xml = xmlUblGenerator.generateVoidedDocumentXml(entity, company);
                         String fileName = ticket + ".xml";
 
                         String signedXml = digitalSignatureService.signXml(xml);

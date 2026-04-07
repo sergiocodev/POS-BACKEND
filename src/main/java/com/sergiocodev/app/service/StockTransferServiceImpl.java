@@ -26,6 +26,7 @@ public class StockTransferServiceImpl implements StockTransferService {
         private final UserRepository userRepository;
         private final InventoryRepository inventoryRepository;
         private final StockMovementRepository stockMovementRepository;
+        private final ProductUnitRepository productUnitRepository;
 
         @Override
         @Transactional
@@ -45,19 +46,28 @@ public class StockTransferServiceImpl implements StockTransferService {
                 transfer.setSourceEstablishment(source);
                 transfer.setTargetEstablishment(target);
                 transfer.setUser(user);
+                transfer.setNotes(request.notes());
 
                 for (StockTransferItemRequest ir : request.items()) {
                         Product product = productRepository.findById(ir.productId())
                                         .orElseThrow(() -> new RuntimeException("Product not found"));
                         ProductLot lot = lotRepository.findById(ir.lotId())
                                         .orElseThrow(() -> new RuntimeException("Lot not found"));
+                        ProductUnit unit = productUnitRepository.findById(ir.unitId())
+                                        .orElseThrow(() -> new RuntimeException("Unit not found"));
+
+                        if (!unit.getProduct().getId().equals(product.getId())) {
+                                throw new RuntimeException("Unit does not belong to the selected product");
+                        }
+
+                        BigDecimal baseQuantity = ir.quantity().multiply(new BigDecimal(unit.getFactor()));
 
                         // Validate source inventory
                         Inventory sourceInventory = inventoryRepository
                                         .findByEstablishmentIdAndLotId(source.getId(), lot.getId())
                                         .orElseThrow(() -> new RuntimeException("Product not in source inventory"));
 
-                        if (sourceInventory.getQuantity().compareTo(ir.quantity()) < 0) {
+                        if (sourceInventory.getQuantity().compareTo(baseQuantity) < 0) {
                                 throw new RuntimeException(
                                                 "Insufficient stock in source establishment for product: "
                                                                 + product.getTradeName());
@@ -67,6 +77,7 @@ public class StockTransferServiceImpl implements StockTransferService {
                         item.setStockTransfer(transfer);
                         item.setProduct(product);
                         item.setLot(lot);
+                        item.setUnit(unit);
                         item.setQuantity(ir.quantity());
                         transfer.getItems().add(item);
                 }
@@ -112,24 +123,27 @@ public class StockTransferServiceImpl implements StockTransferService {
 
                 // Deduct from source
                 for (StockTransferItem item : transfer.getItems()) {
+                        BigDecimal baseQuantity = item.getQuantity().multiply(new BigDecimal(item.getUnit().getFactor()));
+                        
                         Inventory sourceInventory = inventoryRepository.findByEstablishmentIdAndLotId(
                                         transfer.getSourceEstablishment().getId(), item.getLot().getId())
                                         .orElseThrow(() -> new RuntimeException("Inventory not found"));
 
-                        if (sourceInventory.getQuantity().compareTo(item.getQuantity()) < 0) {
+                        if (sourceInventory.getQuantity().compareTo(baseQuantity) < 0) {
                                 throw new RuntimeException("Insufficient stock in source establishment");
                         }
 
-                        sourceInventory.setQuantity(sourceInventory.getQuantity().subtract(item.getQuantity()));
+                        sourceInventory.setQuantity(sourceInventory.getQuantity().subtract(baseQuantity));
                         inventoryRepository.save(sourceInventory);
 
                         createStockMovement(transfer.getSourceEstablishment(), item.getLot(),
-                                        StockMovement.MovementType.TRANSFER_OUT, item.getQuantity().negate(),
+                                        StockMovement.MovementType.TRANSFER_OUT, baseQuantity.negate(),
                                         sourceInventory.getQuantity(), transfer, user);
                 }
 
                 transfer.setStatus(StockTransfer.TransferStatus.IN_TRANSIT);
                 transfer.setSentAt(LocalDateTime.now());
+                transfer.setDispatchedBy(user);
                 return mapToResponse(repository.save(transfer));
         }
 
@@ -147,6 +161,8 @@ public class StockTransferServiceImpl implements StockTransferService {
 
                 // Add to target
                 for (StockTransferItem item : transfer.getItems()) {
+                        BigDecimal baseQuantity = item.getQuantity().multiply(new BigDecimal(item.getUnit().getFactor()));
+                        
                         Inventory targetInventory = inventoryRepository.findByEstablishmentIdAndLotId(
                                         transfer.getTargetEstablishment().getId(), item.getLot().getId())
                                         .orElseGet(() -> {
@@ -163,16 +179,17 @@ public class StockTransferServiceImpl implements StockTransferService {
                                                 return newInv;
                                         });
 
-                        targetInventory.setQuantity(targetInventory.getQuantity().add(item.getQuantity()));
+                        targetInventory.setQuantity(targetInventory.getQuantity().add(baseQuantity));
                         inventoryRepository.save(targetInventory);
 
                         createStockMovement(transfer.getTargetEstablishment(), item.getLot(),
-                                        StockMovement.MovementType.TRANSFER_IN, item.getQuantity(),
+                                        StockMovement.MovementType.TRANSFER_IN, baseQuantity,
                                         targetInventory.getQuantity(), transfer, user);
                 }
 
                 transfer.setStatus(StockTransfer.TransferStatus.COMPLETED);
                 transfer.setReceivedAt(LocalDateTime.now());
+                transfer.setReceivedBy(user);
                 return mapToResponse(repository.save(transfer));
         }
 
@@ -192,15 +209,17 @@ public class StockTransferServiceImpl implements StockTransferService {
                                         .orElseThrow(() -> new RuntimeException("User not found"));
 
                         for (StockTransferItem item : transfer.getItems()) {
+                                BigDecimal baseQuantity = item.getQuantity().multiply(new BigDecimal(item.getUnit().getFactor()));
+                                
                                 Inventory sourceInventory = inventoryRepository.findByEstablishmentIdAndLotId(
                                                 transfer.getSourceEstablishment().getId(), item.getLot().getId())
                                                 .orElseThrow(() -> new RuntimeException("Inventory not found"));
 
-                                sourceInventory.setQuantity(sourceInventory.getQuantity().add(item.getQuantity()));
+                                sourceInventory.setQuantity(sourceInventory.getQuantity().add(baseQuantity));
                                 inventoryRepository.save(sourceInventory);
 
                                 createStockMovement(transfer.getSourceEstablishment(), item.getLot(),
-                                                StockMovement.MovementType.TRANSFER_IN, item.getQuantity(),
+                                                StockMovement.MovementType.TRANSFER_IN, baseQuantity,
                                                 sourceInventory.getQuantity(), transfer, user);
                         }
                 }
@@ -236,10 +255,10 @@ public class StockTransferServiceImpl implements StockTransferService {
                                 transfer.getStatus(),
                                 transfer.getUser().getId(),
                                 transfer.getUser().getUsername(),
-                                null,
-                                null,
-                                null,
-                                null,
+                                transfer.getDispatchedBy() != null ? transfer.getDispatchedBy().getId() : null,
+                                transfer.getDispatchedBy() != null ? transfer.getDispatchedBy().getUsername() : null,
+                                transfer.getReceivedBy() != null ? transfer.getReceivedBy().getId() : null,
+                                transfer.getReceivedBy() != null ? transfer.getReceivedBy().getUsername() : null,
                                 transfer.getCreatedAt(),
                                 transfer.getSentAt(),
                                 transfer.getReceivedAt(),
@@ -252,6 +271,9 @@ public class StockTransferServiceImpl implements StockTransferService {
                                                                 i.getProduct().getTradeName(),
                                                                 i.getLot().getId(),
                                                                 i.getLot().getLotCode(),
+                                                                i.getUnit() != null ? i.getUnit().getId() : null,
+                                                                i.getUnit() != null ? i.getUnit().getUnitName() : "U",
+                                                                i.getUnit() != null ? i.getUnit().getFactor() : 1,
                                                                 i.getQuantity()))
                                                 .collect(Collectors.toList()));
         }

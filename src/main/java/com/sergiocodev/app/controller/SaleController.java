@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.config.UserPrincipal;
 import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
 import com.sergiocodev.app.dto.sale.CartCalculationRequest;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -32,9 +34,9 @@ public class SaleController {
     @PostMapping
     @Operation(summary = "Procesar una nueva venta")
     public ResponseEntity<ResponseApi<SaleResponse>> create(@Valid @RequestBody SaleRequest request,
-            @RequestParam Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseApi.success(service.create(request, userId), "Venta procesada exitosamente"));
+                .body(ResponseApi.success(service.create(request, principal.getId()), "Venta procesada exitosamente"));
     }
 
     @GetMapping
@@ -86,8 +88,8 @@ public class SaleController {
     public ResponseEntity<ResponseApi<SaleResponse>> createCreditNote(
             @PathVariable Long id,
             @RequestParam String reason,
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(ResponseApi.success(service.createCreditNote(id, reason, userId),
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ResponseApi.success(service.createCreditNote(id, reason, principal.getId()),
                 "Nota de crédito emitida exitosamente"));
     }
 
@@ -96,8 +98,8 @@ public class SaleController {
     public ResponseEntity<ResponseApi<SaleResponse>> createDebitNote(
             @PathVariable Long id,
             @RequestParam String reason,
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(ResponseApi.success(service.createDebitNote(id, reason, userId),
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ResponseApi.success(service.createDebitNote(id, reason, principal.getId()),
                 "Nota de débito emitida exitosamente"));
     }
 
@@ -106,8 +108,8 @@ public class SaleController {
     public ResponseEntity<ResponseApi<Void>> invalidate(
             @PathVariable Long id,
             @RequestParam String reason,
-            @RequestParam Long userId) {
-        service.invalidate(id, reason, userId);
+            @AuthenticationPrincipal UserPrincipal principal) {
+        service.invalidate(id, reason, principal.getId());
         return ResponseEntity.ok(ResponseApi.success(null, "Documento invalidado exitosamente"));
     }
 
@@ -145,9 +147,9 @@ public class SaleController {
     @Operation(summary = "Procesar transacción de venta (POS)")
     public ResponseEntity<ResponseApi<SaleResponse>> processSaleTransaction(
             @Valid @RequestBody SaleRequest request,
-            @RequestParam Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseApi.success(service.processSaleTransaction(request, userId),
+                .body(ResponseApi.success(service.processSaleTransaction(request, principal.getId()),
                         "Venta procesada exitosamente"));
     }
 

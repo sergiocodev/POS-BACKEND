@@ -29,6 +29,16 @@ import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.CashSessionRepository;
 import com.sergiocodev.app.repository.ProductUnitRepository;
 import com.sergiocodev.app.model.ProductUnit;
+import com.sergiocodev.app.model.Customer;
+import com.sergiocodev.app.model.DocumentType;
+import com.sergiocodev.app.model.AccountReceivable;
+import com.sergiocodev.app.model.Company;
+import com.sergiocodev.app.model.CashConcept;
+import com.sergiocodev.app.model.DocumentSequence;
+import com.sergiocodev.app.repository.AccountReceivableRepository;
+import com.sergiocodev.app.repository.CompanyRepository;
+import com.sergiocodev.app.repository.CashConceptRepository;
+import com.sergiocodev.app.repository.DocumentSequenceRepository;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
@@ -58,10 +68,15 @@ public class SaleServiceImpl implements SaleService {
     private final StockMovementRepository stockMovementRepository;
     private final CashSessionRepository cashSessionRepository;
     private final ProductUnitRepository productUnitRepository;
+    private final AccountReceivableRepository accountReceivableRepository;
+    private final DocumentSequenceRepository documentSequenceRepository;
+    private final CompanyRepository companyRepository;
     private final SaleMapper mapper;
     private final XmlUblGenerator xmlUblGenerator;
     private final DigitalSignatureService digitalSignatureService;
     private final SunatOseClient sunatOseClient;
+    private final CashMovementService cashMovementService;
+    private final CashConceptRepository cashConceptRepository;
 
     @Override
     @Transactional
@@ -72,13 +87,31 @@ public class SaleServiceImpl implements SaleService {
                         () -> new ResourceNotFoundException("Establishment not found: " + request.establishmentId())));
         if (request.customerId() != null) {
             entity.setCustomer(customerRepository.findById(request.customerId()).orElse(null));
+        } else {
+            // Assign default customer: "Público en General" with document "00000000"
+            Customer defaultCustomer = customerRepository.findByDocumentNumber("00000000")
+                    .orElseGet(() -> {
+                        Customer generic = new Customer();
+                        generic.setName("PUBLICO EN GENERAL");
+                        generic.setDocumentNumber("00000000");
+                        generic.setDocumentType(DocumentType.DNI);
+                        return customerRepository.save(generic);
+                    });
+            entity.setCustomer(defaultCustomer);
         }
         entity.setUser(userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
-        entity.setSeries("B001");
-        entity.setNumber("000001");
+
+        String series = request.series() != null ? request.series()
+                : (request.documentType() == Sale.SaleDocumentType.FACTURA ? "F001" : "B001");
+        entity.setSeries(series);
+        entity.setNumber(generateNextNumber(request.establishmentId(), request.documentType(), series));
+
         entity.setDate(LocalDateTime.now());
         entity.setStatus(Sale.SaleStatus.COMPLETED);
+
+        // Determine payment condition
+        entity.setPaymentCondition(request.paymentCondition() != null ? request.paymentCondition() : Sale.PaymentCondition.CONTADO);
 
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .orElseThrow(() -> new BadRequestException(
@@ -94,13 +127,23 @@ public class SaleServiceImpl implements SaleService {
                             "Lot not found: " + ir.lotId()))
                     : null;
 
+            ProductUnit productUnit = productUnitRepository.findById(ir.productUnitId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "ProductUnit not found: " + ir.productUnitId()));
+
+            // Calcular la cantidad en unidad base (ej: 2 blísteres × factor 10 = 20
+            // tabletas)
+            int factor = productUnit.getFactor() != null ? productUnit.getFactor() : 1;
+            BigDecimal baseQuantity = ir.quantity().multiply(new BigDecimal(factor));
+
             if (lot != null) {
-                validateStock(request.establishmentId(), lot.getId(), ir.quantity());
+                validateStock(request.establishmentId(), lot.getId(), baseQuantity);
             }
 
             SaleItem item = mapper.toItemEntity(ir);
             item.setSale(entity);
             item.setProduct(product);
+            item.setProductUnit(productUnit);
             item.setLot(lot);
             BigDecimal amount = ir.unitPrice().multiply(ir.quantity());
             item.setAmount(amount);
@@ -108,24 +151,116 @@ public class SaleServiceImpl implements SaleService {
             entity.getItems().add(item);
 
             if (lot != null) {
-                updateInventory(entity, item);
+                updateInventory(entity, item, baseQuantity);
             }
         }
 
         calculateTotals(entity);
 
+        // 1. Process all payments and add them to the entity (for cascade save)
         for (var pr : request.payments()) {
             SalePayment payment = mapper.toPaymentEntity(pr);
             payment.setSale(entity);
+            payment.setCashSession(session);
             entity.getPayments().add(payment);
 
-            if (session != null && pr.paymentMethod() == SalePayment.PaymentMethod.EFECTIVO) {
-                session.setCalculatedBalance(session.getCalculatedBalance().add(pr.amount()));
-                cashSessionRepository.save(session);
+            // No check for CREDITO payment method anymore as it doesn't exist
+            if (session != null) {
+                String methodStr = pr.paymentMethod().name().toUpperCase();
+                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
+                        .filter(c -> c.getName().toUpperCase().contains(methodStr) && c.getName().toLowerCase().contains("venta"))
+                        .findFirst()
+                        .orElseGet(() -> cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
+                                .filter(c -> c.getName().toUpperCase().contains(methodStr))
+                                .findFirst()
+                                .orElseGet(() -> {
+                                    CashConcept newConcept = new CashConcept();
+                                    newConcept.setName("VENTA " + methodStr);
+                                    newConcept.setType(CashConcept.ConceptType.IN);
+                                    newConcept.setIsSystem(true);
+                                    return cashConceptRepository.save(newConcept);
+                                }));
+
+                String description = "Venta (" + pr.paymentMethod().name() + "): " + entity.getSeries() + "-" + entity.getNumber();
+                cashMovementService.registerInternalMovement(session, entity.getUser(), concept, pr.amount(),
+                        entity.getSeries() + "-" + entity.getNumber(), description);
             }
         }
 
-        return mapper.toResponse(repository.save(entity));
+        // 2. Save the sale (this saves items and payments via cascade)
+        Sale savedSale = repository.save(entity);
+
+        // 3. Create AccountReceivable for credit sales
+        if (entity.getPaymentCondition() == Sale.PaymentCondition.CREDITO) {
+            BigDecimal totalSale = entity.getTotal();
+            BigDecimal amountPaid = entity.getPayments().stream()
+                    .map(SalePayment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal pendingBalance = totalSale.subtract(amountPaid);
+
+            if (pendingBalance.compareTo(BigDecimal.ZERO) > 0) {
+                AccountReceivable receivable = new AccountReceivable();
+                receivable.setSale(savedSale);
+                receivable.setCustomer(savedSale.getCustomer());
+                receivable.setTotalAmount(totalSale);
+                receivable.setAmountPaid(amountPaid);
+                receivable.setPendingBalance(pendingBalance);
+                receivable.setStatus(AccountReceivable.ReceivableStatus.PENDING);
+                receivable.setDueDate(
+                        request.dueDate() != null ? request.dueDate() : java.time.LocalDate.now().plusDays(30));
+                accountReceivableRepository.save(receivable);
+            }
+        }
+
+        return mapper.toResponse(savedSale);
+    }
+
+    private SaleResponse addCompanyInfo(SaleResponse response) {
+        Company company = companyRepository.findMainCompany().orElse(null);
+        if (company != null) {
+            com.sergiocodev.app.dto.company.CompanyMinimalResponse companyInfo = new com.sergiocodev.app.dto.company.CompanyMinimalResponse(
+                    company.getRuc(),
+                    company.getName(),
+                    company.getAddress(),
+                    company.getUbigeo(),
+                    company.getUrbanization(),
+                    company.getPhone(),
+                    company.getEmail(),
+                    company.getLogoUrl());
+            return new SaleResponse(
+                    response.id(),
+                    response.establishmentName(),
+                    response.customerName(),
+                    response.username(),
+                    response.documentType(),
+                    response.series(),
+                    response.number(),
+                    response.date(),
+                    response.subTotal(),
+                    response.tax(),
+                    response.total(),
+                    response.status(),
+                    response.paymentCondition(),
+                    response.sunatStatus(),
+                    response.pdfUrl(),
+                    response.cdrUrl(),
+                    response.sunatResponseJson(),
+                    response.sunatErrorCode(),
+                    response.relatedSaleId(),
+                    response.noteCode(),
+                    response.noteReason(),
+                    response.voided(),
+                    response.voidedAt(),
+                    response.voidReason(),
+                    response.items(),
+                    response.payments(),
+                    companyInfo,
+                    response.customerDocumentType(),
+                    response.customerDocumentNumber(),
+                    response.customerAddress(),
+                    response.userFullName());
+        }
+        return response;
     }
 
     private void validateStock(Long establishmentId, Long lotId, BigDecimal quantity) {
@@ -139,7 +274,7 @@ public class SaleServiceImpl implements SaleService {
         }
     }
 
-    private void updateInventory(Sale sale, SaleItem item) {
+    private void updateInventory(Sale sale, SaleItem item, BigDecimal baseQuantity) {
         if (item.getLot() == null)
             return;
 
@@ -149,7 +284,9 @@ public class SaleServiceImpl implements SaleService {
                         () -> new ResourceNotFoundException(
                                 "No inventory for lot: " + item.getLot().getLotCode()));
 
-        inventory.setQuantity(inventory.getQuantity().subtract(item.getQuantity()));
+        // Descontar en unidad base (ej: 2 blísteres × factor 10 = 20 tabletas
+        // descontadas)
+        inventory.setQuantity(inventory.getQuantity().subtract(baseQuantity));
         inventory.setLastMovement(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
@@ -157,7 +294,7 @@ public class SaleServiceImpl implements SaleService {
         movement.setEstablishment(sale.getEstablishment());
         movement.setLot(item.getLot());
         movement.setType(StockMovement.MovementType.SALE);
-        movement.setQuantity(item.getQuantity().multiply(new java.math.BigDecimal("-1")));
+        movement.setQuantity(baseQuantity.multiply(new java.math.BigDecimal("-1")));
         movement.setBalanceAfter(inventory.getQuantity());
         movement.setReferenceTable("sales");
         movement.setReferenceId(sale.getId());
@@ -180,8 +317,9 @@ public class SaleServiceImpl implements SaleService {
     @Override
     @Transactional(readOnly = true)
     public List<SaleResponse> getAll() {
-        return repository.findAll().stream()
+        return repository.findAllByOrderByDateDesc().stream()
                 .map(mapper::toResponse)
+                .map(this::addCompanyInfo)
                 .collect(Collectors.toList());
     }
 
@@ -190,6 +328,7 @@ public class SaleServiceImpl implements SaleService {
     public SaleResponse getById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
+                .map(this::addCompanyInfo)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Sale not found: " + id));
     }
@@ -237,8 +376,12 @@ public class SaleServiceImpl implements SaleService {
         note.setDocumentType(Sale.SaleDocumentType.NOTA_CREDITO);
         note.setRelatedSale(original);
         note.setNoteReason(reason);
-        note.setSeries("FC01");
-        note.setNumber("000001"); // Dummy
+
+        String series = "FC01"; // Default for NC
+        note.setSeries(series);
+        note.setNumber(
+                generateNextNumber(original.getEstablishment().getId(), Sale.SaleDocumentType.NOTA_CREDITO, series));
+
         note.setDate(LocalDateTime.now());
         note.setSubTotal(original.getSubTotal().negate());
         note.setTax(original.getTax().negate());
@@ -276,13 +419,25 @@ public class SaleServiceImpl implements SaleService {
 
         if (currentSession != null) {
             BigDecimal refundAmount = original.getPayments().stream()
-                    .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
                     .map(SalePayment::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-                currentSession.setCalculatedBalance(currentSession.getCalculatedBalance().subtract(refundAmount));
-                cashSessionRepository.save(currentSession);
+                // Find outcome concept for sales (Nota de Crédito / Devolución)
+                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                        .filter(c -> c.getName().toLowerCase().contains("devolucion")
+                                || c.getName().toLowerCase().contains("nota")
+                                || c.getName().toLowerCase().contains("egreso"))
+                        .findFirst()
+                        .orElseGet(() -> cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                                .findFirst()
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                        "No se encontró un concepto de caja para egresos por devoluciones")));
+
+                String description = "Nota de Crédito: " + note.getSeries() + "-" + note.getNumber() + " (Ref: "
+                        + original.getSeries() + "-" + original.getNumber() + ")";
+                cashMovementService.registerInternalMovement(currentSession, note.getUser(), concept, refundAmount,
+                        note.getSeries() + "-" + note.getNumber(), description);
             }
         }
 
@@ -335,13 +490,24 @@ public class SaleServiceImpl implements SaleService {
 
         if (currentSession != null) {
             BigDecimal refundAmount = sale.getPayments().stream()
-                    .filter(p -> p.getPaymentMethod() == SalePayment.PaymentMethod.EFECTIVO)
                     .map(SalePayment::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-                currentSession.setCalculatedBalance(currentSession.getCalculatedBalance().subtract(refundAmount));
-                cashSessionRepository.save(currentSession);
+                // Find outcome concept for sales (Invalidación / Anulación)
+                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                        .filter(c -> c.getName().toLowerCase().contains("anulacion")
+                                || c.getName().toLowerCase().contains("egreso"))
+                        .findFirst()
+                        .orElseGet(() -> cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                                .findFirst()
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                        "No se encontró un concepto de caja para egresos por anulaciones")));
+
+                String description = "Anulación de Venta: " + sale.getSeries() + "-" + sale.getNumber();
+                cashMovementService.registerInternalMovement(currentSession,
+                        userRepository.findById(userId).orElse(sale.getUser()), concept, refundAmount,
+                        sale.getSeries() + "-" + sale.getNumber(), description);
             }
         }
     }
@@ -353,7 +519,8 @@ public class SaleServiceImpl implements SaleService {
 
         return inventoryList.stream()
                 .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
-                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
+                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now())
+                        && inventory.getQuantity().compareTo(BigDecimal.ZERO) > 0)
                 .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
                 .flatMap(inventory -> {
                     ProductLot lot = inventory.getLot();
@@ -369,10 +536,10 @@ public class SaleServiceImpl implements SaleService {
                     final String finalConcentration = concentration;
 
                     return product.getUnits().stream()
-                            .filter(pu -> !pu.isBaseUnit() || product.getUnits().size() == 1)
                             .map(pu -> new ProductForSaleResponse(
                                     inventory.getId(),
                                     product.getId(),
+                                    pu.getId(),
                                     product.getTradeName(),
                                     product.getGenericName(),
                                     product.getDescription(),
@@ -388,7 +555,9 @@ public class SaleServiceImpl implements SaleService {
                                     lot.getId(),
                                     product.getImageUrl(),
                                     pu.getBarcode(),
-                                    inventory.getLocationShelf()));
+                                    inventory.getLocationShelf(),
+                                    pu.getUnitName(),
+                                    pu.getFactor()));
                 }).collect(Collectors.toList());
     }
 
@@ -399,7 +568,8 @@ public class SaleServiceImpl implements SaleService {
         List<Inventory> inventoryList = inventoryRepository.searchProductsForPOS(query, establishmentId);
         return inventoryList.stream()
                 .filter(inventory -> inventory.getLot() != null && inventory.getLot().getExpiryDate() != null
-                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now()))
+                        && !inventory.getLot().getExpiryDate().isBefore(java.time.LocalDate.now())
+                        && inventory.getQuantity().compareTo(BigDecimal.ZERO) > 0)
                 .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
                 .flatMap(inventory -> {
                     ProductLot lot = inventory.getLot();
@@ -415,10 +585,10 @@ public class SaleServiceImpl implements SaleService {
                     final String finalConcentration = concentration;
 
                     return product.getUnits().stream()
-                            .filter(pu -> !pu.isBaseUnit() || product.getUnits().size() == 1)
                             .map(pu -> new ProductSearchResponse(
                                     inventory.getId(),
                                     product.getId(),
+                                    pu.getId(),
                                     product.getTradeName(),
                                     product.getGenericName(),
                                     product.getDescription(),
@@ -434,7 +604,9 @@ public class SaleServiceImpl implements SaleService {
                                     lot.getId(),
                                     product.getImageUrl(),
                                     pu.getBarcode(),
-                                    inventory.getLocationShelf()));
+                                    inventory.getLocationShelf(),
+                                    pu.getUnitName(),
+                                    pu.getFactor()));
                 }).collect(Collectors.toList());
     }
 
@@ -614,8 +786,11 @@ public class SaleServiceImpl implements SaleService {
         }
 
         try {
+            com.sergiocodev.app.model.Company company = companyRepository.findMainCompany()
+                    .orElseThrow(() -> new RuntimeException("Company not configured"));
+
             // 1. Generate XML
-            String xml = xmlUblGenerator.generateInvoiceXml(sale);
+            String xml = xmlUblGenerator.generateInvoiceXml(sale, company);
             String fileName = sale.getSeries() + "-" + sale.getNumber() + ".xml";
 
             // 2. Sign XML
@@ -653,6 +828,46 @@ public class SaleServiceImpl implements SaleService {
             sale.setSunatMessage(e.getMessage());
             repository.save(sale);
             throw new RuntimeException("Error emitiendo a SUNAT: " + e.getMessage());
+        }
+    }
+
+    private String generateNextNumber(Long establishmentId, Sale.SaleDocumentType saleDocType, String series) {
+        DocumentSequence.DocumentType seqDocType = mapDocType(saleDocType);
+
+        DocumentSequence sequence = documentSequenceRepository.findForUpdate(establishmentId, seqDocType, series)
+                .orElseGet(() -> {
+                    DocumentSequence newSeq = new DocumentSequence();
+                    newSeq.setEstablishment(establishmentRepository.findById(establishmentId)
+                            .orElseThrow(() -> new ResourceNotFoundException(
+                                    "Establishment not found: " + establishmentId)));
+                    newSeq.setDocumentType(seqDocType);
+                    newSeq.setSeries(series);
+                    newSeq.setCurrentNumber(0);
+                    return newSeq;
+                });
+
+        sequence.setCurrentNumber(sequence.getCurrentNumber() + 1);
+        documentSequenceRepository.save(sequence);
+
+        return String.format("%06d", sequence.getCurrentNumber());
+    }
+
+    private DocumentSequence.DocumentType mapDocType(Sale.SaleDocumentType saleDocType) {
+        switch (saleDocType) {
+            case BOLETA:
+                return DocumentSequence.DocumentType.BOLETA;
+            case FACTURA:
+                return DocumentSequence.DocumentType.FACTURA;
+            case TICKET:
+                return DocumentSequence.DocumentType.TICKET;
+            case NOTA_DE_VENTA:
+                return DocumentSequence.DocumentType.NOTA_DE_VENTA;
+            case NOTA_CREDITO:
+                return DocumentSequence.DocumentType.NOTA_CREDITO;
+            case NOTA_DEBITO:
+                return DocumentSequence.DocumentType.NOTA_DEBITO;
+            default:
+                return DocumentSequence.DocumentType.TICKET;
         }
     }
 }

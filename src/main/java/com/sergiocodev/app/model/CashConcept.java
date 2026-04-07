@@ -31,7 +31,10 @@ public class CashConcept {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "is_system", columnDefinition = "tinyint(1) default 0")
+    private Boolean isSystem = false;
+
     public enum ConceptType {
-        INCOME, EXPENSE
+        IN, OUT
     }
 }

@@ -51,6 +51,14 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<AccountReceivableResponse> getAll() {
+        return repository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<AccountReceivableResponse> getByCustomerId(Long customerId) {
         return repository.findByCustomerId(customerId).stream()
                 .map(this::mapToResponse)

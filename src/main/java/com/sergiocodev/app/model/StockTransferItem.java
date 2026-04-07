@@ -30,6 +30,10 @@ public class StockTransferItem {
     @JoinColumn(name = "lot_id", nullable = false)
     private ProductLot lot;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    private ProductUnit unit;
+
     @Column(nullable = false, precision = 12, scale = 2, columnDefinition = "DECIMAL(12,2) COMMENT 'Cantidad en unidad base'")
     private BigDecimal quantity;
 }

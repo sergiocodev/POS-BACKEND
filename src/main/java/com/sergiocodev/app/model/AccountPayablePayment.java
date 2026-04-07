@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccountPayablePayment {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,6 +27,10 @@ public class AccountPayablePayment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cash_session_id", nullable = true)
+    private CashSession cashSession;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -47,6 +52,6 @@ public class AccountPayablePayment {
     private LocalDateTime deletedAt;
 
     public enum PaymentMethod {
-        EFECTIVO, TRANSFERENCIA, CHEQUE, YAPE, PLIN
+        EFECTIVO, TRANSFERENCIA, YAPE, PLIN, TARJETA
     }
 }

@@ -13,6 +13,7 @@ public record InventoryRequest(
                 BigDecimal costPrice,
 
                 // For adjustments
+                String locationShelf,
                 String movementType,
                 String notes) {
 }

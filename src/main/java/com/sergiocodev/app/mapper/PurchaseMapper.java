@@ -35,6 +35,12 @@ public interface PurchaseMapper {
     @Mapping(target = "deletedAt", ignore = true)
     Purchase toEntity(PurchaseRequest request);
 
+    default Purchase.PaymentCondition mapPaymentCondition(PurchaseRequest.PaymentCondition condition) {
+        if (condition == null) return null;
+        return condition == PurchaseRequest.PaymentCondition.CREDIT 
+            ? Purchase.PaymentCondition.CREDITO : Purchase.PaymentCondition.CONTADO;
+    }
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "productUnit", ignore = true)

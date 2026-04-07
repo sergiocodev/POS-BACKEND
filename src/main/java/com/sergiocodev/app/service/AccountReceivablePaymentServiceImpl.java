@@ -2,20 +2,22 @@ package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentResponse;
-import com.sergiocodev.app.model.AccountReceivable;
-import com.sergiocodev.app.model.AccountReceivablePayment;
-import com.sergiocodev.app.model.CashSession;
-import com.sergiocodev.app.model.User;
-import com.sergiocodev.app.repository.AccountReceivablePaymentRepository;
-import com.sergiocodev.app.repository.AccountReceivableRepository;
-import com.sergiocodev.app.repository.CashSessionRepository;
-import com.sergiocodev.app.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import com.sergiocodev.app.model.*;
+import com.sergiocodev.app.repository.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,9 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
     private final AccountReceivableRepository receivableRepository;
     private final CashSessionRepository cashSessionRepository;
     private final UserRepository userRepository;
+    private final CashMovementRepository cashMovementRepository;
+    private final CashConceptRepository cashConceptRepository;
+    private final CashMovementService cashMovementService;
 
     @Override
     @Transactional
@@ -59,6 +64,26 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
 
         AccountReceivablePayment savedPayment = paymentRepository.save(payment);
 
+        // Register cash movement for all payment methods
+        // Find or create income concept matching the payment method
+        String methodStr = request.paymentMethod().name().toUpperCase();
+        CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
+                .filter(c -> (c.getName().toLowerCase().contains("cliente") || c.getName().toLowerCase().contains("cobro")) 
+                        && c.getName().toUpperCase().contains(methodStr))
+                .findFirst()
+                .orElseGet(() -> {
+                    CashConcept newConcept = new CashConcept();
+                    newConcept.setName("COBRO CLIENTE " + methodStr);
+                    newConcept.setType(CashConcept.ConceptType.IN);
+                    newConcept.setIsSystem(true);
+                    return cashConceptRepository.save(newConcept);
+                });
+
+        String description = request.notes() != null && !request.notes().isEmpty() ? request.notes()
+                : "Cobro de cuenta por cobrar parcial o total (" + request.paymentMethod().name() + ") - Cliente: " + receivable.getCustomer().getName();
+        
+        cashMovementService.registerInternalMovement(cashSession, user, concept, request.amount(), request.reference(), description);
+
         // Update receivable balances
         BigDecimal newAmountPaid = receivable.getAmountPaid().add(request.amount());
         BigDecimal newPendingBalance = receivable.getTotalAmount().subtract(newAmountPaid);
@@ -85,6 +110,38 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<AccountReceivablePaymentResponse> getHistory(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long customerId,
+            String paymentMethod,
+            Pageable pageable) {
+        
+        Specification<AccountReceivablePayment> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isNull(root.get("deletedAt")));
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("paymentDate"), startDate.atStartOfDay()));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("paymentDate"), endDate.atTime(LocalTime.MAX)));
+            }
+            if (customerId != null) {
+                predicates.add(cb.equal(root.get("accountReceivable").get("customer").get("id"), customerId));
+            }
+            if (paymentMethod != null && !paymentMethod.isEmpty()) {
+                predicates.add(cb.equal(root.get("paymentMethod"), AccountReceivablePayment.PaymentMethod.valueOf(paymentMethod)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return paymentRepository.findAll(spec, pageable).map(this::mapToResponse);
+    }
+
+    @Override
     @Transactional
     public void cancel(Long id) {
         AccountReceivablePayment payment = paymentRepository.findById(id)
@@ -96,7 +153,7 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
 
         AccountReceivable receivable = payment.getAccountReceivable();
 
-        // Revert balance
+        // Revert balance in receivable
         receivable.setAmountPaid(receivable.getAmountPaid().subtract(payment.getAmount()));
         receivable.setPendingBalance(receivable.getPendingBalance().add(payment.getAmount()));
 
@@ -107,14 +164,26 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
         }
         receivableRepository.save(receivable);
 
+        // Revert session balance and movement
+        CashSession session = payment.getCashSession();
+        // Find movement associated with this payment to delete it
+        cashMovementRepository.findByCashSessionIdAndAmountAndReference(
+                session.getId(), payment.getAmount(), payment.getReference())
+                .ifPresent(m -> cashMovementService.delete(m.getId()));
+
         payment.setDeletedAt(LocalDateTime.now());
         paymentRepository.save(payment);
     }
 
     private AccountReceivablePaymentResponse mapToResponse(AccountReceivablePayment payment) {
+        AccountReceivable receivable = payment.getAccountReceivable();
         return new AccountReceivablePaymentResponse(
                 payment.getId(),
-                payment.getAccountReceivable().getId(),
+                receivable.getId(),
+                receivable.getCustomer().getName(),
+                receivable.getTotalAmount(),
+                receivable.getAmountPaid(),
+                receivable.getPendingBalance(),
                 payment.getCashSession().getId(),
                 payment.getUser().getId(),
                 payment.getUser().getUsername(),

@@ -69,6 +69,10 @@ public class Purchase {
     @Column(length = 20)
     private PurchaseStatus status = PurchaseStatus.RECEIVED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_condition", nullable = false, length = 20)
+    private PaymentCondition paymentCondition = PaymentCondition.CONTADO;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -87,5 +91,9 @@ public class Purchase {
 
     public enum PurchaseStatus {
         PENDING, RECEIVED, CANCELED
+    }
+
+    public enum PaymentCondition {
+        CONTADO, CREDITO
     }
 }

@@ -53,6 +53,8 @@ public class InventoryServiceImpl implements InventoryService {
         entity.setQuantity(newQuantity);
         if (request.costPrice() != null)
             entity.setCostPrice(request.costPrice());
+        if (request.locationShelf() != null)
+            entity.setLocationShelf(request.locationShelf());
         entity.setLastMovement(LocalDateTime.now());
 
         Inventory saved = repository.save(entity);

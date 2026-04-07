@@ -1,5 +1,6 @@
 package com.sergiocodev.app.controller;
 
+import com.sergiocodev.app.config.UserPrincipal;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
 import com.sergiocodev.app.dto.accountpayable.AccountPayableResponse;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,8 +51,8 @@ public class AccountPayableController {
     public ResponseEntity<ResponseApi<AccountPayableResponse>> pay(
             @PathVariable Long id,
             @Valid @RequestBody AccountPayablePaymentRequest request,
-            @RequestParam Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(
-                ResponseApi.success(service.pay(id, request.amount(), userId), "Pago registrado exitosamente"));
+                ResponseApi.success(service.pay(id, request, principal.getId()), "Pago registrado exitosamente"));
     }
 }

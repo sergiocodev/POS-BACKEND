@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public record ProductForSaleResponse(
         Long id,
         Long productId,
+        Long productUnitId,
         String tradeName,
         String genericName,
         String description,
@@ -20,5 +21,7 @@ public record ProductForSaleResponse(
         Long lotId,
         String imageUrl,
         String barcode,
-        String locationShelf) {
+        String locationShelf,
+        String unitName,
+        Integer factor) {
 }

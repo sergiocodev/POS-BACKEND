@@ -23,6 +23,11 @@ public class AccountReceivableController {
         return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
     }
 
+    @GetMapping
+    public ResponseEntity<List<AccountReceivableResponse>> getAll() {
+        return ResponseEntity.ok(service.getAll());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<AccountReceivableResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));

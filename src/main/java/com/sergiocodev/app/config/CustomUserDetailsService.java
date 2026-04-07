@@ -23,22 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found or deleted: " + username));
 
-        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
-
-        // Add roles
-        user.getRoles().forEach(role -> {
-            authorities.add(
-                    new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.getName()));
-            // Add role permissions
-            role.getPermissions().forEach(permission -> {
-                authorities.add(
-                        new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()));
-            });
-        });
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPasswordHash(),
-                authorities);
+        return UserPrincipal.create(user);
     }
 }

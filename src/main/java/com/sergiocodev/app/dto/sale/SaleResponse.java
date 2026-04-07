@@ -18,6 +18,7 @@ public record SaleResponse(
                 BigDecimal tax,
                 BigDecimal total,
                 Sale.SaleStatus status,
+                Sale.PaymentCondition paymentCondition,
                 Sale.SunatStatus sunatStatus,
                 String pdfUrl,
                 String cdrUrl,
@@ -35,5 +36,12 @@ public record SaleResponse(
                 String voidReason,
 
                 List<SaleItemResponse> items,
-                List<SalePaymentResponse> payments) {
+                List<SalePaymentResponse> payments,
+                com.sergiocodev.app.dto.company.CompanyMinimalResponse company,
+
+                // Requested additional fields
+                String customerDocumentType,
+                String customerDocumentNumber,
+                String customerAddress,
+                String userFullName) {
 }

@@ -1,19 +1,17 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
 import com.sergiocodev.app.dto.accountpayable.AccountPayableResponse;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.mapper.AccountPayableMapper;
-import com.sergiocodev.app.model.AccountPayable;
-import com.sergiocodev.app.model.CashMovement;
-import com.sergiocodev.app.model.CashSession;
-import com.sergiocodev.app.repository.AccountPayableRepository;
-import com.sergiocodev.app.repository.CashMovementRepository;
-import com.sergiocodev.app.repository.CashSessionRepository;
+import com.sergiocodev.app.model.*;
+import com.sergiocodev.app.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +23,9 @@ public class AccountPayableServiceImpl implements AccountPayableService {
     private final AccountPayableMapper mapper;
     private final CashSessionRepository cashSessionRepository;
     private final CashMovementRepository cashMovementRepository;
+    private final AccountPayablePaymentRepository accountPayablePaymentRepository;
+    private final CashConceptRepository cashConceptRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,7 +53,8 @@ public class AccountPayableServiceImpl implements AccountPayableService {
 
     @Override
     @Transactional
-    public AccountPayableResponse pay(Long accountPayableId, BigDecimal amount, Long userId) {
+    public AccountPayableResponse pay(Long accountPayableId, AccountPayablePaymentRequest request, Long userId) {
+        BigDecimal amount = request.amount();
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto a pagar debe ser mayor a cero");
         }
@@ -69,23 +71,54 @@ public class AccountPayableServiceImpl implements AccountPayableService {
                     "El monto a pagar no puede ser mayor al saldo pendiente (" + account.getPendingBalance() + ")");
         }
 
-        // Registrar salida de caja
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No se encontró una sesión de caja abierta para el usuario"));
 
-        session.setCalculatedBalance(session.getCalculatedBalance().subtract(amount));
-        cashSessionRepository.save(session);
+        // Registrar pago
+        AccountPayablePayment payment = new AccountPayablePayment();
+        payment.setAccountPayable(account);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        payment.setUser(user);
+        payment.setCashSession(session);
+        
+        payment.setAmount(amount);
+        payment.setPaymentMethod(request.paymentMethod());
+        payment.setReference(request.reference());
+        payment.setNotes(request.notes());
+        payment.setPaymentDate(LocalDateTime.now());
+        accountPayablePaymentRepository.save(payment);
 
-        CashMovement movement = new CashMovement();
-        movement.setCashSession(session);
-        movement.setAmount(amount);
-        movement.setType(CashMovement.MovementType.EXPENSE);
-        movement.setReferenceTable("account_payables");
-        movement.setReferenceId(account.getId());
-        movement.setDescription(
-                "Pago de cuenta por cobrar parcial o total - Proveedor: " + account.getSupplier().getName());
-        cashMovementRepository.save(movement);
+        // Registrar salida de caja solo si es efectivo
+        if (request.paymentMethod() == AccountPayablePayment.PaymentMethod.EFECTIVO) {
+            session.setCalculatedBalance(session.getCalculatedBalance().subtract(amount));
+            cashSessionRepository.save(session);
+
+            CashMovement movement = new CashMovement();
+            movement.setCashSession(session);
+            movement.setUser(session.getUser());
+            movement.setAmount(amount);
+
+            String methodStr = request.paymentMethod().name().toUpperCase();
+            CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                    .filter(c -> (c.getName().toLowerCase().contains("proveedor") || c.getName().toLowerCase().contains("pago"))
+                            && c.getName().toUpperCase().contains(methodStr))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        CashConcept newConcept = new CashConcept();
+                        newConcept.setName("PAGO PROVEEDOR " + methodStr);
+                        newConcept.setType(CashConcept.ConceptType.OUT);
+                        return cashConceptRepository.save(newConcept);
+                    });
+
+            movement.setCashConcept(concept);
+            movement.setReference(request.reference());
+            movement.setDescription(request.notes() != null && !request.notes().isEmpty() ? request.notes()
+                    : "Pago de cuenta por pagar parcial o total - Proveedor: " + account.getSupplier().getName());
+            cashMovementRepository.save(movement);
+        }
 
         // Actualizar la cuenta por pagar
         account.setAmountPaid(account.getAmountPaid().add(amount));

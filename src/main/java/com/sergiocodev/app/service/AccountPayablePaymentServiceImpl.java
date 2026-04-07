@@ -1,19 +1,23 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.model.*;
+import com.sergiocodev.app.repository.*;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentResponse;
-import com.sergiocodev.app.model.AccountPayable;
-import com.sergiocodev.app.model.AccountPayablePayment;
-import com.sergiocodev.app.model.User;
-import com.sergiocodev.app.repository.AccountPayablePaymentRepository;
-import com.sergiocodev.app.repository.AccountPayableRepository;
-import com.sergiocodev.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,14 +28,18 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
     private final AccountPayablePaymentRepository paymentRepository;
     private final AccountPayableRepository payableRepository;
     private final UserRepository userRepository;
+    private final CashSessionRepository cashSessionRepository;
+    private final CashConceptRepository cashConceptRepository;
+    private final CashMovementService cashMovementService;
+    private final CashMovementRepository cashMovementRepository;
 
     @Override
     @Transactional
     public AccountPayablePaymentResponse create(AccountPayablePaymentRequest request, Long userId) {
         AccountPayable payable = payableRepository.findById(request.accountPayableId())
-                .orElseThrow(() -> new RuntimeException("AccountPayable not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("AccountPayable not found"));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (payable.getStatus() == AccountPayable.PayableStatus.PAID
                 || payable.getStatus() == AccountPayable.PayableStatus.CANCELED) {
@@ -42,9 +50,14 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
             throw new RuntimeException("Payment amount exceeds pending balance");
         }
 
+        // Register cash movement for all payment methods
+        CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                .orElseThrow(() -> new RuntimeException("Debe tener una sesión de caja abierta para realizar pagos"));
+
         AccountPayablePayment payment = new AccountPayablePayment();
         payment.setAccountPayable(payable);
         payment.setUser(user);
+        payment.setCashSession(session);
         payment.setAmount(request.amount());
         payment.setPaymentMethod(request.paymentMethod());
         payment.setReference(request.reference());
@@ -52,6 +65,24 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
         payment.setPaymentDate(LocalDateTime.now());
 
         AccountPayablePayment savedPayment = paymentRepository.save(payment);
+
+        String methodStr = request.paymentMethod().name().toUpperCase();
+        CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                .filter(c -> (c.getName().toLowerCase().contains("proveedor") || c.getName().toLowerCase().contains("pago")) 
+                        && c.getName().toUpperCase().contains(methodStr))
+                .findFirst()
+                .orElseGet(() -> {
+                    CashConcept newConcept = new CashConcept();
+                    newConcept.setName("PAGO PROVEEDOR " + methodStr);
+                    newConcept.setType(CashConcept.ConceptType.OUT);
+                    newConcept.setIsSystem(true);
+                    return cashConceptRepository.save(newConcept);
+                });
+
+        String description = request.notes() != null && !request.notes().isEmpty() ? request.notes()
+                : "Pago a proveedor (" + request.paymentMethod().name() + ") - Proveedor: " + payable.getSupplier().getName();
+
+        cashMovementService.registerInternalMovement(session, user, concept, request.amount(), request.reference(), description);
 
         // Update payable balances
         BigDecimal newAmountPaid = payable.getAmountPaid().add(request.amount());
@@ -79,6 +110,38 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<AccountPayablePaymentResponse> getHistory(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long supplierId,
+            String paymentMethod,
+            Pageable pageable) {
+        
+        Specification<AccountPayablePayment> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isNull(root.get("deletedAt")));
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("paymentDate"), startDate.atStartOfDay()));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("paymentDate"), endDate.atTime(LocalTime.MAX)));
+            }
+            if (supplierId != null) {
+                predicates.add(cb.equal(root.get("accountPayable").get("supplier").get("id"), supplierId));
+            }
+            if (paymentMethod != null && !paymentMethod.isEmpty()) {
+                predicates.add(cb.equal(root.get("paymentMethod"), AccountPayablePayment.PaymentMethod.valueOf(paymentMethod)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return paymentRepository.findAll(spec, pageable).map(this::mapToResponse);
+    }
+
+    @Override
     @Transactional
     public void cancel(Long id) {
         AccountPayablePayment payment = paymentRepository.findById(id)
@@ -101,14 +164,29 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
         }
         payableRepository.save(payable);
 
+        // Revert cash movement
+        CashSession session = cashSessionRepository.findByUserIdAndStatus(payment.getUser().getId(), CashSession.SessionStatus.OPEN)
+                .orElse(null); // If session is closed, we might still want to delete the movement record or handle it differently.
+        
+        if (session != null) {
+            cashMovementRepository.findByCashSessionIdAndAmountAndReference(
+                    session.getId(), payment.getAmount(), payment.getReference())
+                    .ifPresent(m -> cashMovementService.delete(m.getId()));
+        }
+
         payment.setDeletedAt(LocalDateTime.now());
         paymentRepository.save(payment);
     }
 
     private AccountPayablePaymentResponse mapToResponse(AccountPayablePayment payment) {
+        AccountPayable payable = payment.getAccountPayable();
         return new AccountPayablePaymentResponse(
                 payment.getId(),
-                payment.getAccountPayable().getId(),
+                payable.getId(),
+                payable.getSupplier().getName(),
+                payable.getTotalAmount(),
+                payable.getAmountPaid(),
+                payable.getPendingBalance(),
                 payment.getUser().getId(),
                 payment.getUser().getUsername(),
                 payment.getAmount(),

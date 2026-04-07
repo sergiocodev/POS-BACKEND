@@ -39,8 +39,16 @@ public class StockTransfer {
     @Column(name = "sent_at")
     private LocalDateTime sentAt = LocalDateTime.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dispatched_by_id")
+    private User dispatchedBy;
+
     @Column(name = "received_at")
     private LocalDateTime receivedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "received_by_id")
+    private User receivedBy;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
