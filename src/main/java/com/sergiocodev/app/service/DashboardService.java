@@ -17,4 +17,14 @@ public interface DashboardService {
     List<TopProductDashboard> getTopProducts(int limit, Long establishmentId);
 
     List<EmployeePerformanceDashboard> getEmployeePerformance(LocalDate date, Long establishmentId);
+
+    List<SalesByCategoryResponse> getSalesByCategory(String range, Long establishmentId);
+
+    List<RecentSaleResponse> getRecentSales(int limit, Long establishmentId);
+
+    List<ExpiringLotResponse> getExpiringLots(int days, Long establishmentId);
+
+    List<LowStockItemResponse> getLowStockItems(int limit, Long establishmentId);
+
+    FullDashboardResponse getFullDashboard(Long establishmentId);
 }

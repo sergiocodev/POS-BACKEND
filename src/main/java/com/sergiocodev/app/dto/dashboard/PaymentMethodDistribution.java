@@ -1,9 +1,11 @@
 package com.sergiocodev.app.dto.dashboard;
 
-import com.sergiocodev.app.model.SalePayment;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 
 public record PaymentMethodDistribution(
-        SalePayment.PaymentMethod method,
-        BigDecimal amount) {
+        @JsonProperty("payment_method") String paymentMethod,
+        BigDecimal amount,
+        long count,
+        double percentage) {
 }
