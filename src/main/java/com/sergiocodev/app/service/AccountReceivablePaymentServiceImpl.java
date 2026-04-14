@@ -30,8 +30,8 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
     private final CashSessionRepository cashSessionRepository;
     private final UserRepository userRepository;
     private final CashMovementRepository cashMovementRepository;
-    private final CashConceptRepository cashConceptRepository;
     private final CashMovementService cashMovementService;
+    private final CashConceptService cashConceptService;
 
     @Override
     @Transactional
@@ -66,18 +66,7 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
 
         // Register cash movement for all payment methods
         // Find or create income concept matching the payment method
-        String methodStr = request.paymentMethod().name().toUpperCase();
-        CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
-                .filter(c -> (c.getName().toLowerCase().contains("cliente") || c.getName().toLowerCase().contains("cobro")) 
-                        && c.getName().toUpperCase().contains(methodStr))
-                .findFirst()
-                .orElseGet(() -> {
-                    CashConcept newConcept = new CashConcept();
-                    newConcept.setName("COBRO CLIENTE " + methodStr);
-                    newConcept.setType(CashConcept.ConceptType.IN);
-                    newConcept.setIsSystem(true);
-                    return cashConceptRepository.save(newConcept);
-                });
+        CashConcept concept = cashConceptService.findOrCreateReceivableConcept(request.paymentMethod().name());
 
         String description = request.notes() != null && !request.notes().isEmpty() ? request.notes()
                 : "Cobro de cuenta por cobrar parcial o total (" + request.paymentMethod().name() + ") - Cliente: " + receivable.getCustomer().getName();

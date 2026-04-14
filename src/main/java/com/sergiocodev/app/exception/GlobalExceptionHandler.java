@@ -1,6 +1,8 @@
 package com.sergiocodev.app.exception;
 
 import com.sergiocodev.app.dto.ResponseApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,12 +18,15 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+        private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
         /**
          * Handles UserNotFoundException
          */
         @ExceptionHandler(UserNotFoundException.class)
         public ResponseEntity<ResponseApi<Object>> handleUserNotFound(
                         UserNotFoundException ex, WebRequest request) {
+                log.warn("User not found: {}", ex.getMessage());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                 .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
         }
@@ -176,8 +181,9 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ResponseApi<Object>> handleGeneralException(
                         Exception ex, WebRequest request) {
+                log.error("Unhandled exception: {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(ResponseApi.error(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                                "Internal server error: " + ex.getMessage()));
+                                                "Internal server error"));
         }
 }

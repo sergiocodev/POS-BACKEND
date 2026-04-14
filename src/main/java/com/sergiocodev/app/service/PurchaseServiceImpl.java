@@ -26,13 +26,13 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final ProductUnitRepository productUnitRepository;
     private final ProductLotRepository lotRepository;
     private final InventoryRepository inventoryRepository;
-    private final StockMovementRepository stockMovementRepository;
     private final AccountPayableRepository accountPayableRepository;
     private final AccountPayablePaymentRepository accountPayablePaymentRepository;
     private final PurchaseMapper purchaseMapper;
     private final CashSessionRepository cashSessionRepository;
-    private final CashConceptRepository cashConceptRepository;
     private final CashMovementService cashMovementService;
+    private final CashConceptService cashConceptService;
+    private final StockMovementService stockMovementService;
 
     @Override
     @Transactional
@@ -123,19 +123,9 @@ public class PurchaseServiceImpl implements PurchaseService {
             payment.setPaymentDate(LocalDateTime.now());
             accountPayablePaymentRepository.save(payment);
 
-            String methodStr = request.getPaymentMethod().name().toUpperCase();
-            CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
-                    .filter(c -> (c.getName().toLowerCase().contains("pago") || c.getName().toLowerCase().contains("compra") || c.getName().toLowerCase().contains("proveedor")) 
-                            && c.getName().toUpperCase().contains(methodStr))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        CashConcept newConcept = new CashConcept();
-                        newConcept.setName("COMPRA PROVEEDOR " + methodStr);
-                        newConcept.setType(CashConcept.ConceptType.OUT);
-                        return cashConceptRepository.save(newConcept);
-                    });
+            CashConcept concept = cashConceptService.findOrCreatePurchaseConcept(request.getPaymentMethod().name());
 
-            String description = "Compra " + (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH ? "al contado" : "con pago inicial") 
+            String description = "Compra " + (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH ? "al contado" : "con pago inicial")
                     + " (" + request.getPaymentMethod().name() + ") - Proveedor: " + savedEntity.getSupplier().getName();
             
             cashMovementService.registerInternalMovement(session, savedEntity.getUser(), concept, initialPayment, 
@@ -184,17 +174,10 @@ public class PurchaseServiceImpl implements PurchaseService {
     }
 
     private void createStockMovement(Purchase purchase, ProductLot lot, Integer quantity, BigDecimal balanceAfter) {
-        StockMovement movement = new StockMovement();
-        movement.setEstablishment(purchase.getEstablishment());
-        movement.setLot(lot);
-        movement.setType(StockMovement.MovementType.PURCHASE);
-        movement.setQuantity(new BigDecimal(quantity));
-        movement.setBalanceAfter(balanceAfter);
-        movement.setReferenceTable("purchases");
-        movement.setReferenceId(purchase.getId());
-        movement.setUser(purchase.getUser());
-        movement.setCreatedAt(java.time.LocalDateTime.now());
-        stockMovementRepository.save(movement);
+        stockMovementService.recordPurchaseMovement(
+                purchase.getEstablishment(), lot,
+                BigDecimal.valueOf(quantity), balanceAfter,
+                purchase.getId(), purchase.getUser());
     }
 
     private void calculateTotals(Purchase entity) {
@@ -203,7 +186,11 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         entity.setSubTotal(subTotal);
-        entity.setTax(subTotal.multiply(new BigDecimal("0.18")));
+        BigDecimal taxRate = entity.getItems().stream()
+                .findFirst()
+                .map(item -> item.getProduct().getTaxType().getRate())
+                .orElse(new BigDecimal("0.18"));
+        entity.setTax(subTotal.multiply(taxRate));
         entity.setTotal(subTotal.add(entity.getTax()));
     }
 

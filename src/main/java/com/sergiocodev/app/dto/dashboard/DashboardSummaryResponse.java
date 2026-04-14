@@ -10,7 +10,8 @@ public record DashboardSummaryResponse(
             @JsonProperty("total_sales") ValueTrend totalSales,
             ValueTrendLong transactions,
             @JsonProperty("sunat_pending_docs") long sunatPendingDocs,
-            @JsonProperty("stock_alerts") StockAlertsData stockAlerts) {
+            @JsonProperty("stock_alerts") StockAlertsData stockAlerts,
+            @JsonProperty("total_products") long totalProducts) {
     }
 
     public record ValueTrend(

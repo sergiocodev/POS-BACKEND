@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
+import com.sergiocodev.app.config.ApiVersion;
 import java.util.List;
 
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
@@ -21,10 +22,10 @@ import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Products", description = "Endpoints para la gestión de productos")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_CATALOGO + "')")
+@ApiVersion(1)
 public class ProductController {
 
     private final ProductService service;

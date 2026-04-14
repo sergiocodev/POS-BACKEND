@@ -27,6 +27,7 @@ public class PermissionService {
     /**
      * Obtener todos los permisos
      */
+    @Transactional(readOnly = true)
     public List<PermissionResponse> getAll() {
         return permissionRepository.findAll().stream()
                 .map(this::toResponse)
@@ -36,6 +37,7 @@ public class PermissionService {
     /**
      * Obtener permisos filtrados por módulo
      */
+    @Transactional(readOnly = true)
     public List<PermissionResponse> getByModule(String module) {
         return permissionRepository.findByModule(module).stream()
                 .map(this::toResponse)
@@ -45,6 +47,7 @@ public class PermissionService {
     /**
      * Buscar permisos por nombre o descripción
      */
+    @Transactional(readOnly = true)
     public List<PermissionResponse> search(String query) {
         return permissionRepository.findByNameContainingOrDescriptionContaining(query, query).stream()
                 .map(this::toResponse)
@@ -54,6 +57,7 @@ public class PermissionService {
     /**
      * Obtener permisos agrupados por módulo
      */
+    @Transactional(readOnly = true)
     public Map<String, List<PermissionResponse>> getGroupedByModule() {
         return permissionRepository.findAll().stream()
                 .map(this::toResponse)
@@ -64,6 +68,7 @@ public class PermissionService {
     /**
      * Obtener lista de módulos únicos
      */
+    @Transactional(readOnly = true)
     public List<String> getModules() {
         return permissionRepository.findAll().stream()
                 .map(Permission::getModule)
@@ -76,6 +81,7 @@ public class PermissionService {
     /**
      * Obtener un permiso por ID
      */
+    @Transactional(readOnly = true)
     public PermissionResponse getById(Long id) {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Permiso no encontrado con ID: " + id));

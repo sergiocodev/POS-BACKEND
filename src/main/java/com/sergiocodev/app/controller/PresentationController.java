@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/presentations")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Presentations", description = "Endpoints para la gestión de presentaciones")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_PRESENTACIONES + "')")

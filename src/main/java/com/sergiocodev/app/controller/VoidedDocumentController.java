@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/voided-documents")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Voided Documents", description = "API para gestión de bajas de documentos SUNAT")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_BAJAS + "')")

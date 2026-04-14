@@ -46,6 +46,7 @@ public class CashSessionServiceImpl implements CashSessionService {
         private final CashMovementRepository cashMovementRepository;
         private final CashConceptRepository cashConceptRepository;
         private final CashMovementService cashMovementService;
+        private final CashConceptService cashConceptService;
         private final AccountReceivablePaymentRepository arPaymentRepository;
         private final AccountPayablePaymentRepository apPaymentRepository;
 
@@ -273,7 +274,7 @@ public class CashSessionServiceImpl implements CashSessionService {
                                         .orElseThrow(() -> new ResourceNotFoundException("Concept not found"));
                 } else {
                         // Fallback to a default OUT concept or throw error
-                        concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
+                        concept = cashConceptService.findByType(CashConcept.ConceptType.OUT).stream()
                                         .findFirst()
                                         .orElseThrow(() -> new ResourceNotFoundException(
                                                         "No se encontró un concepto de egreso por defecto"));
@@ -299,7 +300,7 @@ public class CashSessionServiceImpl implements CashSessionService {
                                         .orElseThrow(() -> new ResourceNotFoundException("Concept not found"));
                 } else {
                         // Fallback to a default IN concept or throw error
-                        concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
+                        concept = cashConceptService.findByType(CashConcept.ConceptType.IN).stream()
                                         .findFirst()
                                         .orElseThrow(() -> new ResourceNotFoundException(
                                                         "No se encontró un concepto de ingreso por defecto"));

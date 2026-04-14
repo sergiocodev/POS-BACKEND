@@ -21,14 +21,15 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
+import com.sergiocodev.app.config.ApiVersion;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Users", description = "Endpoints para la gestión de usuarios")
 @SecurityRequirement(name = "bearerAuth")
+@ApiVersion(1)
 public class UserController {
 
     private final UserService userService;

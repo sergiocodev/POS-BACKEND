@@ -18,7 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/account-receivables")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Account Receivables", description = "Endpoints para la gestión de cuentas por cobrar")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_CUENTAS_COBRAR + "')")

@@ -8,7 +8,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock_movements")
+@Table(name = "stock_movements", indexes = {
+    @Index(name = "idx_movement_establishment", columnList = "establishment_id"),
+    @Index(name = "idx_movement_lot", columnList = "lot_id"),
+    @Index(name = "idx_movement_created", columnList = "created_at"),
+    @Index(name = "idx_movement_type", columnList = "type")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -55,9 +60,12 @@ public class StockMovement {
         PURCHASE,
         ADJUSTMENT_IN,
         ADJUSTMENT_OUT,
+        ADJUSTMENT,
         TRANSFER_IN,
         TRANSFER_OUT,
+        TRANSFER,
         SALE_RETURN,
+        REVERSAL,
         VOID_RETURN
     }
 }

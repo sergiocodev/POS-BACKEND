@@ -31,6 +31,7 @@ public class RoleService {
     /**
      * Obtener todos los roles
      */
+    @Transactional(readOnly = true)
     public List<RoleResponse> getAll() {
         return roleRepository.findAll().stream()
                 .map(roleMapper::toResponse)
@@ -40,6 +41,7 @@ public class RoleService {
     /**
      * Obtener un rol por ID con sus permisos
      */
+    @Transactional(readOnly = true)
     public RoleDetailResponse getById(Long id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + id));
@@ -123,6 +125,7 @@ public class RoleService {
     /**
      * Obtener permisos de un rol
      */
+    @Transactional(readOnly = true)
     public List<PermissionResponse> getPermissions(Long roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado con ID: " + roleId));

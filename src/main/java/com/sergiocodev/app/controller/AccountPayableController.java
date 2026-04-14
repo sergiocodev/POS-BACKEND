@@ -22,7 +22,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/account-payables")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Account Payables", description = "Endpoints para la gestión de cuentas por pagar a proveedores")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_CUENTAS_PAGAR + "')")

@@ -19,6 +19,9 @@ import com.sergiocodev.app.model.SaleItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +36,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final StockMovementRepository stockMovementRepository;
     private final SaleRepository saleRepository;
     private final InventoryMapper mapper;
+    private final StockMovementService stockMovementService;
 
     @Override
     @Transactional
@@ -61,10 +65,6 @@ public class InventoryServiceImpl implements InventoryService {
 
         java.math.BigDecimal diff = newQuantity.subtract(oldQuantity);
         if (diff.compareTo(java.math.BigDecimal.ZERO) != 0) {
-            StockMovement movement = new StockMovement();
-            movement.setLot(entity.getLot());
-            movement.setEstablishment(entity.getEstablishment());
-
             StockMovement.MovementType type = diff.compareTo(java.math.BigDecimal.ZERO) > 0
                     ? StockMovement.MovementType.ADJUSTMENT_IN
                     : StockMovement.MovementType.ADJUSTMENT_OUT;
@@ -73,17 +73,13 @@ public class InventoryServiceImpl implements InventoryService {
                 try {
                     type = StockMovement.MovementType.valueOf(request.movementType());
                 } catch (IllegalArgumentException e) {
-
+                    // ignore and use computed type
                 }
             }
-            movement.setType(type);
-            movement.setQuantity(diff.abs());
-            movement.setBalanceAfter(newQuantity);
-            movement.setReferenceTable("inventory");
-            movement.setReferenceId(saved.getId());
-            movement.setCreatedAt(java.time.LocalDateTime.now());
-
-            stockMovementRepository.save(movement);
+            stockMovementService.recordAdjustmentMovement(
+                    entity.getEstablishment(), entity.getLot(),
+                    diff, newQuantity,
+                    "Stock adjustment", null);
         }
 
         return mapper.toResponse(saved);
@@ -100,8 +96,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<InventoryResponse> getByEstablishment(Long establishmentId) {
-        return repository.findAll().stream()
-                .filter(i -> i.getEstablishment().getId().equals(establishmentId))
+        return repository.findAllByEstablishmentId(establishmentId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -209,19 +204,10 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory saved = repository.save(entity);
 
         if (diff.compareTo(java.math.BigDecimal.ZERO) != 0) {
-            StockMovement movement = new StockMovement();
-            movement.setLot(entity.getLot());
-            movement.setEstablishment(entity.getEstablishment());
-            movement.setType(diff.compareTo(java.math.BigDecimal.ZERO) > 0
-                    ? StockMovement.MovementType.ADJUSTMENT_IN
-                    : StockMovement.MovementType.ADJUSTMENT_OUT);
-            movement.setQuantity(diff.abs());
-            movement.setBalanceAfter(newQuantity);
-            movement.setReferenceTable("inventory_adjustment");
-            movement.setReferenceId(saved.getId());
-            movement.setCreatedAt(LocalDateTime.now());
-
-            stockMovementRepository.save(movement);
+            stockMovementService.recordAdjustmentMovement(
+                    entity.getEstablishment(), entity.getLot(),
+                    diff, newQuantity,
+                    "Stock adjustment", null);
         }
 
         return mapper.toResponse(saved);
@@ -300,17 +286,23 @@ public class InventoryServiceImpl implements InventoryService {
             inventory.setLastMovement(LocalDateTime.now());
             repository.save(inventory);
 
-            StockMovement movement = new StockMovement();
-            movement.setLot(item.getLot());
-            movement.setEstablishment(sale.getEstablishment());
-            movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
-            movement.setQuantity(quantityToReturn);
-            movement.setBalanceAfter(newQuantity);
-            movement.setReferenceTable("sales");
-            movement.setReferenceId(sale.getId());
-            movement.setCreatedAt(LocalDateTime.now());
-
-            stockMovementRepository.save(movement);
+            stockMovementService.recordReversalMovement(
+                    sale.getEstablishment(), item.getLot(),
+                    quantityToReturn, newQuantity,
+                    "Sale reversal", sale.getId(), null);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, Pageable pageable) {
+        List<Inventory> all = repository.findAllByEstablishmentId(establishmentId);
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), all.size());
+        List<Inventory> page = all.subList(Math.min(start, all.size()), end);
+        return new org.springframework.data.domain.PageImpl<>(
+                page.stream().map(mapper::toResponse).collect(Collectors.toList()),
+                pageable,
+                all.size());
     }
 }

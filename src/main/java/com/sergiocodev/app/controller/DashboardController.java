@@ -16,7 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/dashboard")
-@CrossOrigin(origins = "*")
 @Tag(name = "Dashboard", description = "API para indicadores y gráficos del Dashboard")
 @PreAuthorize("hasAuthority('" + PermissionConstants.DASHBOARD + "')")
 public class DashboardController {

@@ -105,9 +105,8 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         @Override
         @Transactional
         public void processDailyVoids(Long establishmentId) {
-                List<VoidedDocument> pendings = repository.findByEstablishmentId(establishmentId).stream()
-                                .filter(d -> d.getSunatStatus() == VoidedDocument.VoidedSunatStatus.PENDING)
-                                .collect(Collectors.toList());
+                List<VoidedDocument> pendings = repository.findByEstablishmentIdAndSunatStatus(
+                                establishmentId, VoidedDocument.VoidedSunatStatus.PENDING);
 
                 for (VoidedDocument doc : pendings) {
                         doc.setSunatStatus(VoidedDocument.VoidedSunatStatus.ACCEPTED);

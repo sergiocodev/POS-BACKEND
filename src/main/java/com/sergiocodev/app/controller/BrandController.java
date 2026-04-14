@@ -22,7 +22,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/brands")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Brands", description = "Endpoints para la gestión de marcas")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_MARCAS + "')")

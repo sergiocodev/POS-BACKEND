@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/cash-sessions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Cash Sessions", description = "Endpoints para la gestión de sesiones de efectivo")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_APERTURA_CIERRE + "')")

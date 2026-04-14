@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/stock-movements")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Stock Movements", description = "Endpoints para la gestión de movimientos de stock")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_MOVIMIENTOS + "')")

@@ -6,6 +6,8 @@ import com.sergiocodev.app.dto.inventory.StockAdjustmentRequest;
 import com.sergiocodev.app.dto.inventory.LowStockAlertResponse;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface InventoryService {
@@ -14,6 +16,9 @@ public interface InventoryService {
     List<InventoryResponse> getAll();
 
     List<InventoryResponse> getByEstablishment(Long establishmentId);
+
+    /** Paginated inventory by establishment */
+    Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, Pageable pageable);
 
     InventoryResponse getById(Long id);
 

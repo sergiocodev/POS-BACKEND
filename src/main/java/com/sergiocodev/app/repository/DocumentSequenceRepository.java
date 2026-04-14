@@ -20,4 +20,13 @@ public interface DocumentSequenceRepository extends JpaRepository<DocumentSequen
             @Param("establishmentId") Long establishmentId,
             @Param("documentType") DocumentSequence.DocumentType documentType,
             @Param("series") String series);
+
+    boolean existsByEstablishmentIdAndDocumentTypeAndSeries(Long establishmentId,
+                                                             DocumentSequence.DocumentType documentType,
+                                                             String series);
+
+    boolean existsByEstablishmentIdAndDocumentTypeAndSeriesAndIdNot(Long establishmentId,
+                                                                     DocumentSequence.DocumentType documentType,
+                                                                     String series,
+                                                                     Long id);
 }

@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -34,6 +35,13 @@ public class JwtUtil {
      */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * Extracts the JWT ID (jti) claim from the token.
+     */
+    public String extractJti(String token) {
+        return extractClaim(token, Claims::getId);
     }
 
     /**
@@ -90,13 +98,15 @@ public class JwtUtil {
     }
 
     /**
-     * Creates the JWT token
+     * Creates the JWT token with JTI claim for blacklisting support
      */
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {
         long expMillis = expiration != null ? expiration : 86400000;
+        String jti = UUID.randomUUID().toString();
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
+                .id(jti) // JWT ID for blacklisting
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expMillis))
                 .signWith(getSignKey())

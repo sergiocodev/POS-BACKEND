@@ -8,8 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product_lots", uniqueConstraints = {
-        @UniqueConstraint(name = "ux_lot_product", columnNames = { "product_id", "lot_code" })
+@Table(name = "product_lots", indexes = {
+    @Index(name = "idx_lot_product", columnList = "product_id"),
+    @Index(name = "idx_lot_expiry", columnList = "expiry_date")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "ux_lot_product", columnNames = { "product_id", "lot_code" })
 })
 @Data
 @NoArgsConstructor

@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/product-lots")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Product Lots", description = "Endpoints para la gestión de lotes de productos")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_LOTES + "')")

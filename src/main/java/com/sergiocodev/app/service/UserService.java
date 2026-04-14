@@ -29,18 +29,21 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper mapper;
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getAll() {
         return userRepository.findAllActive().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getById(Long id) {
         return userRepository.findById(id)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getByUsername(String username) {
         return userRepository.findActiveByUsername(username)
                 .map(mapper::toResponse)

@@ -8,6 +8,8 @@ import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
 import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -15,6 +17,9 @@ public interface SaleService {
     SaleResponse create(SaleRequest request, Long userId);
 
     List<SaleResponse> getAll(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
+
+    /** Paginated version of getAll for large datasets */
+    Page<SaleResponse> getAllPaged(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Pageable pageable);
 
     SaleResponse getById(Long id);
 

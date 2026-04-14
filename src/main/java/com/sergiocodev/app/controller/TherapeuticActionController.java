@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/therapeutic-actions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Therapeutic Actions", description = "Endpoints for managing therapeutic actions")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_ACCIONES + "')")

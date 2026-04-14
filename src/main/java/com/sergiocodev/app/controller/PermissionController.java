@@ -21,7 +21,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/permissions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Permisos", description = "Endpoints para la gestión de permisos del sistema")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_ROLES + "')")

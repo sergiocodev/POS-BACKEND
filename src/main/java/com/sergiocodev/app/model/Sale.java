@@ -1,6 +1,7 @@
 package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Index;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "sales")
+@Table(name = "sales", indexes = {
+    @Index(name = "idx_sale_establishment_date", columnList = "establishment_id, date"),
+    @Index(name = "idx_sale_sunat_status", columnList = "sunat_status"),
+    @Index(name = "idx_sale_date", columnList = "date"),
+    @Index(name = "idx_sale_customer", columnList = "customer_id"),
+    @Index(name = "idx_sale_user", columnList = "user_id"),
+    @Index(name = "idx_sale_cash_session", columnList = "cash_session_id"),
+    @Index(name = "idx_sale_voided", columnList = "is_voided")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

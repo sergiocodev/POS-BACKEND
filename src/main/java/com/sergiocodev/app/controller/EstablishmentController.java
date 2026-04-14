@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/establishments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Establishments", description = "Endpoints para la gestión de establecimientos")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS + "')")

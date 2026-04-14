@@ -29,8 +29,8 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
     private final AccountPayableRepository payableRepository;
     private final UserRepository userRepository;
     private final CashSessionRepository cashSessionRepository;
-    private final CashConceptRepository cashConceptRepository;
     private final CashMovementService cashMovementService;
+    private final CashConceptService cashConceptService;
     private final CashMovementRepository cashMovementRepository;
 
     @Override
@@ -66,18 +66,7 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
 
         AccountPayablePayment savedPayment = paymentRepository.save(payment);
 
-        String methodStr = request.paymentMethod().name().toUpperCase();
-        CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
-                .filter(c -> (c.getName().toLowerCase().contains("proveedor") || c.getName().toLowerCase().contains("pago")) 
-                        && c.getName().toUpperCase().contains(methodStr))
-                .findFirst()
-                .orElseGet(() -> {
-                    CashConcept newConcept = new CashConcept();
-                    newConcept.setName("PAGO PROVEEDOR " + methodStr);
-                    newConcept.setType(CashConcept.ConceptType.OUT);
-                    newConcept.setIsSystem(true);
-                    return cashConceptRepository.save(newConcept);
-                });
+        CashConcept concept = cashConceptService.findOrCreatePayableConcept(request.paymentMethod().name());
 
         String description = request.notes() != null && !request.notes().isEmpty() ? request.notes()
                 : "Pago a proveedor (" + request.paymentMethod().name() + ") - Proveedor: " + payable.getSupplier().getName();

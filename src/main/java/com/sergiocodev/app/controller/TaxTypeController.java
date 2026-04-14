@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tax-types")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Tax Types", description = "Endpoints para la gestión del tipo de impuesto")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_IMPUESTOS + "')")

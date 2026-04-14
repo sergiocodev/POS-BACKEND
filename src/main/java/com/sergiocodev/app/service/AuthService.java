@@ -7,9 +7,11 @@ import com.sergiocodev.app.dto.user.RefreshTokenRequest;
 import com.sergiocodev.app.dto.user.RegisterRequest;
 import com.sergiocodev.app.exception.UserAlreadyExistsException;
 import com.sergiocodev.app.exception.UserNotFoundException;
+import com.sergiocodev.app.model.TokenBlacklist;
 import com.sergiocodev.app.model.User;
+import com.sergiocodev.app.repository.TokenBlacklistRepository;
 import com.sergiocodev.app.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,13 +21,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
         private final UserRepository userRepository;
@@ -33,6 +36,19 @@ public class AuthService {
         private final JwtUtil jwtUtil;
         private final AuthenticationManager authenticationManager;
         private final UserDetailsService userDetailsService;
+        private final TokenBlacklistRepository tokenBlacklistRepository;
+
+        public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                        JwtUtil jwtUtil, AuthenticationManager authenticationManager,
+                        UserDetailsService userDetailsService,
+                        TokenBlacklistRepository tokenBlacklistRepository) {
+                this.userRepository = userRepository;
+                this.passwordEncoder = passwordEncoder;
+                this.jwtUtil = jwtUtil;
+                this.authenticationManager = authenticationManager;
+                this.userDetailsService = userDetailsService;
+                this.tokenBlacklistRepository = tokenBlacklistRepository;
+        }
 
         /**
          * Authenticates a user and generates a JWT token
@@ -40,6 +56,7 @@ public class AuthService {
         @Transactional
         public LoginResponse login(LoginRequest request) {
                 String usernameOrEmail = request.usernameOrEmail();
+                log.info("Login attempt: user={}", usernameOrEmail);
 
                 // Find active user by username or email
                 User user = userRepository.findActiveByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
@@ -55,6 +72,8 @@ public class AuthService {
                 // Update last login
                 user.setLastLogin(LocalDateTime.now());
                 userRepository.save(user);
+
+                log.info("Login successful: user={}, id={}", user.getUsername(), user.getId());
 
                 // Generate JWT token
                 String token = jwtUtil.generateToken(user.getUsername());
@@ -88,6 +107,8 @@ public class AuthService {
          */
         @Transactional
         public LoginResponse register(RegisterRequest request) {
+                log.info("Registration attempt: username={}, email={}", request.username(), request.email());
+
                 // Check if username already exists
                 if (userRepository.existsByUsername(request.username())) {
                         throw new UserAlreadyExistsException(
@@ -110,6 +131,7 @@ public class AuthService {
 
                 // Save to database
                 User savedUser = userRepository.save(newUser);
+                log.info("User registered successfully: username={}, id={}", savedUser.getUsername(), savedUser.getId());
 
                 // Generate JWT token
                 String token = jwtUtil.generateToken(savedUser.getUsername());
@@ -177,12 +199,31 @@ public class AuthService {
         }
 
         /**
-         * Logs out the user
+         * Logs out the user by blacklisting the token.
          */
-        public void logout() {
-                // Since we are using stateless JWT, we don't need to do anything server-side
-                // unless we implement a token blacklist.
-                // For now, the client just discards the token.
+        @Transactional
+        public void logout(String token) {
+                if (token == null || token.isBlank()) {
+                        return;
+                }
+                try {
+                        String jwt = token.startsWith("Bearer ") ? token.substring(7) : token;
+                        String jti = jwtUtil.extractJti(jwt);
+                        String username = jwtUtil.extractUsername(jwt);
+                        java.util.Date expiration = jwtUtil.extractExpiration(jwt);
+
+                        if (jti != null && !tokenBlacklistRepository.existsByJti(jti)) {
+                                TokenBlacklist entry = new TokenBlacklist();
+                                entry.setJti(jti);
+                                entry.setUsername(username);
+                                entry.setExpiryDate(expiration.toInstant());
+                                entry.setBlacklistedAt(Instant.now());
+                                tokenBlacklistRepository.save(entry);
+                                log.info("Token blacklisted: username={}", username);
+                        }
+                } catch (Exception e) {
+                        log.warn("Failed to blacklist token: {}", e.getMessage());
+                }
         }
 
         /**

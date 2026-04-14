@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/active-ingredients")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS + "')")

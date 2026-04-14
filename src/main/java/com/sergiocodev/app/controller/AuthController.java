@@ -7,6 +7,7 @@ import com.sergiocodev.app.dto.user.RefreshTokenRequest;
 import com.sergiocodev.app.dto.user.RegisterRequest;
 import com.sergiocodev.app.service.AuthService;
 import com.sergiocodev.app.model.User;
+import com.sergiocodev.app.config.ApiVersion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,8 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Authentication", description = "Endpoints para la autenticación y registro de usuarios")
+@ApiVersion(1)
 public class AuthController {
 
     private final AuthService authService;
@@ -60,10 +61,11 @@ public class AuthController {
         return ResponseEntity.ok(ResponseApi.success(response, "Token refrescado exitosamente"));
     }
 
-    @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario (lado del cliente)")
+    @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario invalidando el token")
     @PostMapping("/logout")
-    public ResponseEntity<ResponseApi<Void>> logout() {
-        authService.logout();
+    public ResponseEntity<ResponseApi<Void>> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        authService.logout(authHeader);
         return ResponseEntity.ok(ResponseApi.success(null, "Sesión cerrada exitosamente"));
     }
 

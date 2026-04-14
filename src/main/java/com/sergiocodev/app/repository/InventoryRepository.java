@@ -1,60 +1,137 @@
 package com.sergiocodev.app.repository;
 
 import com.sergiocodev.app.model.Inventory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
         Optional<Inventory> findByEstablishmentIdAndLotId(Long establishmentId, Long lotId);
 
-        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i WHERE i.quantity <= 10")
+        @Query("SELECT i FROM Inventory i WHERE i.quantity <= 10")
         java.util.List<Inventory> findLowStock();
 
-        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
+        @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
         java.util.List<Inventory> findExpiringSoon(
-                        @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
+                        @Param("date") java.time.LocalDate date);
 
-        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i WHERE i.quantity <= i.minStock")
+        @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.minStock")
         java.util.List<Inventory> findLowStockAlerts();
 
-        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i JOIN FETCH i.lot l " +
-                        "WHERE l.expiryDate BETWEEN :startDate AND :endDate")
-        java.util.List<Inventory> findExpiringLotsBetween(
-                        @org.springframework.data.repository.query.Param("startDate") java.time.LocalDate startDate,
-                        @org.springframework.data.repository.query.Param("endDate") java.time.LocalDate endDate);
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId")
+        List<Inventory> findAllByEstablishmentId(@Param("establishmentId") Long establishmentId);
 
-        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT i FROM Inventory i " +
-                        "JOIN FETCH i.lot l " +
-                        "JOIN FETCH l.product p " +
-                        "LEFT JOIN FETCH p.category " +
-                        "LEFT JOIN FETCH p.laboratory " +
-                        "LEFT JOIN FETCH p.presentation " +
-                        "LEFT JOIN FETCH p.ingredients pi " +
-                        "LEFT JOIN FETCH pi.activeIngredient " +
-                        "WHERE i.establishment.id = :establishmentId")
-        java.util.List<Inventory> findAllByEstablishmentId(
-                        @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
-
-        @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i " +
-                        "JOIN FETCH i.lot l " +
-                        "JOIN FETCH l.product p " +
-                        "LEFT JOIN FETCH p.category " +
-                        "LEFT JOIN FETCH p.laboratory " +
-                        "LEFT JOIN FETCH p.presentation " +
-                        "LEFT JOIN FETCH p.ingredients pi " +
-                        "LEFT JOIN FETCH pi.activeIngredient " +
-                        "WHERE i.establishment.id = :establishmentId " +
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId " +
                         "AND i.quantity > 0 " +
-                        "AND (LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
-                        "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-                        "OR LOWER(p.genericName) LIKE LOWER(CONCAT('%', :query, '%')))")
+                        "AND (LOWER(i.lot.product.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(i.lot.product.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(i.lot.product.genericName) LIKE LOWER(CONCAT('%', :query, '%')))")
         java.util.List<Inventory> searchProductsForPOS(
-                        @org.springframework.data.repository.query.Param("query") String query,
-                        @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
+                        @Param("query") String query,
+                        @Param("establishmentId") Long establishmentId);
 
         java.util.Optional<Inventory> findFirstByEstablishmentIdAndLotProductIdAndQuantityGreaterThanOrderByLotExpiryDateAsc(
                         Long establishmentId, Long productId, java.math.BigDecimal quantity);
+
+        @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate BETWEEN :startDate AND :endDate")
+        List<Inventory> findExpiringLotsBetween(
+                        @Param("startDate") java.time.LocalDate startDate,
+                        @Param("endDate") java.time.LocalDate endDate);
+
+        // ──────────────────────────────────────────────────────────────
+        // Dashboard & Report queries: replace findAll().stream().filter()
+        // ──────────────────────────────────────────────────────────────
+
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId")
+        List<Inventory> findSummaryByEstablishment(@Param("establishmentId") Long establishmentId);
+
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE i.establishment.id = :establishmentId " +
+                        "AND i.quantity > 0 AND l.expiryDate < :today")
+        List<Inventory> findExpiredLots(@Param("establishmentId") Long establishmentId,
+                        @Param("today") LocalDate today);
+
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE i.establishment.id = :establishmentId " +
+                        "AND i.quantity > 0 AND l.expiryDate >= :today AND l.expiryDate < :limitDate")
+        List<Inventory> findExpiringLots(@Param("establishmentId") Long establishmentId,
+                        @Param("today") LocalDate today,
+                        @Param("limitDate") LocalDate limitDate);
+
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId " +
+                        "AND i.quantity <= 0")
+        List<Inventory> findOutOfStock(@Param("establishmentId") Long establishmentId);
+
+        @EntityGraph(attributePaths = { "lot", "lot.product", "lot.product.category" })
+        @Query("SELECT i FROM Inventory i JOIN i.lot l JOIN l.product p " +
+                        "WHERE i.establishment.id = :establishmentId " +
+                        "AND i.minStock > 0 AND i.quantity <= i.minStock " +
+                        "ORDER BY (i.quantity / i.minStock) ASC")
+        Page<Inventory> findLowStockItems(@Param("establishmentId") Long establishmentId,
+                        Pageable pageable);
+
+        @EntityGraph(attributePaths = { "lot", "lot.product" })
+        @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE i.establishment.id = :establishmentId " +
+                        "AND i.quantity > 0 AND l.expiryDate >= :today AND l.expiryDate < :limitDate " +
+                        "ORDER BY l.expiryDate ASC")
+        Page<Inventory> findExpiringLotsPaged(@Param("establishmentId") Long establishmentId,
+                        @Param("today") LocalDate today,
+                        @Param("limitDate") LocalDate limitDate,
+                        Pageable pageable);
+
+        @Query("SELECT COUNT(DISTINCT i.lot.product.id) FROM Inventory i " +
+                        "WHERE i.establishment.id = :establishmentId AND i.quantity > 0")
+        long countDistinctProductsInStock(@Param("establishmentId") Long establishmentId);
+
+        @Query("SELECT COUNT(i) FROM Inventory i JOIN i.lot l " +
+                        "WHERE i.establishment.id = :establishmentId AND i.quantity > 0 AND l.expiryDate < :today")
+        long countExpiredLots(@Param("establishmentId") Long establishmentId,
+                        @Param("today") LocalDate today);
+
+        @Query("SELECT COUNT(i) FROM Inventory i JOIN i.lot l " +
+                        "WHERE i.establishment.id = :establishmentId AND i.quantity > 0 " +
+                        "AND l.expiryDate >= :today AND l.expiryDate < :limitDate")
+        long countExpiringLots(@Param("establishmentId") Long establishmentId,
+                        @Param("today") LocalDate today,
+                        @Param("limitDate") LocalDate limitDate);
+
+        @Query("SELECT COUNT(i) FROM Inventory i WHERE i.establishment.id = :establishmentId AND i.quantity <= 0")
+        long countOutOfStock(@Param("establishmentId") Long establishmentId);
+
+        // ──────────────────────────────────────────────────────────────
+        // Locking for concurrent stock operations
+        // ──────────────────────────────────────────────────────────────
+
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId AND i.lot.id = :lotId")
+        Optional<Inventory> findByEstablishmentIdAndLotIdForUpdate(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("lotId") Long lotId);
+
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT i FROM Inventory i JOIN i.lot l " +
+                        "WHERE i.establishment.id = :establishmentId AND l.product.id = :productId " +
+                        "AND i.quantity > :minQuantity AND l.expiryDate >= :today " +
+                        "ORDER BY l.expiryDate ASC")
+        Optional<Inventory> findAvailableLotForUpdate(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("productId") Long productId,
+                        @Param("minQuantity") BigDecimal minQuantity,
+                        @Param("today") LocalDate today);
 }

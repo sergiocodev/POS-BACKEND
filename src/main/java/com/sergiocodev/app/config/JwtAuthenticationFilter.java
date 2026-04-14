@@ -1,9 +1,11 @@
 package com.sergiocodev.app.config;
 
+import com.sergiocodev.app.repository.TokenBlacklistRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,15 +15,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService,
+                                     TokenBlacklistRepository tokenBlacklistRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
     }
 
     @Override
@@ -43,6 +49,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         username = jwtUtil.extractUsername(jwt);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Check if token is blacklisted
+            String jti = jwtUtil.extractJti(jwt);
+            if (jti != null && tokenBlacklistRepository.existsByJti(jti)) {
+                log.debug("Token blacklisted: jti={}", jti);
+                // Set header so frontend knows to redirect to login without refresh attempt
+                response.setHeader("X-Token-Blacklisted", "true");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.validateToken(jwt, userDetails)) {

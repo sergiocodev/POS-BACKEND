@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Roles", description = "Endpoints para la gestión de roles y permisos")
 @SecurityRequirement(name = "bearerAuth")
 public class RoleController {

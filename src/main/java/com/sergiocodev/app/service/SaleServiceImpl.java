@@ -9,6 +9,7 @@ import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
+import com.sergiocodev.app.dto.company.CompanyMinimalResponse;
 import com.sergiocodev.app.mapper.SaleMapper;
 import com.sergiocodev.app.model.Sale;
 import com.sergiocodev.app.model.CashSession;
@@ -44,9 +45,13 @@ import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
 import com.sergiocodev.app.util.XmlUblGenerator;
 import com.sergiocodev.app.util.SunatOseClient;
+import com.sergiocodev.app.util.PdfGenerator;
 import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
 import com.sergiocodev.app.model.Sale.SunatStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -56,6 +61,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SaleServiceImpl implements SaleService {
 
     private final SaleRepository repository;
@@ -76,11 +82,16 @@ public class SaleServiceImpl implements SaleService {
     private final DigitalSignatureService digitalSignatureService;
     private final SunatOseClient sunatOseClient;
     private final CashMovementService cashMovementService;
+    private final CashConceptService cashConceptService;
     private final CashConceptRepository cashConceptRepository;
+    private final StockMovementService stockMovementService;
 
     @Override
     @Transactional
     public SaleResponse create(SaleRequest request, Long userId) {
+        log.info("Creating sale: establishment={}, customer={}, items={}, userId={}",
+                request.establishmentId(), request.customerId(), request.items().size(), userId);
+
         Sale entity = mapper.toEntity(request);
         entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
                 .orElseThrow(
@@ -147,7 +158,7 @@ public class SaleServiceImpl implements SaleService {
             item.setLot(lot);
             BigDecimal amount = ir.unitPrice().multiply(ir.quantity());
             item.setAmount(amount);
-            item.setAppliedTaxRate(new BigDecimal("0.18"));
+            item.setAppliedTaxRate(product.getTaxType().getRate());
             entity.getItems().add(item);
 
             if (lot != null) {
@@ -166,20 +177,7 @@ public class SaleServiceImpl implements SaleService {
 
             // No check for CREDITO payment method anymore as it doesn't exist
             if (session != null) {
-                String methodStr = pr.paymentMethod().name().toUpperCase();
-                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
-                        .filter(c -> c.getName().toUpperCase().contains(methodStr) && c.getName().toLowerCase().contains("venta"))
-                        .findFirst()
-                        .orElseGet(() -> cashConceptRepository.findByType(CashConcept.ConceptType.IN).stream()
-                                .filter(c -> c.getName().toUpperCase().contains(methodStr))
-                                .findFirst()
-                                .orElseGet(() -> {
-                                    CashConcept newConcept = new CashConcept();
-                                    newConcept.setName("VENTA " + methodStr);
-                                    newConcept.setType(CashConcept.ConceptType.IN);
-                                    newConcept.setIsSystem(true);
-                                    return cashConceptRepository.save(newConcept);
-                                }));
+                CashConcept concept = cashConceptService.findOrCreateSaleConcept(pr.paymentMethod().name());
 
                 String description = "Venta (" + pr.paymentMethod().name() + "): " + entity.getSeries() + "-" + entity.getNumber();
                 cashMovementService.registerInternalMovement(session, entity.getUser(), concept, pr.amount(),
@@ -188,7 +186,11 @@ public class SaleServiceImpl implements SaleService {
         }
 
         // 2. Save the sale (this saves items and payments via cascade)
+        log.debug("Saving sale: items={}, payments={}, total={}",
+                entity.getItems().size(), entity.getPayments().size(), entity.getTotal());
         Sale savedSale = repository.save(entity);
+        log.info("Sale created successfully: id={}, series={}, number={}, total={}",
+                savedSale.getId(), savedSale.getSeries(), savedSale.getNumber(), savedSale.getTotal());
 
         // 3. Create AccountReceivable for credit sales
         if (entity.getPaymentCondition() == Sale.PaymentCondition.CREDITO) {
@@ -209,6 +211,7 @@ public class SaleServiceImpl implements SaleService {
                 receivable.setDueDate(
                         request.dueDate() != null ? request.dueDate() : java.time.LocalDate.now().plusDays(30));
                 accountReceivableRepository.save(receivable);
+                log.info("Account receivable created for sale {}: pendingBalance={}", savedSale.getId(), pendingBalance);
             }
         }
 
@@ -290,17 +293,10 @@ public class SaleServiceImpl implements SaleService {
         inventory.setLastMovement(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
-        StockMovement movement = new StockMovement();
-        movement.setEstablishment(sale.getEstablishment());
-        movement.setLot(item.getLot());
-        movement.setType(StockMovement.MovementType.SALE);
-        movement.setQuantity(baseQuantity.multiply(new java.math.BigDecimal("-1")));
-        movement.setBalanceAfter(inventory.getQuantity());
-        movement.setReferenceTable("sales");
-        movement.setReferenceId(sale.getId());
-        movement.setUser(sale.getUser());
-        movement.setCreatedAt(java.time.LocalDateTime.now());
-        stockMovementRepository.save(movement);
+        stockMovementService.recordSaleMovement(
+                sale.getEstablishment(), item.getLot(),
+                baseQuantity, inventory.getQuantity(),
+                sale.getId(), sale.getUser());
     }
 
     private Sale calculateTotals(Sale sale) {
@@ -309,7 +305,12 @@ public class SaleServiceImpl implements SaleService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         sale.setSubTotal(subTotal);
-        sale.setTax(subTotal.multiply(new BigDecimal("0.18")));
+        // Use the tax rate from the first item's product TaxType (assuming consistent tax rates per sale)
+        BigDecimal taxRate = sale.getItems().stream()
+                .findFirst()
+                .map(item -> item.getProduct().getTaxType().getRate())
+                .orElse(new BigDecimal("0.18"));
+        sale.setTax(subTotal.multiply(taxRate));
         sale.setTotal(subTotal);
         return sale;
     }
@@ -328,6 +329,23 @@ public class SaleServiceImpl implements SaleService {
                 .map(mapper::toResponse)
                 .map(this::addCompanyInfo)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SaleResponse> getAllPaged(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Pageable pageable) {
+        Page<Sale> sales;
+        if (startDate != null && endDate != null) {
+            sales = repository.findByEstablishmentAndDateRangeOrderByDateDesc(null, startDate, endDate, pageable);
+        } else {
+            List<Sale> all = repository.findAllByOrderByDateDesc();
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), all.size());
+            List<Sale> page = all.subList(Math.min(start, all.size()), end);
+            sales = new org.springframework.data.domain.PageImpl<>(page, pageable, all.size());
+        }
+
+        return sales.map(mapper::toResponse).map(this::addCompanyInfo);
     }
 
     @Override
@@ -351,13 +369,33 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] getPdf(Long id) {
-        return "PDF Content Placeholder".getBytes();
+        return getSaleDocumentPDF(id, "A4");
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String getXml(Long id) {
-        return "<xml>Placeholder for Sale " + id + "</xml>";
+        Sale sale = repository.findWithItemsById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + id));
+        
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<Sale>\n");
+        xml.append("  <Id>").append(sale.getId()).append("</Id>\n");
+        xml.append("  <DocumentType>").append(sale.getDocumentType()).append("</DocumentType>\n");
+        xml.append("  <Series>").append(sale.getSeries()).append("</Series>\n");
+        xml.append("  <Number>").append(sale.getNumber()).append("</Number>\n");
+        xml.append("  <Date>").append(sale.getDate()).append("</Date>\n");
+        xml.append("  <Customer>").append(sale.getCustomer() != null ? sale.getCustomer().getName() : "").append("</Customer>\n");
+        xml.append("  <SubTotal>").append(sale.getSubTotal()).append("</SubTotal>\n");
+        xml.append("  <Tax>").append(sale.getTax()).append("</Tax>\n");
+        xml.append("  <Total>").append(sale.getTotal()).append("</Total>\n");
+        xml.append("  <Status>").append(sale.getStatus()).append("</Status>\n");
+        xml.append("  <SunatStatus>").append(sale.getSunatStatus()).append("</SunatStatus>\n");
+        xml.append("</Sale>\n");
+        return xml.toString();
     }
 
     @Override
@@ -407,17 +445,10 @@ public class SaleServiceImpl implements SaleService {
                 inventory.setLastMovement(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
-                StockMovement movement = new StockMovement();
-                movement.setLot(originalItem.getLot());
-                movement.setEstablishment(original.getEstablishment());
-                movement.setType(StockMovement.MovementType.ADJUSTMENT_IN);
-                movement.setQuantity(originalItem.getQuantity());
-                movement.setBalanceAfter(inventory.getQuantity());
-                movement.setReferenceTable("sales");
-                movement.setReferenceId(note.getId());
-                movement.setUser(note.getUser());
-                movement.setCreatedAt(LocalDateTime.now());
-                stockMovementRepository.save(movement);
+                stockMovementService.recordReversalMovement(
+                        original.getEstablishment(), originalItem.getLot(),
+                        originalItem.getQuantity(), inventory.getQuantity(),
+                        "Credit note - " + reason, note.getId(), note.getUser());
             }
         }
 
@@ -679,7 +710,7 @@ public class SaleServiceImpl implements SaleService {
 
             BigDecimal quantity = itemReq.quantity();
             BigDecimal unitPrice = itemReq.unitPrice();
-            BigDecimal discount = itemReq.discount() != null ? itemReq.discount() : BigDecimal.ZERO;
+            BigDecimal discount = itemReq.discountAmount() != null ? itemReq.discountAmount() : BigDecimal.ZERO;
 
             BigDecimal lineGross = unitPrice.multiply(quantity);
             BigDecimal lineNet = lineGross.subtract(discount);
@@ -770,16 +801,15 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] getSaleDocumentPDF(Long id, String format) {
-        Sale sale = repository.findById(id)
+        Sale sale = repository.findWithItemsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + id));
-
-        String content = "SALE DOCUMENT: " + sale.getSeries() + "-" + sale.getNumber() + "\n" +
-                "FORMAT: " + (format != null ? format : "A4") + "\n" +
-                "DATE: " + sale.getDate() + "\n" +
-                "TOTAL: " + sale.getTotal();
-
-        return content.getBytes();
+        SaleResponse saleResponse = mapper.toResponse(sale);
+        saleResponse = addCompanyInfo(saleResponse);
+        
+        CompanyMinimalResponse companyInfo = saleResponse.company();
+        return PdfGenerator.generateSalePdf(saleResponse, companyInfo, format);
     }
 
     @Override

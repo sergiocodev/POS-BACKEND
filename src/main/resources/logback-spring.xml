@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Console appender with JSON-like structured format for production -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level [%logger{36}] [traceId=%X{traceId:-},spanId=%X{spanId:-}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File appender for production logging -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level [%logger{36}] [traceId=%X{traceId:-},spanId=%X{spanId:-}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON log file for log aggregation (ELK, Datadog, etc.) -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.json</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdc>true</includeMdc>
+            <includeContext>true</includeContext>
+            <includeCallerData>false</includeCallerData>
+            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+        </encoder>
+    </appender>
+
+    <!-- Spring profiles -->
+    <springProfile name="dev,default">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.sergiocodev.app" level="DEBUG"/>
+        <logger name="com.sergiocodev.app.service.SaleServiceImpl" level="DEBUG"/>
+        <logger name="com.sergiocodev.app.service.AuthService" level="DEBUG"/>
+        <logger name="com.sergiocodev.app.exception" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="JSON_FILE"/>
+        </root>
+        <logger name="com.sergiocodev.app" level="INFO"/>
+        <logger name="com.sergiocodev.app.service.SaleServiceImpl" level="INFO"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+    </springProfile>
+
+    <springProfile name="test">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.sergiocodev.app" level="INFO"/>
+    </springProfile>
+</configuration>

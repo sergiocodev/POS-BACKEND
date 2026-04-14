@@ -18,7 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/product-units")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Product Units", description = "Endpoints para la gestión de unidades de producto")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_CATALOGO + "')")

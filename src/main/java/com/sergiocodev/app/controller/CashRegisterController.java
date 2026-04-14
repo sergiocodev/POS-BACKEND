@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/cash-registers")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Cash Registers", description = "Endpoints para la gestión de la caja registradora")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REGISTRADORAS + "')")

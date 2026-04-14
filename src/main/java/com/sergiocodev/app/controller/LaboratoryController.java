@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/laboratory")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Laboratories", description = "Endpoints para la gestión del laboratorio")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_LABORATORIOS + "')")

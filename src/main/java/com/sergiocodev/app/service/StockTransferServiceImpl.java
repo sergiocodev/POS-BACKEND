@@ -25,8 +25,8 @@ public class StockTransferServiceImpl implements StockTransferService {
         private final ProductLotRepository lotRepository;
         private final UserRepository userRepository;
         private final InventoryRepository inventoryRepository;
-        private final StockMovementRepository stockMovementRepository;
         private final ProductUnitRepository productUnitRepository;
+        private final StockMovementService stockMovementService;
 
         @Override
         @Transactional
@@ -231,17 +231,10 @@ public class StockTransferServiceImpl implements StockTransferService {
         private void createStockMovement(Establishment establishment, ProductLot lot,
                         StockMovement.MovementType type, BigDecimal amount, BigDecimal balanceAfter,
                         StockTransfer transfer, User user) {
-                StockMovement movement = new StockMovement();
-                movement.setEstablishment(establishment);
-                movement.setLot(lot);
-                movement.setType(type);
-                movement.setQuantity(amount);
-                movement.setBalanceAfter(balanceAfter);
-                movement.setReferenceTable("stock_transfers");
-                movement.setReferenceId(transfer.getId());
-                movement.setUser(user);
-                movement.setCreatedAt(LocalDateTime.now());
-                stockMovementRepository.save(movement);
+                stockMovementService.recordTransferMovement(
+                        establishment, lot,
+                        amount, balanceAfter,
+                        transfer.getId(), user, "stock_transfers");
         }
 
         private StockTransferResponse mapToResponse(StockTransfer transfer) {

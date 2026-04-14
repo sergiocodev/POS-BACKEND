@@ -22,7 +22,6 @@ import com.sergiocodev.app.util.PermissionConstants;
 @RestController
 @RequestMapping("/api/v1/cash")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Cash Management", description = "Endpoints para la gestión de caja (Tesorería)")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_APERTURA_CIERRE + "')")

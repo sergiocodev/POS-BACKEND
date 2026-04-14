@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/document-sequences")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Document Sequences", description = "Endpoints para la gestión de series y correlativos de documentos")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_IMPUESTOS + "')")

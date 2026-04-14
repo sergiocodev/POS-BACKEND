@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/stock-transfers")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Stock Transfers", description = "Endpoints para la gestión de transferencias de stock")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_TRANSFERENCIAS + "')")

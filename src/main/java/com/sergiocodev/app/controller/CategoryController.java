@@ -22,7 +22,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/category")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Categories", description = "Endpoints para la gestión de categorías")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_CATEGORIAS + "')")

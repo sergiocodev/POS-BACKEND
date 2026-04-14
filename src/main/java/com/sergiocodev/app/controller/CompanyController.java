@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/company")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Company", description = "Endpoints para la gestión de la empresa")
 @SecurityRequirement(name = "bearerAuth")
 public class CompanyController {

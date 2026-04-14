@@ -8,8 +8,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "inventory", uniqueConstraints = {
-        @UniqueConstraint(name = "ux_inventory_estab_lot", columnNames = { "establishment_id", "lot_id" })
+@Table(name = "inventory", indexes = {
+    @Index(name = "idx_inventory_establishment", columnList = "establishment_id"),
+    @Index(name = "idx_inventory_lot", columnList = "lot_id"),
+    @Index(name = "idx_inventory_quantity", columnList = "quantity")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "ux_inventory_estab_lot", columnNames = { "establishment_id", "lot_id" })
 })
 @Data
 @NoArgsConstructor

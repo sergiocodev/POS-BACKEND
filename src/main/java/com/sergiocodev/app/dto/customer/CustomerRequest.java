@@ -1,21 +1,21 @@
 package com.sergiocodev.app.dto.customer;
 
 import com.sergiocodev.app.model.DocumentType;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record CustomerRequest(
         @NotNull(message = "Document type is required") DocumentType documentType,
 
-        @NotBlank(message = "Document number is required") @Size(max = 20, message = "Document number cannot exceed 20 characters") @Pattern(regexp = "^[0-9]*$", message = "Document number must contain only numbers") String documentNumber,
+        @Size(max = 20, message = "Document number max 20 characters") String documentNumber,
 
-        @NotBlank(message = "Name is required") @Size(min = 2, max = 255, message = "Name must be between 2 and 255 characters") String name,
+        @NotBlank(message = "Name is required") @Size(max = 200, message = "Name max 200 characters") String name,
 
-        @Size(max = 30, message = "Phone cannot exceed 30 characters") String phone,
+        @Size(max = 20, message = "Phone max 20 characters") String phone,
 
-        @jakarta.validation.constraints.Email(message = "Email must be valid") @Size(max = 255, message = "Email cannot exceed 255 characters") String email,
+        @Email(message = "Email must be valid") @Size(max = 100, message = "Email max 100 characters") String email,
 
-        String address) {
+        @Size(max = 200, message = "Address max 200 characters") String address) {
 }

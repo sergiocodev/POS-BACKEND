@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reports")
-@CrossOrigin(origins = "*")
 @Tag(name = "Reports", description = "API para generación de reportes de negocio")
 @SecurityRequirement(name = "bearerAuth")
 public class ReportController {
