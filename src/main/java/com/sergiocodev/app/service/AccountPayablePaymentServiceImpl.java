@@ -71,7 +71,20 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
         String description = request.notes() != null && !request.notes().isEmpty() ? request.notes()
                 : "Pago a proveedor (" + request.paymentMethod().name() + ") - Proveedor: " + payable.getSupplier().getName();
 
-        cashMovementService.registerInternalMovement(session, user, concept, request.amount(), request.reference(), description);
+        if (request.paymentMethod() == AccountPayablePayment.PaymentMethod.EFECTIVO) {
+            session.setCalculatedBalance(session.getCalculatedBalance().subtract(request.amount()));
+            cashSessionRepository.save(session);
+        }
+
+        CashMovement movement = new CashMovement();
+        movement.setCashSession(session);
+        movement.setUser(user);
+        movement.setCashConcept(concept);
+        movement.setAmount(request.amount());
+        movement.setReference(request.reference());
+        movement.setDescription(description);
+        movement.setCreatedAt(LocalDateTime.now());
+        cashMovementRepository.save(movement);
 
         // Update payable balances
         BigDecimal newAmountPaid = payable.getAmountPaid().add(request.amount());

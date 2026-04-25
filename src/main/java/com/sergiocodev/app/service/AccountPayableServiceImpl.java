@@ -24,7 +24,7 @@ public class AccountPayableServiceImpl implements AccountPayableService {
     private final CashSessionRepository cashSessionRepository;
     private final CashMovementRepository cashMovementRepository;
     private final AccountPayablePaymentRepository accountPayablePaymentRepository;
-    private final CashConceptRepository cashConceptRepository;
+    private final CashConceptService cashConceptService;
     private final UserRepository userRepository;
 
     @Override
@@ -91,34 +91,24 @@ public class AccountPayableServiceImpl implements AccountPayableService {
         payment.setPaymentDate(LocalDateTime.now());
         accountPayablePaymentRepository.save(payment);
 
-        // Registrar salida de caja solo si es efectivo
+        // Registrar salida de caja
         if (request.paymentMethod() == AccountPayablePayment.PaymentMethod.EFECTIVO) {
             session.setCalculatedBalance(session.getCalculatedBalance().subtract(amount));
             cashSessionRepository.save(session);
-
-            CashMovement movement = new CashMovement();
-            movement.setCashSession(session);
-            movement.setUser(session.getUser());
-            movement.setAmount(amount);
-
-            String methodStr = request.paymentMethod().name().toUpperCase();
-            CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
-                    .filter(c -> (c.getName().toLowerCase().contains("proveedor") || c.getName().toLowerCase().contains("pago"))
-                            && c.getName().toUpperCase().contains(methodStr))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        CashConcept newConcept = new CashConcept();
-                        newConcept.setName("PAGO PROVEEDOR " + methodStr);
-                        newConcept.setType(CashConcept.ConceptType.OUT);
-                        return cashConceptRepository.save(newConcept);
-                    });
-
-            movement.setCashConcept(concept);
-            movement.setReference(request.reference());
-            movement.setDescription(request.notes() != null && !request.notes().isEmpty() ? request.notes()
-                    : "Pago de cuenta por pagar parcial o total - Proveedor: " + account.getSupplier().getName());
-            cashMovementRepository.save(movement);
         }
+
+        CashMovement movement = new CashMovement();
+        movement.setCashSession(session);
+        movement.setUser(session.getUser());
+        movement.setAmount(amount);
+
+        CashConcept concept = cashConceptService.findOrCreatePayableConcept(request.paymentMethod().name());
+
+        movement.setCashConcept(concept);
+        movement.setReference(request.reference());
+        movement.setDescription(request.notes() != null && !request.notes().isEmpty() ? request.notes()
+                : "Pago de cuenta por pagar parcial o total - Proveedor: " + account.getSupplier().getName());
+        cashMovementRepository.save(movement);
 
         // Actualizar la cuenta por pagar
         account.setAmountPaid(account.getAmountPaid().add(amount));

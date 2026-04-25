@@ -31,7 +31,22 @@ public class CashConceptController {
 
     @GetMapping("/type/{type}")
     @Operation(summary = "Filtrar conceptos por tipo (IN/OUT)")
-    public ResponseEntity<ResponseApi<List<CashConcept>>> getByType(@PathVariable CashConcept.ConceptType type) {
+    public ResponseEntity<ResponseApi<List<CashConcept>>> getByType(
+            @PathVariable CashConcept.ConceptType type,
+            @RequestParam(required = false) Boolean isSystem) {
+        if (isSystem != null) {
+            return ResponseEntity.ok(ResponseApi.success(repository.findByTypeAndIsSystem(type, isSystem)));
+        }
         return ResponseEntity.ok(ResponseApi.success(repository.findByType(type)));
+    }
+
+    @PostMapping
+    @Operation(summary = "Crear un concepto manual de caja")
+    public ResponseEntity<ResponseApi<CashConcept>> create(@RequestBody com.sergiocodev.app.dto.CashConceptRequest request) {
+        CashConcept concept = new CashConcept();
+        concept.setName(request.getName().toUpperCase());
+        concept.setType(request.getType());
+        concept.setIsSystem(false); // Manually created concepts are never system concepts
+        return ResponseEntity.ok(ResponseApi.success(repository.save(concept)));
     }
 }

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface CashConceptRepository extends JpaRepository<CashConcept, Long> {
     List<CashConcept> findByType(CashConcept.ConceptType type);
+    List<CashConcept> findByTypeAndIsSystem(CashConcept.ConceptType type, Boolean isSystem);
 }

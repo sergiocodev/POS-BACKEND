@@ -90,20 +90,19 @@ public class CashConceptService {
     @Transactional
     public CashConcept findOrCreatePayableConcept(String paymentMethodName) {
         String methodStr = paymentMethodName.toUpperCase();
+        String conceptName = "PAGO PROVEEDOR " + methodStr;
+
         return cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
-                .filter(c -> c.getName().toUpperCase().contains(methodStr) && c.getName().toLowerCase().contains("pago"))
+                .filter(c -> c.getName().toUpperCase().contains(methodStr) && (c.getName().toUpperCase().contains("PAGO") || c.getName().toUpperCase().contains("PROVEEDOR")))
                 .findFirst()
-                .orElseGet(() -> cashConceptRepository.findByType(CashConcept.ConceptType.OUT).stream()
-                        .filter(c -> c.getName().toUpperCase().contains(methodStr))
-                        .findFirst()
-                        .orElseGet(() -> {
-                            log.info("Creating new CashConcept for payable: PAGO {}", methodStr);
-                            CashConcept newConcept = new CashConcept();
-                            newConcept.setName("PAGO " + methodStr);
-                            newConcept.setType(CashConcept.ConceptType.OUT);
-                            newConcept.setIsSystem(true);
-                            return cashConceptRepository.save(newConcept);
-                        }));
+                .orElseGet(() -> {
+                    log.info("Creating new CashConcept for payable: {}", conceptName);
+                    CashConcept newConcept = new CashConcept();
+                    newConcept.setName(conceptName);
+                    newConcept.setType(CashConcept.ConceptType.OUT);
+                    newConcept.setIsSystem(true);
+                    return cashConceptRepository.save(newConcept);
+                });
     }
 
     /**
