@@ -23,5 +23,6 @@ public record ProductSearchResponse(
                 String barcode,
                 String locationShelf,
                 String unitName,
-                Integer factor) {
+                Integer factor,
+                BigDecimal taxRate) {
 }

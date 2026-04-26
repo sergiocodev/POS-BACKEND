@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "sales", indexes = {
@@ -135,10 +135,10 @@ public class Sale {
     }
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<SaleItem> items = new HashSet<>();
+    private List<SaleItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<SalePayment> payments = new HashSet<>();
+    private List<SalePayment> payments = new ArrayList<>();
 
     public enum SaleDocumentType {
         TICKET, BOLETA, FACTURA, NOTA_DE_VENTA, NOTA_CREDITO, NOTA_DEBITO

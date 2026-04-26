@@ -13,5 +13,6 @@ public record BarcodeScanResponse(
                 LocalDate expiryDate,
                 BigDecimal availableStock,
                 String message,
-                String imageUrl) {
+                String imageUrl,
+                BigDecimal taxRate) {
 }

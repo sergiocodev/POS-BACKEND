@@ -300,18 +300,24 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private Sale calculateTotals(Sale sale) {
-        BigDecimal subTotal = sale.getItems().stream()
-                .map(SaleItem::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal subTotal = BigDecimal.ZERO;
 
-        sale.setSubTotal(subTotal);
-        // Use the tax rate from the first item's product TaxType (assuming consistent tax rates per sale)
-        BigDecimal taxRate = sale.getItems().stream()
-                .findFirst()
-                .map(item -> item.getProduct().getTaxType().getRate())
-                .orElse(new BigDecimal("0.18"));
-        sale.setTax(subTotal.multiply(taxRate));
-        sale.setTotal(subTotal);
+        for (SaleItem item : sale.getItems()) {
+            BigDecimal itemAmount = item.getAmount();
+            BigDecimal rate = item.getAppliedTaxRate() != null ? item.getAppliedTaxRate() : BigDecimal.ZERO;
+
+            BigDecimal divisor = BigDecimal.ONE.add(rate);
+            // Usamos 4 decimales para cálculos intermedios y evitar pérdida de precisión
+            BigDecimal itemSubTotal = itemAmount.divide(divisor, 4, java.math.RoundingMode.HALF_UP);
+
+            total = total.add(itemAmount);
+            subTotal = subTotal.add(itemSubTotal);
+        }
+
+        sale.setTotal(total.setScale(2, java.math.RoundingMode.HALF_UP));
+        sale.setSubTotal(subTotal.setScale(2, java.math.RoundingMode.HALF_UP));
+        sale.setTax(sale.getTotal().subtract(sale.getSubTotal()));
         return sale;
     }
 
@@ -595,7 +601,8 @@ public class SaleServiceImpl implements SaleService {
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
                                     pu.getUnitName(),
-                                    pu.getFactor()));
+                                    pu.getFactor(),
+                                    product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO));
                 }).collect(Collectors.toList());
     }
 
@@ -644,7 +651,8 @@ public class SaleServiceImpl implements SaleService {
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
                                     pu.getUnitName(),
-                                    pu.getFactor()));
+                                    pu.getFactor(),
+                                    product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO));
                 }).collect(Collectors.toList());
     }
 
@@ -658,7 +666,7 @@ public class SaleServiceImpl implements SaleService {
                     "Producto no encontrado",
                     barcode,
                     BigDecimal.ZERO,
-                    null, null, null, BigDecimal.ZERO, "No stock available", null);
+                    null, null, null, BigDecimal.ZERO, "No stock available", null, BigDecimal.ZERO);
         }
 
         Product product = pu.getProduct();
@@ -675,7 +683,7 @@ public class SaleServiceImpl implements SaleService {
                     "Producto no encontrado",
                     barcode,
                     BigDecimal.ZERO,
-                    null, null, null, BigDecimal.ZERO, "No stock available", null);
+                    null, null, null, BigDecimal.ZERO, "No stock available", null, BigDecimal.ZERO);
         }
 
         java.math.BigDecimal price = pu.getPrice();
@@ -690,7 +698,8 @@ public class SaleServiceImpl implements SaleService {
                 inventory.getLot().getExpiryDate(),
                 inventory.getQuantity(),
                 "Stock available",
-                product.getImageUrl());
+                product.getImageUrl(),
+                product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO);
     }
 
     @Override
