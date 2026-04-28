@@ -11,5 +11,7 @@ public record SaleItemResponse(
                 BigDecimal amount,
                 BigDecimal appliedTaxRate,
                 BigDecimal discountAmount,
-                String discountReason) {
+                String discountReason,
+                BigDecimal increaseAmount,
+                String increaseReason) {
 }

@@ -77,11 +77,16 @@ public class PdfGenerator {
         
         if (sale.items() != null) {
             for (var item : sale.items()) {
+                BigDecimal netAmount = item.amount()
+                    .subtract(item.discountAmount() != null ? item.discountAmount() : BigDecimal.ZERO)
+                    .add(item.increaseAmount() != null ? item.increaseAmount() : BigDecimal.ZERO);
+                BigDecimal effectiveItemPrice = netAmount.divide(item.quantity(), 2, java.math.RoundingMode.HALF_UP);
+                
                 String line = String.format("%-4s  %-20s  %8s  %8s",
                         item.quantity().toPlainString(),
                         truncate(item.productName(), 20),
-                        item.unitPrice().toPlainString(),
-                        item.amount().toPlainString());
+                        effectiveItemPrice.toPlainString(),
+                        netAmount.toPlainString());
                 addParagraph(document, line, normalFont);
             }
         }
@@ -151,11 +156,11 @@ public class PdfGenerator {
         document.add(Chunk.NEWLINE);
 
         // Items table
-        PdfPTable itemsTable = new PdfPTable(new float[]{1, 4, 1.5f, 1.5f, 1.5f});
+        PdfPTable itemsTable = new PdfPTable(new float[]{1, 4, 2f, 2f});
         itemsTable.setWidthPercentage(100);
         itemsTable.setHeaderRows(1);
 
-        String[] headers = {"Cant", "Descripción", "P. Unit", "Descuento", "Total"};
+        String[] headers = {"Cant", "Descripción", "P. Unit", "Total"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
             cell.setBackgroundColor(new Color(211, 211, 211));
@@ -165,14 +170,15 @@ public class PdfGenerator {
 
         if (sale.items() != null) {
             for (var item : sale.items()) {
+                BigDecimal netAmount = item.amount()
+                    .subtract(item.discountAmount() != null ? item.discountAmount() : BigDecimal.ZERO)
+                    .add(item.increaseAmount() != null ? item.increaseAmount() : BigDecimal.ZERO);
+                BigDecimal effectiveItemPrice = netAmount.divide(item.quantity(), 2, java.math.RoundingMode.HALF_UP);
+
                 itemsTable.addCell(createCell(item.quantity().toPlainString(), normalFont, Element.ALIGN_CENTER));
                 itemsTable.addCell(createCell(item.productName(), normalFont));
-                itemsTable.addCell(createCell(item.unitPrice().toPlainString(), normalFont, Element.ALIGN_RIGHT));
-                itemsTable.addCell(createCell(
-                        item.discountAmount() != null && item.discountAmount().compareTo(BigDecimal.ZERO) > 0 
-                                ? item.discountAmount().toPlainString() : "-", 
-                        normalFont, Element.ALIGN_RIGHT));
-                itemsTable.addCell(createCell(item.amount().toPlainString(), normalFont, Element.ALIGN_RIGHT));
+                itemsTable.addCell(createCell(effectiveItemPrice.toPlainString(), normalFont, Element.ALIGN_RIGHT));
+                itemsTable.addCell(createCell(netAmount.toPlainString(), normalFont, Element.ALIGN_RIGHT));
             }
         }
         document.add(itemsTable);

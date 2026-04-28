@@ -78,6 +78,7 @@ public class SaleServiceImpl implements SaleService {
     private final DocumentSequenceRepository documentSequenceRepository;
     private final CompanyRepository companyRepository;
     private final SaleMapper mapper;
+    private final jakarta.persistence.EntityManager entityManager;
     private final XmlUblGenerator xmlUblGenerator;
     private final DigitalSignatureService digitalSignatureService;
     private final SunatOseClient sunatOseClient;
@@ -156,8 +157,17 @@ public class SaleServiceImpl implements SaleService {
             item.setProduct(product);
             item.setProductUnit(productUnit);
             item.setLot(lot);
-            BigDecimal amount = ir.unitPrice().multiply(ir.quantity());
-            item.setAmount(amount);
+            
+            BigDecimal grossAmount = ir.unitPrice().multiply(ir.quantity());
+            BigDecimal discount = ir.discountAmount() != null ? ir.discountAmount() : BigDecimal.ZERO;
+            BigDecimal increase = ir.increaseAmount() != null ? ir.increaseAmount() : BigDecimal.ZERO;
+            BigDecimal netAmount = grossAmount.subtract(discount).add(increase);
+            
+            item.setAmount(netAmount);
+            item.setDiscountAmount(discount);
+            item.setDiscountReason(ir.discountReason());
+            item.setIncreaseAmount(increase);
+            item.setIncreaseReason(ir.increaseReason());
             item.setAppliedTaxRate(product.getTaxType().getRate());
             entity.getItems().add(item);
 
@@ -339,18 +349,27 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SaleResponse> getAllPaged(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Pageable pageable) {
-        Page<Sale> sales;
-        if (startDate != null && endDate != null) {
-            sales = repository.findByEstablishmentAndDateRangeOrderByDateDesc(null, startDate, endDate, pageable);
-        } else {
-            List<Sale> all = repository.findAllByOrderByDateDesc();
-            int start = (int) pageable.getOffset();
-            int end = Math.min(start + pageable.getPageSize(), all.size());
-            List<Sale> page = all.subList(Math.min(start, all.size()), end);
-            sales = new org.springframework.data.domain.PageImpl<>(page, pageable, all.size());
-        }
+    public Page<SaleResponse> getAllPaged(
+            java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String customerName,
+            String customerDocument,
+            String vendedorName,
+            String status,
+            String sunatStatus,
+            String total,
+            String paymentMethod,
+            String columnDate,
+            Pageable pageable) {
+        
+        org.springframework.data.jpa.domain.Specification<Sale> spec = com.sergiocodev.app.specification.SaleSpecification.filterSales(
+                startDate, endDate, documentType, series, number, customerName, customerDocument, vendedorName, status, sunatStatus,
+                total, paymentMethod, columnDate);
 
+        Page<Sale> sales = repository.findAll(spec, pageable);
         return sales.map(mapper::toResponse).map(this::addCompanyInfo);
     }
 
@@ -720,9 +739,10 @@ public class SaleServiceImpl implements SaleService {
             BigDecimal quantity = itemReq.quantity();
             BigDecimal unitPrice = itemReq.unitPrice();
             BigDecimal discount = itemReq.discountAmount() != null ? itemReq.discountAmount() : BigDecimal.ZERO;
+            BigDecimal increase = itemReq.increaseAmount() != null ? itemReq.increaseAmount() : BigDecimal.ZERO;
 
             BigDecimal lineGross = unitPrice.multiply(quantity);
-            BigDecimal lineNet = lineGross.subtract(discount);
+            BigDecimal lineNet = lineGross.subtract(discount).add(increase);
 
             // Tax
             // Assuming price is INCLUSIVE of tax? Or exclusive?
@@ -782,6 +802,7 @@ public class SaleServiceImpl implements SaleService {
                     quantity,
                     unitPrice,
                     discount,
+                    increase,
                     infoTaxAmount,
                     lineNet));
         }
@@ -915,5 +936,65 @@ public class SaleServiceImpl implements SaleService {
             default:
                 return DocumentSequence.DocumentType.TICKET;
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sergiocodev.app.dto.sale.SaleSummaryResponse getSummary(
+            java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String customerName,
+            String customerDocument,
+            String vendedorName,
+            String status,
+            String sunatStatus,
+            String total,
+            String paymentMethod,
+            String columnDate) {
+        
+        jakarta.persistence.criteria.CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        jakarta.persistence.criteria.CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
+        jakarta.persistence.criteria.Root<Sale> root = query.from(Sale.class);
+        query.distinct(true); // Added for safety with joins
+
+        jakarta.persistence.criteria.Predicate predicate = com.sergiocodev.app.specification.SaleSpecification.buildPredicate(
+                root, cb, startDate, endDate, documentType, series, number, customerName, customerDocument, vendedorName, status, sunatStatus,
+                total, paymentMethod, columnDate);
+
+        query.where(predicate);
+        query.multiselect(root.get("documentType"), cb.sum(root.get("total")));
+        query.groupBy(root.get("documentType"));
+
+        java.util.List<Object[]> results = entityManager.createQuery(query).getResultList();
+
+        java.math.BigDecimal totalFacturas = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalBoletas = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalNotaCredito = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalNotaDebito = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalNotaVenta = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalNeto = java.math.BigDecimal.ZERO;
+
+        for (Object[] result : results) {
+            Sale.SaleDocumentType type = (Sale.SaleDocumentType) result[0];
+            java.math.BigDecimal sum = (java.math.BigDecimal) result[1];
+            if (sum == null) sum = java.math.BigDecimal.ZERO;
+
+            if (type != null) {
+                switch (type) {
+                    case FACTURA -> totalFacturas = sum;
+                    case BOLETA -> totalBoletas = sum;
+                    case NOTA_CREDITO -> totalNotaCredito = sum;
+                    case NOTA_DEBITO -> totalNotaDebito = sum;
+                    case NOTA_DE_VENTA, TICKET -> totalNotaVenta = totalNotaVenta.add(sum);
+                }
+            }
+            totalNeto = totalNeto.add(sum);
+        }
+
+        return new com.sergiocodev.app.dto.sale.SaleSummaryResponse(
+            totalFacturas, totalBoletas, totalNotaCredito, totalNotaDebito, totalNotaVenta, totalNeto);
     }
 }

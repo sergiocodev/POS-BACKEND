@@ -14,8 +14,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface SaleRepository extends JpaRepository<Sale, Long> {
+public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale> {
 
         @Query("SELECT COUNT(s) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false AND s.date >= :start AND s.date <= :end")
         long countByEstablishmentAndDateBetween(

@@ -54,4 +54,10 @@ public class SaleItem {
 
     @Column(name = "discount_reason", length = 100)
     private String discountReason;
+
+    @Column(name = "increase_amount", precision = 12, scale = 2)
+    private BigDecimal increaseAmount = BigDecimal.ZERO;
+
+    @Column(name = "increase_reason", length = 100)
+    private String increaseReason;
 }

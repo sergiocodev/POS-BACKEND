@@ -11,6 +11,7 @@ import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface SaleService {
@@ -19,7 +20,21 @@ public interface SaleService {
     List<SaleResponse> getAll(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     /** Paginated version of getAll for large datasets */
-    Page<SaleResponse> getAllPaged(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Pageable pageable);
+    Page<SaleResponse> getAllPaged(
+            java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String customerName,
+            String customerDocument,
+            String vendedorName,
+            String status,
+            String sunatStatus,
+            String total,
+            String paymentMethod,
+            String columnDate,
+            Pageable pageable);
 
     SaleResponse getById(Long id);
 
@@ -50,4 +65,19 @@ public interface SaleService {
     byte[] getSaleDocumentPDF(Long id, String format);
 
     EmitInvoiceResponse emitInvoiceToOSE(Long saleId);
+
+    com.sergiocodev.app.dto.sale.SaleSummaryResponse getSummary(
+            java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String customerName,
+            String customerDocument,
+            String vendedorName,
+            String status,
+            String sunatStatus,
+            String total,
+            String paymentMethod,
+            String columnDate);
 }

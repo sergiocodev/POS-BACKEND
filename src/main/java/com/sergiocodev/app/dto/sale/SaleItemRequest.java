@@ -12,5 +12,10 @@ public record SaleItemRequest(
 
                 @NotNull(message = "Quantity is required") BigDecimal quantity,
 
-                @NotNull(message = "Unit price is required") BigDecimal unitPrice) {
+                @NotNull(message = "Unit price is required") BigDecimal unitPrice,
+                
+                BigDecimal discountAmount,
+                String discountReason,
+                BigDecimal increaseAmount,
+                String increaseReason) {
 }

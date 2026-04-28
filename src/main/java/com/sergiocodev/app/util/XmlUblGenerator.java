@@ -125,7 +125,8 @@ public class XmlUblGenerator {
                 .append("</cbc:Description>");
             xml.append("</cac:Item>");
             xml.append("<cac:Price>");
-            xml.append("<cbc:PriceAmount currencyID=\"PEN\">").append(item.getUnitPrice())
+            java.math.BigDecimal effectivePrice = item.getAmount().divide(item.getQuantity(), 2, java.math.RoundingMode.HALF_UP);
+            xml.append("<cbc:PriceAmount currencyID=\"PEN\">").append(effectivePrice)
                     .append("</cbc:PriceAmount>");
             xml.append("</cac:Price>");
             xml.append("</cac:InvoiceLine>");

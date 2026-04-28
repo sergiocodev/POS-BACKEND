@@ -18,7 +18,9 @@ public record CartItemRequest(
 
         @NotNull(message = "Product unit ID is required") Long productUnitId,
 
-        @PositiveOrZero(message = "Discount must be zero or positive") BigDecimal discountAmount,
+        BigDecimal discountAmount,
 
-        @Size(max = 100, message = "Discount reason max 100 characters") String discountReason) {
+        String discountReason,
+        BigDecimal increaseAmount,
+        String increaseReason) {
 }

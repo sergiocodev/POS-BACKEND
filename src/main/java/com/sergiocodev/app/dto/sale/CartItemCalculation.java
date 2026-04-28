@@ -7,6 +7,7 @@ public record CartItemCalculation(
         BigDecimal quantity,
         BigDecimal unitPrice,
         BigDecimal discount,
+        BigDecimal increase,
         BigDecimal taxAmount,
         BigDecimal lineTotal) {
 }

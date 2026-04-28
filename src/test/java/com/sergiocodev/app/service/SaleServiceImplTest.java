@@ -14,6 +14,8 @@ import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 import com.sergiocodev.app.util.XmlUblGenerator;
 import com.sergiocodev.app.util.SunatOseClient;
+import java.util.ArrayList;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -214,8 +216,8 @@ class SaleServiceImplTest {
             // Arrange
             SaleRequest request = createSaleRequest();
             Sale saleEntity = new Sale();
-            saleEntity.setItems(new LinkedHashSet<>());
-            saleEntity.setPayments(new LinkedHashSet<>());
+            saleEntity.setItems(new ArrayList<>());
+            saleEntity.setPayments(new ArrayList<>());
 
             when(saleMapper.toEntity(request)).thenReturn(saleEntity);
             when(establishmentRepository.findById(1L)).thenReturn(Optional.of(establishment));
@@ -237,8 +239,8 @@ class SaleServiceImplTest {
             // Arrange
             SaleRequest request = createSaleRequest();
             Sale saleEntity = new Sale();
-            saleEntity.setItems(new LinkedHashSet<>());
-            saleEntity.setPayments(new LinkedHashSet<>());
+            saleEntity.setItems(new ArrayList<>());
+            saleEntity.setPayments(new ArrayList<>());
 
             when(saleMapper.toEntity(request)).thenReturn(saleEntity);
             when(establishmentRepository.findById(1L)).thenReturn(Optional.of(establishment));
@@ -263,8 +265,8 @@ class SaleServiceImplTest {
             SaleItemRequest itemRequest = request.items().get(0);
 
             Sale saleEntity = new Sale();
-            saleEntity.setItems(new LinkedHashSet<>());
-            saleEntity.setPayments(new LinkedHashSet<>());
+            saleEntity.setItems(new ArrayList<>());
+            saleEntity.setPayments(new ArrayList<>());
 
             when(saleMapper.toEntity(request)).thenReturn(saleEntity);
             when(establishmentRepository.findById(1L)).thenReturn(Optional.of(establishment));
@@ -295,7 +297,6 @@ class SaleServiceImplTest {
             // Arrange
             SaleRequest request = createSaleRequest();
             SaleItemRequest itemRequest = request.items().get(0);
-            SalePaymentRequest paymentRequest = request.payments().get(0);
 
             Sale saleEntity = createSaleEntity();
             saleEntity.getItems().clear();
@@ -626,32 +627,37 @@ class SaleServiceImplTest {
         void calculateTotals_ShouldCalculateCorrectly_WhenItemsExist() {
             // Arrange
             Sale sale = new Sale();
-            sale.setItems(new LinkedHashSet<>());
+            sale.setItems(new ArrayList<>());
 
-            // Item 1: 2 x 50 = 100
+            // Item 1: 2 x 50 = 100 (Incl. IGV 18%)
             SaleItem item1 = new SaleItem();
             item1.setId(1L);
             item1.setProduct(product);
             item1.setQuantity(new BigDecimal("2.00"));
             item1.setUnitPrice(new BigDecimal("50.00"));
             item1.setAmount(new BigDecimal("100.00"));
+            item1.setAppliedTaxRate(new BigDecimal("0.18"));
             sale.getItems().add(item1);
 
-            // Item 2: 3 x 30 = 90
+            // Item 2: 3 x 30 = 90 (Incl. IGV 18%)
             SaleItem item2 = new SaleItem();
             item2.setId(2L);
             item2.setProduct(product);
             item2.setQuantity(new BigDecimal("3.00"));
             item2.setUnitPrice(new BigDecimal("30.00"));
             item2.setAmount(new BigDecimal("90.00"));
+            item2.setAppliedTaxRate(new BigDecimal("0.18"));
             sale.getItems().add(item2);
 
             // Act
             Sale result = invokeCalculateTotals(sale);
 
             // Assert
-            assertEquals(0, result.getSubTotal().compareTo(new BigDecimal("190.00")));
-            assertEquals(0, result.getTax().compareTo(new BigDecimal("34.20"))); // 190 * 0.18
+            // Total = 100 + 90 = 190.00
+            // SubTotal = 190 / 1.18 = 161.02
+            // Tax = 190 - 161.02 = 28.98
+            assertEquals(0, result.getSubTotal().compareTo(new BigDecimal("161.02")));
+            assertEquals(0, result.getTax().compareTo(new BigDecimal("28.98")));
             assertEquals(0, result.getTotal().compareTo(new BigDecimal("190.00")));
         }
 
@@ -660,7 +666,7 @@ class SaleServiceImplTest {
         void calculateTotals_ShouldHandleEmptyItems() {
             // Arrange
             Sale sale = new Sale();
-            sale.setItems(new LinkedHashSet<>());
+            sale.setItems(new ArrayList<>());
 
             // Act
             Sale result = invokeCalculateTotals(sale);
@@ -676,7 +682,7 @@ class SaleServiceImplTest {
         void calculateTotals_ShouldUseDefaultTaxRate_WhenNoItems() {
             // Arrange
             Sale sale = new Sale();
-            sale.setItems(new LinkedHashSet<>());
+            sale.setItems(new ArrayList<>());
 
             // Act - the method calculates tax using default rate of 0.18 but since subTotal is 0, tax is also 0
             Sale result = invokeCalculateTotals(sale);
@@ -773,7 +779,11 @@ class SaleServiceImplTest {
                 1L,   // lotId
                 1L,   // productUnitId
                 new BigDecimal("10.00"),  // quantity
-                new BigDecimal("100.00")); // unitPrice
+                new BigDecimal("100.00"), // unitPrice
+                null,                     // discountAmount
+                null,                     // discountReason
+                null,                     // increaseAmount
+                null);                    // increaseReason
     }
 
     private SalePaymentRequest createPaymentRequest() {
@@ -796,8 +806,8 @@ class SaleServiceImplTest {
         sale.setStatus(Sale.SaleStatus.COMPLETED);
         sale.setPaymentCondition(Sale.PaymentCondition.CONTADO);
         sale.setCashSession(cashSession);
-        sale.setItems(new LinkedHashSet<>());
-        sale.setPayments(new LinkedHashSet<>());
+        sale.setItems(new ArrayList<>());
+        sale.setPayments(new ArrayList<>());
         return sale;
     }
 

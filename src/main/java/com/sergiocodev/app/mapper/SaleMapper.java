@@ -27,6 +27,9 @@ public interface SaleMapper {
     @Mapping(target = "appliedTaxRate", source = "appliedTaxRate")
     @Mapping(target = "discountAmount", source = "discountAmount")
     @Mapping(target = "discountReason", source = "discountReason")
+    @Mapping(target = "increaseAmount", source = "increaseAmount")
+    @Mapping(target = "increaseReason", source = "increaseReason")
+    @Mapping(target = "amount", expression = "java(item.getUnitPrice().multiply(item.getQuantity()))")
     SaleItemResponse toItemResponse(SaleItem item);
 
     SalePaymentResponse toPaymentResponse(SalePayment payment);
@@ -68,8 +71,9 @@ public interface SaleMapper {
     @Mapping(target = "productUnit", ignore = true)
     @Mapping(target = "amount", ignore = true)
     @Mapping(target = "appliedTaxRate", ignore = true)
-    @Mapping(target = "discountAmount", ignore = true)
     @Mapping(target = "discountReason", ignore = true)
+    @Mapping(target = "increaseAmount", ignore = true)
+    @Mapping(target = "increaseReason", ignore = true)
     SaleItem toItemEntity(SaleItemRequest request);
 
     @Mapping(target = "id", ignore = true)

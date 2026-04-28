@@ -28,8 +28,6 @@ import java.time.LocalDateTime;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
 import com.sergiocodev.app.config.ApiVersion;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -67,9 +65,43 @@ public class SaleController {
     public ResponseEntity<ResponseApi<Page<SaleResponse>>> getAllPaged(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) String documentType,
+            @RequestParam(required = false) String series,
+            @RequestParam(required = false) String number,
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String customerDocument,
+            @RequestParam(required = false) String vendedorName,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sunatStatus,
+            @RequestParam(required = false) String total,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String columnDate,
             @PageableDefault(size = 50, sort = "date", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
 
-        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(startDate, endDate, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(startDate, endDate, documentType, series, number,
+                customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate, pageable)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Obtener resumen de totales filtrados")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_LISTA + "')")
+    public ResponseEntity<ResponseApi<com.sergiocodev.app.dto.sale.SaleSummaryResponse>> getSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) String documentType,
+            @RequestParam(required = false) String series,
+            @RequestParam(required = false) String number,
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String customerDocument,
+            @RequestParam(required = false) String vendedorName,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sunatStatus,
+            @RequestParam(required = false) String total,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String columnDate) {
+
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(startDate, endDate, documentType, series, number,
+                customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate)));
     }
 
     @GetMapping("/{id}")
