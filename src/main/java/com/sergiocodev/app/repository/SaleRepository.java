@@ -19,12 +19,31 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale> {
 
+        /**
+         * Cuenta rápidamente de forma algorítmica las ventas exitosamente completadas (no anuladas) y procesadas.
+         * Si provee un establishmentId solo cuenta de ese establecimiento, 
+         * si el pase es nulo se contará transversalmente en toda la cadena globalmente operativa (Admin scope).
+         * 
+         * @param establishmentId   Origen o sucursal.
+         * @param start             El comienzo de la evaluación temporal.
+         * @param end               El tope o límite comparativo a la fecha actual del rango.
+         * @return Total de ventas sin cancelar producidas en la organización.
+         */
         @Query("SELECT COUNT(s) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false AND s.date >= :start AND s.date <= :end")
         long countByEstablishmentAndDateBetween(
                         @Param("establishmentId") Long establishmentId,
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
 
+        /**
+         * Suma el valor adquisitivo subtotal neto e ingresos generados por operaciones de las cajas.
+         * Provee una radiografía económica fundamental para elaborar arqueos, presupuestos directos o cierres.
+         * 
+         * @param establishmentId La sucursal o sede comercial recaudadora.
+         * @param start           El timestamp de comienzo.
+         * @param end             La liquidación a consultar final.
+         * @return Dinero nominal devengado transaccionalmente o un campo nulo/0 internamente al omitir anulaciones.
+         */
         @Query("SELECT SUM(s.total) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false AND s.date >= :start AND s.date <= :end")
         BigDecimal sumTotalByEstablishmentAndDateBetween(
                         @Param("establishmentId") Long establishmentId,

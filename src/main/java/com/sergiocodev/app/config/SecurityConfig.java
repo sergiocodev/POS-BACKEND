@@ -25,7 +25,7 @@ public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthFilter;
 
-        @Value("${app.cors.allowed-origins:*}")
+        @Value("${app.cors.allowed-origins:http://localhost:4200}")
         private String allowedOrigins;
 
         public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
@@ -42,10 +42,10 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/auth/**").permitAll()
                                                 .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/uploads/**").permitAll()
-                                                .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
-                                                                "/v3/api-docs/**",
-                                                                "/swagger-resources/**", "/webjars/**")
-                                                .permitAll()
+        .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/swagger-resources/**", "/webjars/**")
+            .hasRole("ADMIN")
                                                 // ALL other endpoints require JWT authentication
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
@@ -80,7 +80,7 @@ public class SecurityConfig {
                 }
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of("*"));
-                configuration.setExposedHeaders(List.of("Content-Disposition", "X-Token-Blacklisted"));
+                configuration.setExposedHeaders(List.of("Content-Disposition"));
                 configuration.setAllowCredentials(true);
                 configuration.setMaxAge(3600L);
 

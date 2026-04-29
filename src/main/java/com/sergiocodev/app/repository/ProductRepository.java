@@ -11,8 +11,13 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
         Optional<Product> findByCode(String code);
 
-        // Search for POS: Barcode, Name, or Active Ingredient Name
-        // Search for POS: Barcode, Name, or Active Ingredient Name
+        /**
+         * Busca productos en el Punto de Venta (POS) coincidiendo por código corporativo, nombre comercial, o principio activo de los componentes.
+         * Retorna un grafo de entidades que incluye categoría, marca, laboratorio e ingredientes para agilizar la carga perdiendo el problema N+1.
+         *
+         * @param query El término de búsqueda (nombre, ingredientes o código).
+         * @return Lista de productos que coinciden con el criterio (sin paginación, asume listado del POS).
+         */
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
                         "category", "brand", "laboratory", "presentation", "taxType", "ingredients",
                         "ingredients.activeIngredient"
@@ -25,6 +30,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                         "OR LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%'))")
         java.util.List<Product> searchByQuery(@org.springframework.data.repository.query.Param("query") String query);
 
+        /**
+         * Recupera todos los productos filtrados de forma optativa por categoría o marca,
+         * forzando fetch de entidades relacionadas para pintar eficientemente los catálogos en el frontend.
+         *
+         * @param categoryId ID de la clasificación categorica (opcional).
+         * @param brandId    ID de la procedencia/marca (opcional).
+         * @return Fichas completas de productos filtrados y pre-hidratados.
+         */
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
                         "category", "brand", "laboratory", "presentation", "taxType"
         })

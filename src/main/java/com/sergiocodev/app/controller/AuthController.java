@@ -5,6 +5,8 @@ import com.sergiocodev.app.dto.user.LoginRequest;
 import com.sergiocodev.app.dto.user.LoginResponse;
 import com.sergiocodev.app.dto.user.RefreshTokenRequest;
 import com.sergiocodev.app.dto.user.RegisterRequest;
+import com.sergiocodev.app.dto.user.UserResponse;
+import com.sergiocodev.app.mapper.UserMapper;
 import com.sergiocodev.app.service.AuthService;
 import com.sergiocodev.app.model.User;
 import com.sergiocodev.app.config.ApiVersion;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserMapper userMapper;
 
     @Operation(summary = "Iniciar sesión", description = "Autentica a un usuario y devuelve un token JWT")
     @ApiResponses(value = {
@@ -71,9 +74,9 @@ public class AuthController {
 
     @Operation(summary = "Obtener usuario actual", description = "Devuelve los datos del usuario autenticado actualmente")
     @GetMapping("/me")
-    public ResponseEntity<ResponseApi<User>> getCurrentUser() {
+    public ResponseEntity<ResponseApi<UserResponse>> getCurrentUser() {
         User user = authService.getCurrentUser();
-        return ResponseEntity.ok(ResponseApi.success(user));
+        return ResponseEntity.ok(ResponseApi.success(userMapper.toResponse(user)));
     }
 
 }

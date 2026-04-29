@@ -31,4 +31,18 @@ public class TokenBlacklist {
 
     @Column(name = "blacklisted_at", nullable = false)
     private Instant blacklistedAt = Instant.now();
+
+    public void setExpiryDate(Instant expiryDate) {
+        if (this.blacklistedAt != null && expiryDate != null && expiryDate.isBefore(this.blacklistedAt)) {
+            throw new IllegalArgumentException("expiryDate debe ser posterior a blacklistedAt");
+        }
+        this.expiryDate = expiryDate;
+    }
+
+    public void setBlacklistedAt(Instant blacklistedAt) {
+        if (this.expiryDate != null && blacklistedAt != null && blacklistedAt.isAfter(this.expiryDate)) {
+            throw new IllegalArgumentException("blacklistedAt debe ser anterior a expiryDate");
+        }
+        this.blacklistedAt = blacklistedAt;
+    }
 }

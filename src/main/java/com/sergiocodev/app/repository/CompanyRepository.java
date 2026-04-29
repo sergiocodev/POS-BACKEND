@@ -5,13 +5,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
+/**
+ * Repositorio para la información legal y comercial de la empresa.
+ */
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, Long> {
     
-    // Usually there is only one company, but we provide a way to find by RUC just in case
+    /**
+     * Busca la empresa por su número de RUC.
+     * @param ruc Registro Único de Contribuyentes.
+     * @return Optional con la empresa.
+     */
     Optional<Company> findByRuc(String ruc);
     
-    // Helper to get the first (and usually only) company
+    /**
+     * Método de conveniencia para obtener la empresa principal configurada.
+     * @return La primera empresa encontrada en el sistema.
+     */
     default Optional<Company> findMainCompany() {
         return findAll().stream().findFirst();
     }

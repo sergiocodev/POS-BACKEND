@@ -20,13 +20,33 @@ import java.util.Optional;
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
         Optional<Inventory> findByEstablishmentIdAndLotId(Long establishmentId, Long lotId);
 
+        /**
+         * Recupera el material en plaza cuyo stock remanente se haya tornado crítico o residualmente 
+         * menor o equivalente a tan solo 10 elementos totales (umbral por defecto). 
+         * Actúa de gatillo para reabastecimientos reactivos globalizados.
+         * 
+         * @return Colecciones de activos extinguiéndose en inventarios de todas las sedes.
+         */
         @Query("SELECT i FROM Inventory i WHERE i.quantity <= 10")
         java.util.List<Inventory> findLowStock();
 
+        /**
+         * Encuentra remanentes biológicos y de mercancía vinculados a la dependencia de lotes
+         * cuya vigencia expire anterior o estrictamente igual al parámetro temporal suministrado.
+         * 
+         * @param date Timestamp acotando la pesquisa de lotes o empaquetados perecibles.
+         * @return Desglose de mermas, productos listos a rematar o caducados si son desfasajes.
+         */
         @Query("SELECT i FROM Inventory i JOIN i.lot l WHERE l.expiryDate <= :date")
         java.util.List<Inventory> findExpiringSoon(
                         @Param("date") java.time.LocalDate date);
 
+        /**
+         * Analiza individualmente los límites predefinidos personalizables definidos según el control operativo 
+         * devolviéndonos artículos que vulneraron el límite o "Stock Mínimo" estipulado expresamente por el regente.
+         * 
+         * @return Bienes y medicinas por debajo de su umbral de tolerancia preventivo en bodega.
+         */
         @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.minStock")
         java.util.List<Inventory> findLowStockAlerts();
 

@@ -6,7 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Repositorio para las presentaciones comerciales de los productos (Caja x 100, Frasco x 500ml, etc.).
+ */
 @Repository
 public interface PresentationRepository extends JpaRepository<Presentation, Long> {
+    /**
+     * Busca una presentación por su descripción comercial.
+     */
     Optional<Presentation> findByDescription(String description);
 }

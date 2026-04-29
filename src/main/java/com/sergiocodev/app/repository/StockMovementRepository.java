@@ -6,18 +6,34 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repositorio para el registro de movimientos de stock (Kardex).
+ * Registra entradas, salidas y ajustes de inventario.
+ */
 @Repository
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
+    /**
+     * Lista movimientos de stock para un producto específico, ordenado por fecha descendente.
+     */
     List<StockMovement> findByLotProductIdOrderByCreatedAtDesc(Long productId);
 
+    /**
+     * Lista movimientos ocurridos en un establecimiento.
+     */
     List<StockMovement> findByEstablishmentIdOrderByCreatedAtDesc(Long establishmentId);
 
+    /**
+     * Obtiene el Kardex (historial de movimientos) de un producto cargando relaciones de lotes.
+     */
     @org.springframework.data.jpa.repository.Query("SELECT sm FROM StockMovement sm JOIN FETCH sm.lot l JOIN FETCH l.product "
             +
             "WHERE l.product.id = :productId ORDER BY sm.createdAt DESC")
     List<StockMovement> findKardexByProductId(
             @org.springframework.data.repository.query.Param("productId") Long productId);
 
+    /**
+     * Obtiene el historial de movimientos de un lote específico.
+     */
     @org.springframework.data.jpa.repository.Query("SELECT sm FROM StockMovement sm WHERE sm.lot.id = :lotId ORDER BY sm.createdAt DESC")
     List<StockMovement> findKardexByLotId(@org.springframework.data.repository.query.Param("lotId") Long lotId);
 }

@@ -18,6 +18,14 @@ public interface SalePaymentRepository extends JpaRepository<SalePayment, Long> 
 
     List<SalePayment> findBySaleCashSessionIdAndDeletedAtIsNull(Long cashSessionId);
 
+    /**
+     * Sumariza todos los montos de un método de transaccioón financiera (Ej: Yape, Efectivo) para un turno o caja (Cash Session).
+     * Ignora proactivamente abonos de los cuales su venta ha sido abortada (Venta Anulada) usando COALESCE para evitar punteros nulos.
+     *
+     * @param sessionId Identidad de la caja aperturada actual del vendedor.
+     * @param method    El método cobrado específicamente sobre el que calcular fondos en balance.
+     * @return El total de ingresos purificados por el método de pago especificado.
+     */
     @Query("SELECT COALESCE(SUM(sp.amount), 0) FROM SalePayment sp " +
            "WHERE sp.sale.cashSession.id = :sessionId " +
            "AND sp.paymentMethod = :method " +

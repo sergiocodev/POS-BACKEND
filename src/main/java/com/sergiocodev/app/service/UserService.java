@@ -1,24 +1,27 @@
 package com.sergiocodev.app.service;
 
 import com.sergiocodev.app.dto.user.UserRequest;
+import com.sergiocodev.app.dto.user.UserResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.UserAlreadyExistsException;
 import com.sergiocodev.app.exception.UserNotFoundException;
+import com.sergiocodev.app.mapper.UserMapper;
 import com.sergiocodev.app.model.Role;
 import com.sergiocodev.app.model.User;
 import com.sergiocodev.app.repository.RoleRepository;
 import com.sergiocodev.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.sergiocodev.app.dto.user.UserResponse;
-import com.sergiocodev.app.mapper.UserMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +32,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper mapper;
 
+    @Value("${app.default.role}")
+    private String defaultRoleName;
+
+    @Value("${app.timezone}")
+    private String timezone;
+
     @Transactional(readOnly = true)
-    public List<UserResponse> getAll() {
-        return userRepository.findAllActive().stream()
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getAll(Pageable pageable) {
+        return userRepository.findAllActive(pageable)
+                .map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -52,23 +60,27 @@ public class UserService {
 
     @Transactional
     public UserResponse create(UserRequest request) {
-        if (userRepository.existsByUsername(request.username())) {
-            throw new UserAlreadyExistsException("Username already exists: " + request.username());
+        if (userRepository.existsActiveByUsername(request.getUsername())) {
+            throw new UserAlreadyExistsException("Username already exists: " + request.getUsername());
         }
-        if (userRepository.existsByEmail(request.email())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.email());
+        if (userRepository.existsActiveByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
         }
 
         User user = new User();
-        user.setUsername(request.username());
-        user.setEmail(request.email());
-        user.setFullName(request.fullName());
-        user.setProfilePicture(request.profilePicture());
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        user.setProfilePicture(request.getProfilePicture());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
-        if (request.roleIds() != null && !request.roleIds().isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.roleIds()));
-            user.setRoles(roles);
+        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
+            validateRoles(request.getRoleIds());
+            user.setRoles(new HashSet<>(roleRepository.findAllById(request.getRoleIds())));
+        } else {
+            Role defaultRole = roleRepository.findByName(defaultRoleName)
+                    .orElseThrow(() -> new ResourceNotFoundException("Default role '" + defaultRoleName + "' not found"));
+            user.setRoles(Set.of(defaultRole));
         }
 
         return mapper.toResponse(userRepository.save(user));
@@ -79,26 +91,26 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
-        if (!user.getUsername().equals(request.username())
-                && userRepository.existsByUsername(request.username())) {
-            throw new UserAlreadyExistsException("Username already exists: " + request.username());
+        if (!user.getUsername().equals(request.getUsername())
+                && userRepository.existsActiveByUsername(request.getUsername())) {
+            throw new UserAlreadyExistsException("Username already exists: " + request.getUsername());
         }
-        if (!user.getEmail().equals(request.email()) && userRepository.existsByEmail(request.email())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.email());
-        }
-
-        user.setUsername(request.username());
-        user.setEmail(request.email());
-        user.setFullName(request.fullName());
-        user.setProfilePicture(request.profilePicture());
-
-        if (request.password() != null && !request.password().isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode(request.password()));
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsActiveByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
         }
 
-        if (request.roleIds() != null) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(request.roleIds()));
-            user.setRoles(roles);
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        user.setProfilePicture(request.getProfilePicture());
+
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
+
+        if (request.getRoleIds() != null) {
+            validateRoles(request.getRoleIds());
+            user.setRoles(new HashSet<>(roleRepository.findAllById(request.getRoleIds())));
         }
 
         return mapper.toResponse(userRepository.save(user));
@@ -116,10 +128,17 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         if (user.getDeletedAt() == null) {
-            user.setDeletedAt(java.time.LocalDateTime.now());
+            user.setDeletedAt(LocalDateTime.now().atZone(ZoneId.of(timezone)).toInstant());
         } else {
             user.setDeletedAt(null);
         }
         return mapper.toResponse(userRepository.save(user));
+    }
+
+    private void validateRoles(Set<Long> roleIds) {
+        Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+        if (roles.size() != roleIds.size()) {
+            throw new ResourceNotFoundException("One or more roles not found");
+        }
     }
 }

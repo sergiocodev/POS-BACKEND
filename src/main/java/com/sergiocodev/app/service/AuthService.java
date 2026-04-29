@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,32 +30,32 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthService {
 
-        private final UserRepository userRepository;
-        private final PasswordEncoder passwordEncoder;
-        private final JwtUtil jwtUtil;
-        private final AuthenticationManager authenticationManager;
-        private final UserDetailsService userDetailsService;
-        private final TokenBlacklistRepository tokenBlacklistRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
+    private final TokenService tokenService;
 
-        public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                        JwtUtil jwtUtil, AuthenticationManager authenticationManager,
-                        UserDetailsService userDetailsService,
-                        TokenBlacklistRepository tokenBlacklistRepository) {
-                this.userRepository = userRepository;
-                this.passwordEncoder = passwordEncoder;
-                this.jwtUtil = jwtUtil;
-                this.authenticationManager = authenticationManager;
-                this.userDetailsService = userDetailsService;
-                this.tokenBlacklistRepository = tokenBlacklistRepository;
-        }
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil, 
+            AuthenticationManager authenticationManager,
+            UserDetailsService userDetailsService,
+            TokenService tokenService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.authenticationManager = authenticationManager;
+        this.userDetailsService = userDetailsService;
+        this.tokenService = tokenService;
+    }
 
         /**
          * Authenticates a user and generates a JWT token
          */
-        @Transactional
-        public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
                 String usernameOrEmail = request.usernameOrEmail();
-                log.info("Login attempt: user={}", usernameOrEmail);
+                log.debug("Login attempt: user={}", usernameOrEmail);
 
                 // Find active user by username or email
                 User user = userRepository.findActiveByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
@@ -70,14 +69,14 @@ public class AuthService {
                                                 request.password()));
 
                 // Update last login
-                user.setLastLogin(LocalDateTime.now());
+                user.setLastLogin(Instant.now());
                 userRepository.save(user);
 
-                log.info("Login successful: user={}, id={}", user.getUsername(), user.getId());
+                log.debug("Login successful: user={}, id={}", user.getUsername(), user.getId());
 
-                // Generate JWT token
-                String token = jwtUtil.generateToken(user.getUsername());
-                String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+            // Generate JWT tokens
+            String token = tokenService.generateAccessToken(user.getUsername());
+            String refreshToken = tokenService.generateRefreshToken(user.getUsername());
 
                 // Get role names and permissions
                 Set<String> rolesNames = user.getRoles().stream()
@@ -110,13 +109,13 @@ public class AuthService {
                 log.info("Registration attempt: username={}, email={}", request.username(), request.email());
 
                 // Check if username already exists
-                if (userRepository.existsByUsername(request.username())) {
+                if (userRepository.existsActiveByUsername(request.username())) {
                         throw new UserAlreadyExistsException(
                                         "Username '" + request.username() + "' already exists");
                 }
 
                 // Check if email already exists
-                if (userRepository.existsByEmail(request.email())) {
+                if (userRepository.existsActiveByEmail(request.email())) {
                         throw new UserAlreadyExistsException(
                                         "Email '" + request.email() + "' is already registered");
                 }
@@ -133,9 +132,9 @@ public class AuthService {
                 User savedUser = userRepository.save(newUser);
                 log.info("User registered successfully: username={}, id={}", savedUser.getUsername(), savedUser.getId());
 
-                // Generate JWT token
-                String token = jwtUtil.generateToken(savedUser.getUsername());
-                String refreshToken = jwtUtil.generateRefreshToken(savedUser.getUsername());
+            // Generate JWT tokens
+            String token = tokenService.generateAccessToken(savedUser.getUsername());
+            String refreshToken = tokenService.generateRefreshToken(savedUser.getUsername());
 
                 // Empty roles by default
                 Set<String> roles = Collections.emptySet();
@@ -170,12 +169,9 @@ public class AuthService {
                 User user = userRepository.findActiveByUsernameOrEmail(username, username)
                                 .orElseThrow(() -> new UserNotFoundException("User not found or deleted"));
 
-                String newToken = jwtUtil.generateToken(username);
-                // Optionally generate a new refresh token or return the same one
-                // For this implementation, we'll return the same refresh token to not force
-                // re-login too often,
-                // or we could rotate it. Let's rotate it for better security.
-                String newRefreshToken = jwtUtil.generateRefreshToken(username);
+                // Generate new tokens
+        String newToken = tokenService.generateAccessToken(username);
+        String newRefreshToken = tokenService.generateRefreshToken(username);
 
                 Set<String> rolesNames = user.getRoles().stream()
                                 .map(role -> "ROLE_" + role.getName())
@@ -198,33 +194,13 @@ public class AuthService {
                                 permissionNames);
         }
 
-        /**
-         * Logs out the user by blacklisting the token.
-         */
-        @Transactional
-        public void logout(String token) {
-                if (token == null || token.isBlank()) {
-                        return;
-                }
-                try {
-                        String jwt = token.startsWith("Bearer ") ? token.substring(7) : token;
-                        String jti = jwtUtil.extractJti(jwt);
-                        String username = jwtUtil.extractUsername(jwt);
-                        java.util.Date expiration = jwtUtil.extractExpiration(jwt);
-
-                        if (jti != null && !tokenBlacklistRepository.existsByJti(jti)) {
-                                TokenBlacklist entry = new TokenBlacklist();
-                                entry.setJti(jti);
-                                entry.setUsername(username);
-                                entry.setExpiryDate(expiration.toInstant());
-                                entry.setBlacklistedAt(Instant.now());
-                                tokenBlacklistRepository.save(entry);
-                                log.info("Token blacklisted: username={}", username);
-                        }
-                } catch (Exception e) {
-                        log.warn("Failed to blacklist token: {}", e.getMessage());
-                }
-        }
+    /**
+     * Logs out the user by blacklisting the token.
+     */
+    @Transactional
+    public void logout(String token) {
+        tokenService.invalidateToken(token);
+    }
 
         /**
          * Gets the current authenticated user

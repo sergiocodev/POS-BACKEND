@@ -6,7 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repositorio para los laboratorios fabricantes de productos farmacéuticos.
+ */
 @Repository
 public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
+    /**
+     * Búsqueda por nombre ignorando mayúsculas/minúsculas.
+     */
     List<Laboratory> findByNameContainingIgnoreCase(String name);
 }

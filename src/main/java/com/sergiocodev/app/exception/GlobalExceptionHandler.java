@@ -125,25 +125,16 @@ public class GlobalExceptionHandler {
         /**
          * Handles validation errors (Bean Validation)
          */
-        @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<ResponseApi<Object>> handleValidationErrors(
-                        MethodArgumentNotValidException ex) {
-                Map<String, String> errors = new HashMap<>();
-
-                ex.getBindingResult().getAllErrors().forEach(error -> {
-                        String field = ((FieldError) error).getField();
-                        String message = error.getDefaultMessage();
-                        errors.put(field, message);
-                });
-
-                ResponseApi<Object> response = ResponseApi.builder()
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message("Validation failed")
-                                .data(errors)
-                                .build();
-
-                return ResponseEntity.badRequest().body(response);
-        }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ResponseApi<Map<String, String>>> handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String field = ((FieldError) error).getField();
+            String message = error.getDefaultMessage();
+            errors.put(field, message);
+        });
+        return ResponseEntity.badRequest().body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(), "Validation failed"));
+    }
 
         /**
          * Handles StockInsufficientException

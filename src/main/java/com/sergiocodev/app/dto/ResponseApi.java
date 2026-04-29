@@ -19,10 +19,10 @@ public record ResponseApi<T>(
         return success(data, "Operación exitosa");
     }
 
-    public static <T> ResponseApi<T> error(int status, String message) {
-        return ResponseApi.<T>builder()
-                .status(status)
-                .message(message)
-                .build();
-    }
+public static <T> ResponseApi<T> error(int status, String message) {
+    return ResponseApi.<T>builder()
+        .status(status)
+        .message(message)
+        .build();
+}
 }

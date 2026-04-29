@@ -14,6 +14,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,12 +38,12 @@ public class UserController {
     private final UserService userService;
     private final ExternalConsultationService externalConsultationService;
 
-    @Operation(summary = "Lista de usuarios", description = "Obtiene la lista de todos los usuarios registrados")
+    @Operation(summary = "Lista de usuarios", description = "Obtiene la lista paginada de usuarios registrados")
     @ApiResponse(responseCode = "200", description = "List of users obtained successfully")
     @GetMapping
     @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_USUARIOS + "')")
-    public ResponseEntity<ResponseApi<List<UserResponse>>> getAll() {
-        return ResponseEntity.ok(ResponseApi.success(userService.getAll()));
+    public ResponseEntity<ResponseApi<List<UserResponse>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(userService.getAll(pageable).getContent()));
     }
 
     @Operation(summary = "Obtener perfil", description = "Obtiene el perfil del usuario autenticado")

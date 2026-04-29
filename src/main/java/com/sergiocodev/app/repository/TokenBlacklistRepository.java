@@ -12,6 +12,12 @@ import java.time.Instant;
 public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, Long> {
     boolean existsByJti(String jti);
 
+    /**
+     * Limpia la base de datos eliminando físicamente los tokens en la lista negra
+     * cuya fecha de expiración haya pasado para liberar espacio y mejorar el rendimiento de validación.
+     *
+     * @param now La fecha representativa del momento actual, cualquier token menor a él, será eliminado.
+     */
     @Modifying
     @Query("DELETE FROM TokenBlacklist tb WHERE tb.expiryDate < :now")
     void deleteExpiredTokens(@Param("now") Instant now);

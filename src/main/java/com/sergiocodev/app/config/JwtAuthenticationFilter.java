@@ -46,32 +46,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = jwtUtil.extractUsername(jwt);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Check if token is blacklisted
-            String jti = jwtUtil.extractJti(jwt);
-            if (jti != null && tokenBlacklistRepository.existsByJti(jti)) {
-                log.debug("Token blacklisted: jti={}", jti);
-                // Set header so frontend knows to redirect to login without refresh attempt
-                response.setHeader("X-Token-Blacklisted", "true");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+        try {
+            username = jwtUtil.extractUsername(jwt);
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Check if token is blacklisted
+                String jti = jwtUtil.extractJti(jwt);
+                if (jti != null && tokenBlacklistRepository.existsByJti(jti)) {
+                    log.debug("Token blacklisted: jti={}", jti);
+                    // Set header so frontend knows to redirect to login without refresh attempt
+                    response.setHeader("X-Token-Blacklisted", "true");
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (jwtUtil.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    log.warn("Token JWT inválido para el usuario: {}", username);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Token JWT inválido\"}");
+                    return;
+                }
             }
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
+        } catch (Exception e) {
+            log.error("Token JWT malformado, expirado o inválido: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token JWT malformado o inválido\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);

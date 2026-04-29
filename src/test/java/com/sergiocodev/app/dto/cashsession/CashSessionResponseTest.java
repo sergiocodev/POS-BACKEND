@@ -28,7 +28,7 @@ class CashSessionResponseTest {
         // Arrange
         com.sergiocodev.app.model.User deletedUser = new com.sergiocodev.app.model.User();
         deletedUser.setUsername("deleted_user_01");
-        deletedUser.setDeletedAt(java.time.LocalDateTime.now());
+        deletedUser.setDeletedAt(java.time.Instant.now());
 
         CashSession session = new CashSession();
         session.setId(2L);
