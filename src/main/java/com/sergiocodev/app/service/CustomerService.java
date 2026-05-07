@@ -1,15 +1,20 @@
 package com.sergiocodev.app.service;
 
+import com.sergiocodev.app.dto.customer.CustomerDashboardResponse;
 import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CustomerService {
 
     CustomerResponse create(CustomerRequest request);
 
     List<CustomerResponse> getAll();
+
+    Page<CustomerResponse> getAllPaged(String name, String documentNumber, String email, String phone, Pageable pageable);
 
     CustomerResponse getById(Long id);
 
@@ -18,4 +23,6 @@ public interface CustomerService {
     void delete(Long id);
 
     CustomerResponse findByDocumentNumber(String documentNumber);
+
+    CustomerDashboardResponse getDashboard();
 }

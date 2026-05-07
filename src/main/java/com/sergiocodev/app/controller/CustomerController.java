@@ -1,6 +1,7 @@
 package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
+import com.sergiocodev.app.dto.customer.CustomerDashboardResponse;
 import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
 import com.sergiocodev.app.service.CustomerService;
@@ -17,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 
 @RestController
@@ -47,6 +51,19 @@ public class CustomerController {
     @GetMapping
     public ResponseEntity<ResponseApi<List<CustomerResponse>>> getAll() {
         List<CustomerResponse> customers = customerService.getAll();
+        return ResponseEntity.ok(ResponseApi.success(customers));
+    }
+
+    @Operation(summary = "Lista de clientes con paginación", description = "Obtiene la lista de clientes paginada y filtrada")
+    @ApiResponse(responseCode = "200", description = "Paged list of customers obtained successfully")
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<Page<CustomerResponse>>> getAllPaged(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String documentNumber,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<CustomerResponse> customers = customerService.getAllPaged(name, documentNumber, email, phone, pageable);
         return ResponseEntity.ok(ResponseApi.success(customers));
     }
 
@@ -85,6 +102,13 @@ public class CustomerController {
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         customerService.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Cliente eliminado exitosamente"));
+    }
+
+    @Operation(summary = "Dashboard de clientes", description = "Retorna estadísticas y KPIs del módulo de clientes")
+    @ApiResponse(responseCode = "200", description = "Dashboard data obtained successfully")
+    @GetMapping("/dashboard")
+    public ResponseEntity<ResponseApi<CustomerDashboardResponse>> getDashboard() {
+        return ResponseEntity.ok(ResponseApi.success(customerService.getDashboard()));
     }
 
     @Operation(summary = "Buscar cliente por documento", description = "Busca un cliente por su número de documento de identidad")

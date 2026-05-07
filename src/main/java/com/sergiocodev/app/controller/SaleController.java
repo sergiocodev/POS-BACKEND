@@ -23,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
@@ -78,8 +77,10 @@ public class SaleController {
             @RequestParam(required = false) String columnDate,
             @PageableDefault(size = 50, sort = "date", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
 
-        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(startDate, endDate, documentType, series, number,
-                customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate, pageable)));
+        return ResponseEntity
+                .ok(ResponseApi.success(service.getAllPaged(startDate, endDate, documentType, series, number,
+                        customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod,
+                        columnDate, pageable)));
     }
 
     @GetMapping("/summary")
@@ -100,7 +101,8 @@ public class SaleController {
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) String columnDate) {
 
-        return ResponseEntity.ok(ResponseApi.success(service.getSummary(startDate, endDate, documentType, series, number,
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(startDate, endDate, documentType, series,
+                number,
                 customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate)));
     }
 

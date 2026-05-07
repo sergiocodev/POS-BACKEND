@@ -1,12 +1,8 @@
 package com.sergiocodev.app.specification;
 
 import com.sergiocodev.app.model.Sale;
-import com.sergiocodev.app.model.Sale.SunatStatus;
-import com.sergiocodev.app.model.Sale.SaleStatus;
-import com.sergiocodev.app.model.Sale.SaleDocumentType;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.time.LocalDateTime;

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -20,13 +19,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale> {
 
         /**
-         * Cuenta rápidamente de forma algorítmica las ventas exitosamente completadas (no anuladas) y procesadas.
-         * Si provee un establishmentId solo cuenta de ese establecimiento, 
-         * si el pase es nulo se contará transversalmente en toda la cadena globalmente operativa (Admin scope).
+         * Cuenta rápidamente de forma algorítmica las ventas exitosamente completadas
+         * (no anuladas) y procesadas.
+         * Si provee un establishmentId solo cuenta de ese establecimiento,
+         * si el pase es nulo se contará transversalmente en toda la cadena globalmente
+         * operativa (Admin scope).
          * 
-         * @param establishmentId   Origen o sucursal.
-         * @param start             El comienzo de la evaluación temporal.
-         * @param end               El tope o límite comparativo a la fecha actual del rango.
+         * @param establishmentId Origen o sucursal.
+         * @param start           El comienzo de la evaluación temporal.
+         * @param end             El tope o límite comparativo a la fecha actual del
+         *                        rango.
          * @return Total de ventas sin cancelar producidas en la organización.
          */
         @Query("SELECT COUNT(s) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false AND s.date >= :start AND s.date <= :end")
@@ -36,13 +38,16 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("end") LocalDateTime end);
 
         /**
-         * Suma el valor adquisitivo subtotal neto e ingresos generados por operaciones de las cajas.
-         * Provee una radiografía económica fundamental para elaborar arqueos, presupuestos directos o cierres.
+         * Suma el valor adquisitivo subtotal neto e ingresos generados por operaciones
+         * de las cajas.
+         * Provee una radiografía económica fundamental para elaborar arqueos,
+         * presupuestos directos o cierres.
          * 
          * @param establishmentId La sucursal o sede comercial recaudadora.
          * @param start           El timestamp de comienzo.
          * @param end             La liquidación a consultar final.
-         * @return Dinero nominal devengado transaccionalmente o un campo nulo/0 internamente al omitir anulaciones.
+         * @return Dinero nominal devengado transaccionalmente o un campo nulo/0
+         *         internamente al omitir anulaciones.
          */
         @Query("SELECT SUM(s.total) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false AND s.date >= :start AND s.date <= :end")
         BigDecimal sumTotalByEstablishmentAndDateBetween(
@@ -50,20 +55,16 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end);
 
-        @EntityGraph(attributePaths = { "items", "payments", "customer",
-                        "establishment", "user" })
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         List<Sale> findByCustomerId(Long customerId);
 
-        @EntityGraph(attributePaths = { "items", "payments", "customer",
-                        "establishment", "user" })
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         List<Sale> findByCashSessionId(Long cashSessionId);
 
-        @EntityGraph(attributePaths = { "items", "payments", "customer",
-                        "establishment", "user" })
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         List<Sale> findAllByOrderByDateDesc();
 
-        @EntityGraph(attributePaths = { "items", "payments", "customer",
-                        "establishment", "user" })
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         List<Sale> findByDateBetweenOrderByDateDesc(java.time.LocalDateTime start, java.time.LocalDateTime end);
 
         @EntityGraph(attributePaths = { "items", "items.productLot",
@@ -75,14 +76,15 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
         // ──────────────────────────────────────────────────────────────
 
         /** Count sales pending SUNAT submission (PENDING or REJECTED) before a date */
-        @Query("SELECT COUNT(s) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+        @Query("SELECT COUNT(s) FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) "
+                        +
                         "AND s.isVoided = false AND s.sunatStatus IN (:statuses) AND s.date < :beforeDate")
         long countPendingSunat(@Param("establishmentId") Long establishmentId,
                         @Param("statuses") List<Sale.SunatStatus> statuses,
                         @Param("beforeDate") LocalDateTime beforeDate);
 
         /** Sales for dashboard/chart: paginated with eager loading */
-        @EntityGraph(attributePaths = { "items", "payments", "customer", "establishment", "user" })
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         @Query("SELECT s FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
                         "AND s.isVoided = false AND s.date >= :startDate AND s.date <= :endDate " +
                         "ORDER BY s.date DESC")
@@ -163,7 +165,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
         /** Top products: aggregate query via GROUP BY (most efficient) */
         @Query("SELECT si.product.id, SUM(si.quantity), SUM(si.amount) " +
                         "FROM SaleItem si JOIN si.sale s " +
-                        "WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false " +
+                        "WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) AND s.isVoided = false "
+                        +
                         "AND s.date >= :startDate AND s.date <= :endDate " +
                         "GROUP BY si.product.id ORDER BY SUM(si.quantity) DESC")
         List<Object[]> findTopProductsByQuantity(

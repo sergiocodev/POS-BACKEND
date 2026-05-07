@@ -9,18 +9,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.List;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Entity
 @Table(name = "sales", indexes = {
-    @Index(name = "idx_sale_establishment_date", columnList = "establishment_id, date"),
-    @Index(name = "idx_sale_sunat_status", columnList = "sunat_status"),
-    @Index(name = "idx_sale_date", columnList = "date"),
-    @Index(name = "idx_sale_customer", columnList = "customer_id"),
-    @Index(name = "idx_sale_user", columnList = "user_id"),
-    @Index(name = "idx_sale_cash_session", columnList = "cash_session_id"),
-    @Index(name = "idx_sale_voided", columnList = "is_voided")
+        @Index(name = "idx_sale_establishment_date", columnList = "establishment_id, date"),
+        @Index(name = "idx_sale_sunat_status", columnList = "sunat_status"),
+        @Index(name = "idx_sale_date", columnList = "date"),
+        @Index(name = "idx_sale_customer", columnList = "customer_id"),
+        @Index(name = "idx_sale_user", columnList = "user_id"),
+        @Index(name = "idx_sale_cash_session", columnList = "cash_session_id"),
+        @Index(name = "idx_sale_voided", columnList = "is_voided")
 })
 @Data
 @NoArgsConstructor
@@ -137,9 +137,11 @@ public class Sale {
     }
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Fetch(FetchMode.SUBSELECT)
     private List<SaleItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Fetch(FetchMode.SUBSELECT)
     private List<SalePayment> payments = new ArrayList<>();
 
     public enum SaleDocumentType {

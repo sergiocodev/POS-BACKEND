@@ -13,7 +13,6 @@ import com.sergiocodev.app.model.AccountPayablePayment;
 import com.sergiocodev.app.model.AccountReceivablePayment;
 import com.sergiocodev.app.model.CashConcept.ConceptType;
 import com.sergiocodev.app.model.SalePayment.PaymentMethod;
-import com.sergiocodev.app.model.SalePayment;
 import com.sergiocodev.app.model.CashConcept;
 import com.sergiocodev.app.model.User;
 import com.sergiocodev.app.model.CashMovement;

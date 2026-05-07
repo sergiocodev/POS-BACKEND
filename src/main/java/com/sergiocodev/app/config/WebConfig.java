@@ -16,4 +16,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(apiVersionInterceptor)
                 .addPathPatterns("/api/v1/**");
     }
+
+    @Override
+    public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/");
+    }
 }

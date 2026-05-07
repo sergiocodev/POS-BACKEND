@@ -4,8 +4,6 @@ import com.sergiocodev.app.dto.sale.SaleItemRequest;
 import com.sergiocodev.app.dto.sale.SalePaymentRequest;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
-import com.sergiocodev.app.dto.sale.SaleItemResponse;
-import com.sergiocodev.app.dto.sale.SalePaymentResponse;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
@@ -15,7 +13,6 @@ import com.sergiocodev.app.repository.*;
 import com.sergiocodev.app.util.XmlUblGenerator;
 import com.sergiocodev.app.util.SunatOseClient;
 import java.util.ArrayList;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -684,7 +680,8 @@ class SaleServiceImplTest {
             Sale sale = new Sale();
             sale.setItems(new ArrayList<>());
 
-            // Act - the method calculates tax using default rate of 0.18 but since subTotal is 0, tax is also 0
+            // Act - the method calculates tax using default rate of 0.18 but since subTotal
+            // is 0, tax is also 0
             Sale result = invokeCalculateTotals(sale);
 
             // Assert - verify the calculation logic works (0 * 0.18 = 0)
@@ -775,23 +772,23 @@ class SaleServiceImplTest {
 
     private SaleItemRequest createSaleItemRequest() {
         return new SaleItemRequest(
-                1L,   // productId
-                1L,   // lotId
-                1L,   // productUnitId
-                new BigDecimal("10.00"),  // quantity
+                1L, // productId
+                1L, // lotId
+                1L, // productUnitId
+                new BigDecimal("10.00"), // quantity
                 new BigDecimal("100.00"), // unitPrice
-                null,                     // discountAmount
-                null,                     // discountReason
-                null,                     // increaseAmount
-                null);                    // increaseReason
+                null, // discountAmount
+                null, // discountReason
+                null, // increaseAmount
+                null); // increaseReason
     }
 
     private SalePaymentRequest createPaymentRequest() {
         return new SalePaymentRequest(
                 SalePayment.PaymentMethod.EFECTIVO,
                 new BigDecimal("1180.00"),
-                1L,     // cashSessionId
-                null);  // reference
+                1L, // cashSessionId
+                null); // reference
     }
 
     private Sale createSaleEntity() {
@@ -840,7 +837,10 @@ class SaleServiceImplTest {
                 List.of(),
                 List.of(),
                 null,
-                sale.getCustomer() != null ? sale.getCustomer().getDocumentType() != null ? sale.getCustomer().getDocumentType().name() : null : null,
+                sale.getCustomer() != null
+                        ? sale.getCustomer().getDocumentType() != null ? sale.getCustomer().getDocumentType().name()
+                                : null
+                        : null,
                 sale.getCustomer() != null ? sale.getCustomer().getDocumentNumber() : null,
                 sale.getCustomer() != null ? sale.getCustomer().getAddress() : null,
                 sale.getUser() != null ? sale.getUser().getFullName() : null);

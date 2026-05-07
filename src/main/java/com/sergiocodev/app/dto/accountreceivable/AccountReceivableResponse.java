@@ -7,12 +7,13 @@ import java.time.LocalDateTime;
 
 public record AccountReceivableResponse(
         Long id,
-        Long saleId,
+        String saleIdentifier,
         String customerName,
         BigDecimal totalAmount,
         BigDecimal amountPaid,
         BigDecimal pendingBalance,
         AccountReceivable.ReceivableStatus status,
+        Long daysUntilDue,
         LocalDate dueDate,
         String notes,
         LocalDateTime createdAt,
