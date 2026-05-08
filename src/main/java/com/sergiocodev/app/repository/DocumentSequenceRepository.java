@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface DocumentSequenceRepository extends JpaRepository<DocumentSequence, Long> {
@@ -40,4 +41,9 @@ public interface DocumentSequenceRepository extends JpaRepository<DocumentSequen
                                                                      DocumentSequence.DocumentType documentType,
                                                                      String series,
                                                                      Long id);
+
+    @Query("SELECT ds.series FROM DocumentSequence ds WHERE ds.establishment.id = :establishmentId " +
+           "AND ds.documentType = :documentType AND ds.deletedAt IS NULL ORDER BY ds.series ASC")
+    List<String> findSeriesByEstablishmentAndDocumentType(@Param("establishmentId") Long establishmentId,
+                                                          @Param("documentType") DocumentSequence.DocumentType documentType);
 }

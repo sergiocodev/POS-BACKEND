@@ -174,4 +174,38 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate,
                         Pageable pageable);
+
+        /** Sales with payments for payment method reports */
+        @EntityGraph(attributePaths = { "payments", "establishment", "user" })
+        @Query("SELECT s FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+                        "AND s.date >= :startDate AND s.date <= :endDate " +
+                        "ORDER BY s.date DESC")
+        List<Sale> findWithPaymentsForReport(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /** Sales with items, product and category for category detail reports */
+        @EntityGraph(attributePaths = { "items", "items.product", "items.product.category",
+                        "items.product.laboratory", "establishment", "user" })
+        @Query("SELECT s FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+                        "AND s.isVoided = false AND s.date >= :startDate AND s.date <= :endDate")
+        List<Sale> findForCategoryDetailAnalysis(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /** Sales filtered by documentType and optionally series */
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
+        @Query("SELECT s FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+                        "AND s.date >= :startDate AND s.date <= :endDate " +
+                        "AND (:documentType IS NULL OR s.documentType = :documentType) " +
+                        "AND (:series IS NULL OR s.series = :series) " +
+                        "ORDER BY s.date DESC")
+        List<Sale> findByFilters(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("documentType") Sale.SaleDocumentType documentType,
+                        @Param("series") String series);
 }
