@@ -14,6 +14,7 @@ public class SalesByProductReport {
     private String productName;
     private String categoryName;
     private String laboratoryName;
+    private String therapeuticAction;
     private Long quantitySold;
     private BigDecimal totalRevenue;
 }

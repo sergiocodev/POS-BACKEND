@@ -28,20 +28,27 @@ public class ReportServiceImpl implements ReportService {
         private final PurchaseRepository purchaseRepository;
         private final InventoryRepository inventoryRepository;
         private final DocumentSequenceRepository documentSequenceRepository;
+        private final UserRepository userRepository;
+        private final EmployeeRepository employeeRepository;
 
         public ReportServiceImpl(SaleRepository saleRepository, PurchaseRepository purchaseRepository,
-                        InventoryRepository inventoryRepository, DocumentSequenceRepository documentSequenceRepository) {
+                        InventoryRepository inventoryRepository,
+                        DocumentSequenceRepository documentSequenceRepository,
+                        UserRepository userRepository,
+                        EmployeeRepository employeeRepository) {
                 this.saleRepository = saleRepository;
                 this.purchaseRepository = purchaseRepository;
                 this.inventoryRepository = inventoryRepository;
                 this.documentSequenceRepository = documentSequenceRepository;
+                this.userRepository = userRepository;
+                this.employeeRepository = employeeRepository;
         }
 
         @Override
         @Transactional(readOnly = true)
-        public DailySalesReport getDailySales(LocalDate date, Long establishmentId) {
-                LocalDateTime start = date.atStartOfDay();
-                LocalDateTime end = date.atTime(LocalTime.MAX);
+        public DailySalesReport getDailySales(LocalDateTime date, Long establishmentId) {
+                LocalDateTime start = date.toLocalDate().atStartOfDay();
+                LocalDateTime end = date.toLocalDate().atTime(LocalTime.MAX);
 
                 // Query at DB level instead of loading all sales
                 List<Sale> sales = saleRepository.findByEstablishmentAndDateRangeOrderByDateDesc(
@@ -50,14 +57,14 @@ public class ReportServiceImpl implements ReportService {
                 BigDecimal totalSales = sales.stream().map(Sale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
                 BigDecimal totalTax = sales.stream().map(Sale::getTax).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                return new DailySalesReport(date, (long) sales.size(), totalSales, totalTax, BigDecimal.ZERO);
+                return new DailySalesReport(date.toLocalDate(), (long) sales.size(), totalSales, totalTax, BigDecimal.ZERO);
         }
 
         @Override
         @Transactional(readOnly = true)
-        public List<ProfitabilityReport> getProfitability(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<ProfitabilityReport> getProfitability(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Query at DB level
                 List<Sale> sales = saleRepository.findByEstablishmentAndDateRangeOrderByDateDesc(
@@ -72,7 +79,8 @@ public class ReportServiceImpl implements ReportService {
                                 .stream()
                                 .collect(Collectors.toMap(
                                                 inv -> inv.getLot().getId(),
-                                                inv -> inv.getCostPrice() != null ? inv.getCostPrice() : BigDecimal.ZERO,
+                                                inv -> inv.getCostPrice() != null ? inv.getCostPrice()
+                                                                : BigDecimal.ZERO,
                                                 (existing, replacement) -> existing));
 
                 List<ProfitabilityReport> reports = new ArrayList<>();
@@ -108,7 +116,8 @@ public class ReportServiceImpl implements ReportService {
                         reports.add(new ProfitabilityReport(entry.getKey(), name, qty, revenue, cost, profit, margin));
                 }
 
-                log.info("Profitability report generated: {} products, establishmentId={}", reports.size(), establishmentId);
+                log.info("Profitability report generated: {} products, establishmentId={}", reports.size(),
+                                establishmentId);
                 return reports;
         }
 
@@ -128,10 +137,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<TopProductReport> getTopProducts(LocalDate start, LocalDate end, Long establishmentId,
+        public List<TopProductReport> getTopProducts(LocalDateTime start, LocalDateTime end, Long establishmentId,
                         String sortBy, int limit) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Use the aggregate query for better performance
                 List<Object[]> topProducts = saleRepository.findTopProductsByQuantity(
@@ -149,13 +158,15 @@ public class ReportServiceImpl implements ReportService {
                 List<TopProductReport> sorted = topProducts.stream()
                                 .map(row -> {
                                         Long productId = (Long) row[0];
-                                        BigDecimal value = "quantity".equalsIgnoreCase(sortBy) ? (BigDecimal) row[1] : (BigDecimal) row[2];
+                                        BigDecimal value = "quantity".equalsIgnoreCase(sortBy) ? (BigDecimal) row[1]
+                                                        : (BigDecimal) row[2];
                                         BigDecimal percentage = grandTotal.compareTo(BigDecimal.ZERO) > 0
                                                         ? ((BigDecimal) row[2]).multiply(new BigDecimal("100"))
                                                                         .divide(grandTotal, 2, RoundingMode.HALF_UP)
                                                         : BigDecimal.ZERO;
                                         // Product name needs a lookup - keep it simple with a single query
-                                        return new TopProductReport(productId, "Product #" + productId, value, percentage,
+                                        return new TopProductReport(productId, "Product #" + productId, value,
+                                                        percentage,
                                                         BigDecimal.ZERO);
                                 })
                                 .sorted((a, b) -> b.value().compareTo(a.value()))
@@ -206,9 +217,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<CategorySalesReport> getSalesByCategory(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<CategorySalesReport> getSalesByCategory(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Use repository query with eager-loaded items+product
                 List<Sale> sales = saleRepository.findForCategoryAnalysis(establishmentId, startTime, endTime);
@@ -235,9 +246,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<EmployeeSalesReport> getSalesByEmployee(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<EmployeeSalesReport> getSalesByEmployee(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Use repository query with eager-loaded items
                 List<Sale> sales = saleRepository.findByEstablishmentAndDateRangeForEmployee(
@@ -262,9 +273,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<HourlyHeatReport> getHourlyHeat(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<HourlyHeatReport> getHourlyHeat(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Query at DB level
                 List<Sale> sales = saleRepository.findByEstablishmentAndDateRangeOrderByDateDesc(
@@ -303,9 +314,11 @@ public class ReportServiceImpl implements ReportService {
                                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                                         // This query is still in-memory but operates on the already-filtered sales set
-                                        LocalDateTime lastSale = saleRepository.findByEstablishmentAndDateRangeOrderByDateDesc(
-                                                        establishmentId, p.getCreatedAt(), LocalDateTime.now(),
-                                                        Pageable.unpaged())
+                                        LocalDateTime lastSale = saleRepository
+                                                        .findByEstablishmentAndDateRangeOrderByDateDesc(
+                                                                        establishmentId, p.getCreatedAt(),
+                                                                        LocalDateTime.now(),
+                                                                        Pageable.unpaged())
                                                         .getContent().stream()
                                                         .filter(s -> !s.isVoided())
                                                         .flatMap(s -> s.getItems().stream())
@@ -322,10 +335,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<PurchaseReport> getPurchases(LocalDate start, LocalDate end, Long establishmentId) {
+        public List<PurchaseReport> getPurchases(LocalDateTime start, LocalDateTime end, Long establishmentId) {
                 // Use paginated repository query
                 List<Purchase> purchases = purchaseRepository.findByEstablishmentAndDateRangeList(
-                                establishmentId, start, end);
+                                establishmentId, start.toLocalDate(), end.toLocalDate());
 
                 return purchases.stream()
                                 .map(p -> new PurchaseReport(
@@ -346,9 +359,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesReport> getSales(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<SalesReport> getSales(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Use paginated repository query
                 List<Sale> sales = saleRepository.findForReports(establishmentId, startTime, endTime,
@@ -374,9 +387,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public SalesSummaryReport getSalesSummary(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public SalesSummaryReport getSalesSummary(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 // Use repository query
                 List<Sale> sales = saleRepository.findForReports(establishmentId, startTime, endTime,
@@ -399,7 +412,7 @@ public class ReportServiceImpl implements ReportService {
                                 .collect(Collectors.groupingBy(s -> s.getDocumentType().name(),
                                                 Collectors.reducing(BigDecimal.ZERO, Sale::getTotal, BigDecimal::add)));
 
-                return new SalesSummaryReport(start, end, totalTransactions, totalRevenue, totalTax,
+                return new SalesSummaryReport(start.toLocalDate(), end.toLocalDate(), totalTransactions, totalRevenue, totalTax,
                                 voidedCount, voidedAmount, countByDocumentType, amountByDocumentType);
         }
 
@@ -414,13 +427,17 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesReport> getSalesFiltered(LocalDate start, LocalDate end, Long establishmentId,
-                        Sale.SaleDocumentType documentType, String series) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<SalesReport> getSalesFiltered(LocalDateTime start, LocalDateTime end, Long establishmentId,
+                        Sale.SaleDocumentType documentType, String series, Long sellerId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findByFilters(establishmentId, startTime, endTime,
                                 documentType, series);
+
+                if (sellerId != null) {
+                        sales = sales.stream().filter(s -> s.getUser() != null && s.getUser().getId().equals(sellerId)).collect(Collectors.toList());
+                }
 
                 return sales.stream()
                                 .map(s -> new SalesReport(
@@ -442,9 +459,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesBySeriesReport> getSalesBySeries(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<SalesBySeriesReport> getSalesBySeries(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findAllForReport(establishmentId, startTime, endTime,
                                 Pageable.unpaged()).getContent();
@@ -474,7 +491,15 @@ public class ReportServiceImpl implements ReportService {
                                         BigDecimal voidedAmount = voided.stream().map(Sale::getTotal)
                                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                                        Long initialNum = group.stream().map(Sale::getNumber)
+                                                        .map(Long::valueOf)
+                                                        .min(Long::compare).orElse(0L);
+                                        Long actualNum = group.stream().map(Sale::getNumber)
+                                                        .map(Long::valueOf)
+                                                        .max(Long::compare).orElse(0L);
+
                                         return new SalesBySeriesReport(docType, seriesVal,
+                                                        initialNum, actualNum,
                                                         (long) valid.size(), totalSubTotal, totalTax,
                                                         totalAmount, (long) voided.size(), voidedAmount);
                                 })
@@ -484,10 +509,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesByPaymentMethodReport> getSalesByPaymentMethod(LocalDate start, LocalDate end,
+        public List<SalesByPaymentMethodReport> getSalesByPaymentMethod(LocalDateTime start, LocalDateTime end,
                         Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findWithPaymentsForReport(establishmentId, startTime, endTime);
 
@@ -525,10 +550,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesByLaboratoryReport> getSalesByLaboratory(LocalDate start, LocalDate end,
+        public List<SalesByLaboratoryReport> getSalesByLaboratory(LocalDateTime start, LocalDateTime end,
                         Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
 
@@ -561,10 +586,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesByEmployeeCategoryReport> getSalesByEmployeeCategory(LocalDate start, LocalDate end,
+        public List<SalesByEmployeeCategoryReport> getSalesByEmployeeCategory(LocalDateTime start, LocalDateTime end,
                         Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
 
@@ -606,10 +631,10 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesByCategoryDetailReport> getSalesByCategoryDetail(LocalDate start, LocalDate end,
+        public List<SalesByCategoryDetailReport> getSalesByCategoryDetail(LocalDateTime start, LocalDateTime end,
                         Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
 
@@ -679,9 +704,9 @@ public class ReportServiceImpl implements ReportService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<SalesByProductReport> getSalesByProduct(LocalDate start, LocalDate end, Long establishmentId) {
-                LocalDateTime startTime = start.atStartOfDay();
-                LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        public List<SalesByProductReport> getSalesByProduct(LocalDateTime start, LocalDateTime end, Long establishmentId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
 
                 List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
 
@@ -702,14 +727,21 @@ public class ReportServiceImpl implements ReportService {
                                                         .map(i -> i.getQuantity().longValue())
                                                         .reduce(0L, Long::sum);
 
-                                        String catName = product.getCategory() != null ? product.getCategory().getName() : "Sin Categoría";
-                                        String labName = product.getLaboratory() != null ? product.getLaboratory().getName() : "Sin Laboratorio";
+                                        String catName = product.getCategory() != null ? product.getCategory().getName()
+                                                        : "Sin Categoría";
+                                        String labName = product.getLaboratory() != null
+                                                        ? product.getLaboratory().getName()
+                                                        : "Sin Laboratorio";
+                                        String therapeuticAction = product.getTherapeuticActions().stream()
+                                                        .map(TherapeuticAction::getName)
+                                                        .collect(Collectors.joining(", "));
 
                                         return new SalesByProductReport(
                                                         product.getId(),
                                                         product.getTradeName(),
                                                         catName,
                                                         labName,
+                                                        therapeuticAction,
                                                         quantitySold,
                                                         totalRevenue);
                                 })
@@ -720,6 +752,10 @@ public class ReportServiceImpl implements ReportService {
         @Override
         @Transactional(readOnly = true)
         public List<String> getAvailableSeries(Long establishmentId, Sale.SaleDocumentType documentType) {
+                if (documentType == null) {
+                        return documentSequenceRepository.findSeriesByEstablishment(establishmentId);
+                }
+
                 DocumentSequence.DocumentType seqDocType;
                 try {
                         seqDocType = DocumentSequence.DocumentType.valueOf(documentType.name());
@@ -728,5 +764,500 @@ public class ReportServiceImpl implements ReportService {
                 }
                 return documentSequenceRepository.findSeriesByEstablishmentAndDocumentType(establishmentId, seqDocType);
         }
-}
 
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesByCategoryDetailReport> getSalesByCategories(LocalDateTime start, LocalDateTime end,
+                        Long establishmentId, List<Long> categoryIds, Long sellerId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
+
+                List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
+
+                if (sellerId != null) {
+                        sales = sales.stream().filter(s -> s.getUser() != null && s.getUser().getId().equals(sellerId)).collect(Collectors.toList());
+                }
+
+                Map<Category, List<SaleItem>> itemsByCategory = sales.stream()
+                                .flatMap(s -> s.getItems().stream())
+                                .filter(item -> {
+                                        Category cat = item.getProduct().getCategory();
+                                        if (categoryIds == null || categoryIds.isEmpty())
+                                                return true;
+                                        return cat != null && categoryIds.contains(cat.getId());
+                                })
+                                .collect(Collectors.groupingBy(
+                                                item -> {
+                                                        Category cat = item.getProduct().getCategory();
+                                                        return cat != null ? cat : createUncategorized();
+                                                }));
+
+                return itemsByCategory.entrySet().stream()
+                                .map(entry -> {
+                                        Category cat = entry.getKey();
+                                        List<SaleItem> items = entry.getValue();
+
+                                        BigDecimal totalRevenue = items.stream()
+                                                        .map(SaleItem::getAmount)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal totalQty = items.stream()
+                                                        .map(SaleItem::getQuantity)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                        List<SalesByCategoryDetailReport.ProductDetail> products = items.stream()
+                                                        .collect(Collectors.groupingBy(
+                                                                        item -> item.getProduct().getId()))
+                                                        .entrySet().stream()
+                                                        .map(productEntry -> {
+                                                                List<SaleItem> productItems = productEntry.getValue();
+                                                                Product product = productItems.get(0).getProduct();
+                                                                BigDecimal pQty = productItems.stream()
+                                                                                .map(SaleItem::getQuantity)
+                                                                                .reduce(BigDecimal.ZERO,
+                                                                                                BigDecimal::add);
+                                                                BigDecimal pRevenue = productItems.stream()
+                                                                                .map(SaleItem::getAmount)
+                                                                                .reduce(BigDecimal.ZERO,
+                                                                                                BigDecimal::add);
+                                                                String labName = product.getLaboratory() != null
+                                                                                ? product.getLaboratory().getName()
+                                                                                : "N/A";
+                                                                return new SalesByCategoryDetailReport.ProductDetail(
+                                                                                product.getId(),
+                                                                                product.getTradeName(),
+                                                                                labName,
+                                                                                pQty, pRevenue);
+                                                        })
+                                                        .sorted((a, b) -> b.revenue().compareTo(a.revenue()))
+                                                        .collect(Collectors.toList());
+
+                                        return new SalesByCategoryDetailReport(
+                                                        cat.getId(), cat.getName(), totalRevenue, totalQty,
+                                                        (long) products.size(), products);
+                                })
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesByProductReport> getSalesByProductFilters(LocalDateTime start, LocalDateTime end, Long establishmentId,
+                        List<Long> productIds, List<Long> brandIds, List<Long> therapeuticActionIds, Long sellerId) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
+
+                List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
+
+                if (sellerId != null) {
+                        sales = sales.stream().filter(s -> s.getUser() != null && s.getUser().getId().equals(sellerId)).collect(Collectors.toList());
+                }
+
+                Map<Product, List<SaleItem>> itemsByProduct = sales.stream()
+                                .flatMap(s -> s.getItems().stream())
+                                .filter(item -> {
+                                        Product p = item.getProduct();
+                                        boolean matchProduct = productIds == null || productIds.isEmpty()
+                                                        || productIds.contains(p.getId());
+                                        boolean matchBrand = brandIds == null || brandIds.isEmpty()
+                                                        || (p.getBrand() != null
+                                                                        && brandIds.contains(
+                                                                                        p.getBrand().getId()));
+                                        boolean matchTherapeutic = therapeuticActionIds == null
+                                                        || therapeuticActionIds.isEmpty()
+                                                        || p.getTherapeuticActions().stream()
+                                                                        .anyMatch(ta -> therapeuticActionIds
+                                                                                        .contains(ta.getId()));
+
+                                        return matchProduct && matchBrand && matchTherapeutic;
+                                })
+                                .collect(Collectors.groupingBy(SaleItem::getProduct));
+
+                return itemsByProduct.entrySet().stream()
+                                .map(entry -> {
+                                        Product product = entry.getKey();
+                                        List<SaleItem> items = entry.getValue();
+
+                                        BigDecimal totalRevenue = items.stream()
+                                                        .map(SaleItem::getAmount)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Long quantitySold = items.stream()
+                                                        .map(i -> i.getQuantity().longValue())
+                                                        .reduce(0L, Long::sum);
+
+                                        String catName = product.getCategory() != null ? product.getCategory().getName()
+                                                        : "Sin Categoría";
+                                        String labName = product.getBrand() != null
+                                                        ? product.getBrand().getName()
+                                                        : "Sin Marca";
+                                        String therapeuticAction = product.getTherapeuticActions().stream()
+                                                        .map(TherapeuticAction::getName)
+                                                        .collect(Collectors.joining(", "));
+
+                                        return new SalesByProductReport(
+                                                        product.getId(),
+                                                        product.getTradeName(),
+                                                        catName,
+                                                        labName,
+                                                        therapeuticAction,
+                                                        quantitySold,
+                                                        totalRevenue);
+                                })
+                                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesBySeriesReport> getSalesBySeriesFiltered(LocalDateTime start, LocalDateTime end, Long establishmentId,
+                        List<String> seriesList) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
+
+                List<Sale> sales = saleRepository.findAllForReport(establishmentId, startTime, endTime,
+                                Pageable.unpaged()).getContent();
+
+                return sales.stream()
+                                .filter(s -> seriesList == null || seriesList.isEmpty()
+                                                || seriesList.contains(s.getSeries()))
+                                .collect(Collectors.groupingBy(
+                                                s -> s.getDocumentType().name() + "|" + s.getSeries()))
+                                .entrySet().stream()
+                                .map(entry -> {
+                                        String[] parts = entry.getKey().split("\\|", 2);
+                                        String docType = parts[0];
+                                        String seriesVal = parts.length > 1 ? parts[1] : "";
+                                        List<Sale> group = entry.getValue();
+
+                                        List<Sale> valid = group.stream().filter(s -> !s.isVoided())
+                                                        .collect(Collectors.toList());
+                                        List<Sale> voided = group.stream().filter(Sale::isVoided)
+                                                        .collect(Collectors.toList());
+
+                                        BigDecimal totalSubTotal = valid.stream().map(Sale::getSubTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal totalTax = valid.stream().map(Sale::getTax)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal totalAmount = valid.stream().map(Sale::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal voidedAmount = voided.stream().map(Sale::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                        Long initialNum = group.stream().map(Sale::getNumber)
+                                                        .map(Long::valueOf)
+                                                        .min(Long::compare).orElse(0L);
+                                        Long actualNum = group.stream().map(Sale::getNumber)
+                                                        .map(Long::valueOf)
+                                                        .max(Long::compare).orElse(0L);
+
+                                        return new SalesBySeriesReport(docType, seriesVal,
+                                                        initialNum, actualNum,
+                                                        (long) valid.size(), totalSubTotal, totalTax,
+                                                        totalAmount, (long) voided.size(), voidedAmount);
+                                })
+                                .sorted((a, b) -> b.totalAmount().compareTo(a.totalAmount()))
+                                .collect(Collectors.toList());
+        }
+
+        // ── Reportes por Vendedor ──
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesReport> getSalesBySeller(LocalDateTime start, LocalDateTime end, Long establishmentId,
+                        List<Long> sellerIds) {
+                // Map Employee IDs (from frontend) to User IDs (stored in Sales)
+                List<Long> userIds = null;
+                if (sellerIds != null && !sellerIds.isEmpty() && !sellerIds.contains(0L)) {
+                        userIds = employeeRepository.findAllById(sellerIds).stream()
+                                        .filter(e -> e.getUser() != null)
+                                        .map(e -> e.getUser().getId())
+                                        .collect(Collectors.toList());
+
+                        if (userIds.isEmpty()) {
+                                return new ArrayList<>(); // Selected employees have no associated users
+                        }
+                }
+
+                List<Sale> sales = saleRepository.findByFilters(establishmentId, start, end, null, null);
+
+                // Filter by user IDs if not "Todos"
+                if (userIds != null) {
+                        final List<Long> finalUserIds = userIds;
+                        sales = sales.stream()
+                                        .filter(s -> s.getUser() != null && finalUserIds.contains(s.getUser().getId()))
+                                        .collect(Collectors.toList());
+                }
+
+                return sales.stream()
+                                .map(s -> {
+                                        // Get employee name from User -> Employee link if possible
+                                        String employeeName = "N/A";
+                                        if (s.getUser() != null) {
+                                                Employee emp = employeeRepository.findByUserId(s.getUser().getId()).orElse(null);
+                                                if (emp != null) {
+                                                        employeeName = emp.getFirstName() + " " + (emp.getLastName() != null ? emp.getLastName() : "");
+                                                } else {
+                                                        employeeName = s.getUser().getFullName();
+                                                }
+                                        }
+
+                                        return new SalesReport(
+                                                        s.getId(),
+                                                        s.getCustomer() != null ? s.getCustomer().getName() : "PUBLICO EN GENERAL",
+                                                        employeeName,
+                                                        s.getDocumentType().name(),
+                                                        s.getSeries() + "-" + s.getNumber(),
+                                                        s.getDate(),
+                                                        s.getSubTotal(),
+                                                        s.getTax(),
+                                                        s.getTotal(),
+                                                        s.getStatus().name(),
+                                                        s.getSunatStatus() != null ? s.getSunatStatus().name() : null,
+                                                        s.isVoided());
+                                })
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesByCategoryDetailReport> getSalesBySellerCategories(LocalDateTime start, LocalDateTime end,
+                        Long establishmentId, List<Long> sellerIds, List<Long> categoryIds) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
+
+                List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
+
+                // Filter by seller if not "Todos"
+                if (sellerIds != null && !sellerIds.isEmpty() && !sellerIds.contains(0L)) {
+                        sales = sales.stream()
+                                        .filter(s -> s.getUser() != null && sellerIds.contains(s.getUser().getId()))
+                                        .collect(Collectors.toList());
+                }
+
+                Map<Category, List<SaleItem>> itemsByCategory = sales.stream()
+                                .flatMap(s -> s.getItems().stream())
+                                .filter(item -> {
+                                        Category cat = item.getProduct().getCategory();
+                                        if (categoryIds == null || categoryIds.isEmpty())
+                                                return true;
+                                        return cat != null && categoryIds.contains(cat.getId());
+                                })
+                                .collect(Collectors.groupingBy(
+                                                item -> {
+                                                        Category cat = item.getProduct().getCategory();
+                                                        return cat != null ? cat : createUncategorized();
+                                                }));
+
+                return itemsByCategory.entrySet().stream()
+                                .map(entry -> {
+                                        Category cat = entry.getKey();
+                                        List<SaleItem> items = entry.getValue();
+
+                                        BigDecimal totalRevenue = items.stream()
+                                                        .map(SaleItem::getAmount)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal totalQty = items.stream()
+                                                        .map(SaleItem::getQuantity)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                        List<SalesByCategoryDetailReport.ProductDetail> products = items.stream()
+                                                        .collect(Collectors.groupingBy(
+                                                                        item -> item.getProduct().getId()))
+                                                        .entrySet().stream()
+                                                        .map(productEntry -> {
+                                                                List<SaleItem> productItems = productEntry.getValue();
+                                                                Product product = productItems.get(0).getProduct();
+                                                                BigDecimal pQty = productItems.stream()
+                                                                                .map(SaleItem::getQuantity)
+                                                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                                                BigDecimal pRevenue = productItems.stream()
+                                                                                .map(SaleItem::getAmount)
+                                                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                                                String labName = product.getLaboratory() != null
+                                                                                ? product.getLaboratory().getName()
+                                                                                : "N/A";
+                                                                return new SalesByCategoryDetailReport.ProductDetail(
+                                                                                product.getId(),
+                                                                                product.getTradeName(),
+                                                                                labName,
+                                                                                pQty, pRevenue);
+                                                        })
+                                                        .sorted((a, b) -> b.revenue().compareTo(a.revenue()))
+                                                        .collect(Collectors.toList());
+
+                                        return new SalesByCategoryDetailReport(
+                                                        cat.getId(), cat.getName(), totalRevenue, totalQty,
+                                                        (long) products.size(), products);
+                                })
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesByProductReport> getSalesBySellerProducts(LocalDateTime start, LocalDateTime end,
+                        Long establishmentId, List<Long> sellerIds, List<Long> productIds) {
+                LocalDateTime startTime = start;
+                LocalDateTime endTime = end;
+
+                List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
+
+                // Filter by seller if not "Todos"
+                if (sellerIds != null && !sellerIds.isEmpty() && !sellerIds.contains(0L)) {
+                        sales = sales.stream()
+                                        .filter(s -> s.getUser() != null && sellerIds.contains(s.getUser().getId()))
+                                        .collect(Collectors.toList());
+                }
+
+                Map<Product, List<SaleItem>> itemsByProduct = sales.stream()
+                                .flatMap(s -> s.getItems().stream())
+                                .filter(item -> {
+                                        if (productIds == null || productIds.isEmpty())
+                                                return true;
+                                        return productIds.contains(item.getProduct().getId());
+                                })
+                                .collect(Collectors.groupingBy(SaleItem::getProduct));
+
+                return itemsByProduct.entrySet().stream()
+                                .map(entry -> {
+                                        Product product = entry.getKey();
+                                        List<SaleItem> items = entry.getValue();
+
+                                        BigDecimal totalRevenue = items.stream()
+                                                        .map(SaleItem::getAmount)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        Long quantitySold = items.stream()
+                                                        .map(i -> i.getQuantity().longValue())
+                                                        .reduce(0L, Long::sum);
+
+                                        String catName = product.getCategory() != null ? product.getCategory().getName()
+                                                        : "Sin Categoría";
+                                        String labName = product.getLaboratory() != null
+                                                        ? product.getLaboratory().getName()
+                                                        : "Sin Laboratorio";
+                                        String therapeuticAction = product.getTherapeuticActions().stream()
+                                                        .map(TherapeuticAction::getName)
+                                                        .collect(Collectors.joining(", "));
+
+                                        return new SalesByProductReport(
+                                                        product.getId(),
+                                                        product.getTradeName(),
+                                                        catName,
+                                                        labName,
+                                                        therapeuticAction,
+                                                        quantitySold,
+                                                        totalRevenue);
+                                })
+                                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public String getSellerNames(List<Long> sellerIds) {
+                if (sellerIds == null || sellerIds.isEmpty() || sellerIds.contains(0L)) {
+                        return "TODOS LOS VENDEDORES";
+                }
+
+                if (sellerIds.size() == 1) {
+                        return employeeRepository.findById(sellerIds.get(0))
+                                        .map(e -> e.getFirstName() + " " + (e.getLastName() != null ? e.getLastName() : ""))
+                                        .orElse("Vendedor Desconocido");
+                }
+
+                return "VARIOS VENDEDORES (" + sellerIds.size() + ")";
+        }
+
+        // ── Reportes por Cliente ──
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesByCustomerReport> getSalesByCustomer(LocalDateTime start, LocalDateTime end,
+                        Long establishmentId, List<Long> customerIds) {
+                List<Sale> sales = saleRepository
+                                .findByEstablishmentAndDateRangeOrderByDateDesc(establishmentId, start, end, Pageable.unpaged())
+                                .getContent().stream()
+                                .filter(s -> !s.isVoided())
+                                .collect(Collectors.toList());
+
+                // Filter by customer IDs if specified (0 = Todos)
+                if (customerIds != null && !customerIds.isEmpty() && !customerIds.contains(0L)) {
+                        sales = sales.stream()
+                                        .filter(s -> s.getCustomer() != null && customerIds.contains(s.getCustomer().getId()))
+                                        .collect(Collectors.toList());
+                }
+
+                // Group by customer
+                Map<Long, List<Sale>> salesByCustomer = sales.stream()
+                                .collect(Collectors.groupingBy(s -> s.getCustomer() != null ? s.getCustomer().getId() : 0L));
+
+                return salesByCustomer.entrySet().stream()
+                                .map(entry -> {
+                                        List<Sale> customerSales = entry.getValue();
+                                        Sale firstSale = customerSales.get(0);
+                                        String customerName = firstSale.getCustomer() != null
+                                                        ? firstSale.getCustomer().getName()
+                                                        : "PUBLICO EN GENERAL";
+                                        String documentNumber = firstSale.getCustomer() != null
+                                                        ? firstSale.getCustomer().getDocumentNumber()
+                                                        : "-";
+                                        BigDecimal total = customerSales.stream()
+                                                        .map(Sale::getTotal)
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                                        return new SalesByCustomerReport(
+                                                        entry.getKey(),
+                                                        customerName,
+                                                        documentNumber,
+                                                        customerSales.size(),
+                                                        total);
+                                })
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SalesReport> getSalesByCustomerDetail(LocalDateTime start, LocalDateTime end,
+                        Long establishmentId, List<Long> customerIds) {
+                List<Sale> sales = saleRepository
+                                .findByEstablishmentAndDateRangeOrderByDateDesc(establishmentId, start, end, Pageable.unpaged())
+                                .getContent().stream()
+                                .filter(s -> !s.isVoided())
+                                .collect(Collectors.toList());
+
+                // Filter by customer IDs if specified (0 = Todos)
+                if (customerIds != null && !customerIds.isEmpty() && !customerIds.contains(0L)) {
+                        sales = sales.stream()
+                                        .filter(s -> s.getCustomer() != null && customerIds.contains(s.getCustomer().getId()))
+                                        .collect(Collectors.toList());
+                }
+
+                return sales.stream()
+                                .map(s -> {
+                                        String employeeName = "N/A";
+                                        if (s.getUser() != null) {
+                                                Employee emp = employeeRepository.findByUserId(s.getUser().getId()).orElse(null);
+                                                if (emp != null) {
+                                                        employeeName = emp.getFirstName() + " " + (emp.getLastName() != null ? emp.getLastName() : "");
+                                                } else {
+                                                        employeeName = s.getUser().getFullName();
+                                                }
+                                        }
+
+                                        return new SalesReport(
+                                                        s.getId(),
+                                                        s.getCustomer() != null ? s.getCustomer().getName() : "PUBLICO EN GENERAL",
+                                                        employeeName,
+                                                        s.getDocumentType().name(),
+                                                        s.getSeries() + "-" + s.getNumber(),
+                                                        s.getDate(),
+                                                        s.getSubTotal(),
+                                                        s.getTax(),
+                                                        s.getTotal(),
+                                                        s.getStatus().name(),
+                                                        s.getSunatStatus() != null ? s.getSunatStatus().name() : null,
+                                                        s.isVoided());
+                                })
+                                .collect(Collectors.toList());
+        }
+}

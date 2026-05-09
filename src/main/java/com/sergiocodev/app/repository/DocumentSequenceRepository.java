@@ -46,4 +46,8 @@ public interface DocumentSequenceRepository extends JpaRepository<DocumentSequen
            "AND ds.documentType = :documentType AND ds.deletedAt IS NULL ORDER BY ds.series ASC")
     List<String> findSeriesByEstablishmentAndDocumentType(@Param("establishmentId") Long establishmentId,
                                                           @Param("documentType") DocumentSequence.DocumentType documentType);
+
+    @Query("SELECT ds.series FROM DocumentSequence ds WHERE ds.establishment.id = :establishmentId " +
+           "AND ds.deletedAt IS NULL ORDER BY ds.series ASC")
+    List<String> findSeriesByEstablishment(@Param("establishmentId") Long establishmentId);
 }
