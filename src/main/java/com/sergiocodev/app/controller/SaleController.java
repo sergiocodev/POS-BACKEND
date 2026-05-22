@@ -9,7 +9,7 @@ import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.sale.ProductForSaleResponse;
 import com.sergiocodev.app.dto.sale.SaleRequest;
 import com.sergiocodev.app.dto.sale.SaleResponse;
-import com.sergiocodev.app.service.SaleService;
+import com.sergiocodev.app.service.interfaces.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

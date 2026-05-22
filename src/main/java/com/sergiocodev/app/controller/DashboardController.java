@@ -2,7 +2,7 @@ package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.dashboard.*;
-import com.sergiocodev.app.service.DashboardService;
+import com.sergiocodev.app.service.interfaces.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;

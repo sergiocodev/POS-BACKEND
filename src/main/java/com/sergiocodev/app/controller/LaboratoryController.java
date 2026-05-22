@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.laboratory.LaboratoryRequest;
 import com.sergiocodev.app.dto.laboratory.LaboratoryResponse;
-import com.sergiocodev.app.service.LaboratoryService;
+import com.sergiocodev.app.service.interfaces.LaboratoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.inventory.InventoryRequest;
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
-import com.sergiocodev.app.service.InventoryService;
+import com.sergiocodev.app.service.interfaces.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

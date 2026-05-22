@@ -4,7 +4,7 @@ import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentResponse;
 import com.sergiocodev.app.model.VoidedDocument;
-import com.sergiocodev.app.service.VoidedDocumentService;
+import com.sergiocodev.app.service.interfaces.VoidedDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

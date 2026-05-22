@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.config.UserPrincipal;
 import com.sergiocodev.app.dto.stocktransfer.StockTransferRequest;
 import com.sergiocodev.app.dto.stocktransfer.StockTransferResponse;
-import com.sergiocodev.app.service.StockTransferService;
+import com.sergiocodev.app.service.interfaces.StockTransferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.permission.CreatePermissionRequest;
 import com.sergiocodev.app.dto.permission.PermissionResponse;
-import com.sergiocodev.app.service.PermissionService;
+import com.sergiocodev.app.service.interfaces.PermissionService;
 import com.sergiocodev.app.util.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

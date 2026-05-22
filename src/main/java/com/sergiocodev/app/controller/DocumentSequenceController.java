@@ -2,7 +2,7 @@ package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.documentsequence.DocumentSequenceRequest;
 import com.sergiocodev.app.dto.documentsequence.DocumentSequenceResponse;
-import com.sergiocodev.app.service.DocumentSequenceService;
+import com.sergiocodev.app.service.interfaces.DocumentSequenceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

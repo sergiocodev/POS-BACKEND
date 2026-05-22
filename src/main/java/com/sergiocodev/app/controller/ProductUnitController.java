@@ -2,7 +2,7 @@ package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.productunit.ProductUnitRequest;
 import com.sergiocodev.app.dto.productunit.ProductUnitResponse;
-import com.sergiocodev.app.service.ProductUnitService;
+import com.sergiocodev.app.service.interfaces.ProductUnitService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

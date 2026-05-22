@@ -8,7 +8,7 @@ import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
 import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
 import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
-import com.sergiocodev.app.service.CashSessionService;
+import com.sergiocodev.app.service.interfaces.CashSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

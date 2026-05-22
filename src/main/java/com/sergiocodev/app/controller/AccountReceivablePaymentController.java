@@ -4,7 +4,7 @@ import com.sergiocodev.app.config.UserPrincipal;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentResponse;
-import com.sergiocodev.app.service.AccountReceivablePaymentService;
+import com.sergiocodev.app.service.interfaces.AccountReceivablePaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

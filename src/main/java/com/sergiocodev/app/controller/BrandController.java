@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.brand.BrandRequest;
 import com.sergiocodev.app.dto.brand.BrandResponse;
-import com.sergiocodev.app.service.BrandService;
+import com.sergiocodev.app.service.interfaces.BrandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

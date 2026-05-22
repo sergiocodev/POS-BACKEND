@@ -4,7 +4,7 @@ import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.customer.CustomerDashboardResponse;
 import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
-import com.sergiocodev.app.service.CustomerService;
+import com.sergiocodev.app.service.interfaces.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

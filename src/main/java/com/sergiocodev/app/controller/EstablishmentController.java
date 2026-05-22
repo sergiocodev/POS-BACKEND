@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.establishment.EstablishmentRequest;
 import com.sergiocodev.app.dto.establishment.EstablishmentResponse;
-import com.sergiocodev.app.service.EstablishmentService;
+import com.sergiocodev.app.service.interfaces.EstablishmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

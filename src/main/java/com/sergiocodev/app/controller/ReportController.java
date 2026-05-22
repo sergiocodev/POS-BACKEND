@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.report.*;
 import com.sergiocodev.app.dto.report.SalesByCustomerReport;
-import com.sergiocodev.app.service.ReportService;
+import com.sergiocodev.app.service.interfaces.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
 import com.sergiocodev.app.util.ReportPdfGenerator;
-import com.sergiocodev.app.service.CompanyService;
+import com.sergiocodev.app.service.interfaces.CompanyService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.time.LocalDate;

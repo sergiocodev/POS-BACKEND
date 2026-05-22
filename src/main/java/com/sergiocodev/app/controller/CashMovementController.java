@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.cashmovement.CashMovementRequest;
 import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
-import com.sergiocodev.app.service.CashMovementService;
+import com.sergiocodev.app.service.interfaces.CashMovementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableResponse;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableDashboardResponse;
-import com.sergiocodev.app.service.AccountReceivableService;
+import com.sergiocodev.app.service.interfaces.AccountReceivableService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

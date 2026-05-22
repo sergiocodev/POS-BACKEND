@@ -5,7 +5,7 @@ import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
 import com.sergiocodev.app.dto.accountpayable.AccountPayableResponse;
 import com.sergiocodev.app.model.AccountPayable;
-import com.sergiocodev.app.service.AccountPayableService;
+import com.sergiocodev.app.service.interfaces.AccountPayableService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

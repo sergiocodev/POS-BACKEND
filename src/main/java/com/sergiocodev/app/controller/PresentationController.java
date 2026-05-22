@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.presentation.PresentationRequest;
 import com.sergiocodev.app.dto.presentation.PresentationResponse;
-import com.sergiocodev.app.service.PresentationService;
+import com.sergiocodev.app.service.interfaces.PresentationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

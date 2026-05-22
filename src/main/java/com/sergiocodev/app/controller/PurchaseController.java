@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.purchase.PurchaseRequest;
 import com.sergiocodev.app.dto.purchase.PurchaseResponse;
-import com.sergiocodev.app.service.PurchaseService;
+import com.sergiocodev.app.service.interfaces.PurchaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -2,7 +2,7 @@ package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.company.CompanyRequest;
 import com.sergiocodev.app.dto.company.CompanyResponse;
-import com.sergiocodev.app.service.CompanyService;
+import com.sergiocodev.app.service.interfaces.CompanyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

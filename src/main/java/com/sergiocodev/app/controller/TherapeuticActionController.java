@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.therapeuticaction.TherapeuticActionRequest;
 import com.sergiocodev.app.dto.therapeuticaction.TherapeuticActionResponse;
-import com.sergiocodev.app.service.TherapeuticActionService;
+import com.sergiocodev.app.service.interfaces.TherapeuticActionService;
 import com.sergiocodev.app.util.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

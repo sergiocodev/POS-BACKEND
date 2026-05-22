@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientRequest;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientResponse;
-import com.sergiocodev.app.service.ActiveIngredientService;
+import com.sergiocodev.app.service.interfaces.ActiveIngredientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

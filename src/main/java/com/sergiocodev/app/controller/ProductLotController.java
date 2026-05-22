@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.productlot.ProductLotRequest;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
-import com.sergiocodev.app.service.ProductLotService;
+import com.sergiocodev.app.service.interfaces.ProductLotService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

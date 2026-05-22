@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.pharmaceuticalform.PharmaceuticalFormRequest;
 import com.sergiocodev.app.dto.pharmaceuticalform.PharmaceuticalFormResponse;
-import com.sergiocodev.app.service.PharmaceuticalFormService;
+import com.sergiocodev.app.service.interfaces.PharmaceuticalFormService;
 import com.sergiocodev.app.util.PermissionConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

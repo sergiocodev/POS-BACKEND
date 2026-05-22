@@ -1,0 +1,17 @@
+package com.sergiocodev.app.service.interfaces;
+
+import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
+import com.sergiocodev.app.dto.accountpayable.AccountPayableResponse;
+import com.sergiocodev.app.model.AccountPayable;
+
+import java.util.List;
+
+public interface AccountPayableService {
+    List<AccountPayableResponse> getAll();
+
+    List<AccountPayableResponse> getBySupplierId(Long supplierId);
+
+    List<AccountPayableResponse> getByStatus(AccountPayable.PayableStatus status);
+
+    AccountPayableResponse pay(Long accountPayableId, AccountPayablePaymentRequest request, Long userId);
+}

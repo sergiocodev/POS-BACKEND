@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.stockmovement.StockMovementRequest;
 import com.sergiocodev.app.dto.stockmovement.StockMovementResponse;
-import com.sergiocodev.app.service.StockMovementService;
+import com.sergiocodev.app.service.interfaces.StockMovementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

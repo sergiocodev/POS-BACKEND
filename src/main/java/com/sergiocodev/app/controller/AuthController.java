@@ -7,7 +7,7 @@ import com.sergiocodev.app.dto.user.RefreshTokenRequest;
 import com.sergiocodev.app.dto.user.RegisterRequest;
 import com.sergiocodev.app.dto.user.UserResponse;
 import com.sergiocodev.app.mapper.UserMapper;
-import com.sergiocodev.app.service.AuthService;
+import com.sergiocodev.app.service.interfaces.AuthService;
 import com.sergiocodev.app.model.User;
 import com.sergiocodev.app.config.ApiVersion;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,7 +1,7 @@
 package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
-import com.sergiocodev.app.service.FileStorageService;
+import com.sergiocodev.app.service.interfaces.FileStorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

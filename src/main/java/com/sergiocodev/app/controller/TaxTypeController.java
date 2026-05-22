@@ -3,7 +3,7 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.taxtype.TaxTypeRequest;
 import com.sergiocodev.app.dto.taxtype.TaxTypeResponse;
-import com.sergiocodev.app.service.TaxTypeService;
+import com.sergiocodev.app.service.interfaces.TaxTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
