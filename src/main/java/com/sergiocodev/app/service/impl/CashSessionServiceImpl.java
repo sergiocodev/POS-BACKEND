@@ -171,6 +171,60 @@ public class CashSessionServiceImpl implements CashSessionService {
                 return new CashSessionResponse(repository.save(entity));
         }
 
+        private record CashInflows(BigDecimal totalCashSales, BigDecimal totalArCashPayments, BigDecimal totalManualInflows) {
+                public BigDecimal getTotal() {
+                        return totalCashSales.add(totalArCashPayments).add(totalManualInflows);
+                }
+        }
+
+        private record CashOutflows(BigDecimal totalApCashPayments, BigDecimal totalManualOutflows) {
+                public BigDecimal getTotal() {
+                        return totalApCashPayments.add(totalManualOutflows);
+                }
+        }
+
+        private CashInflows calculateCashInflows(Long sessionId) {
+                BigDecimal totalCashSales = salePaymentRepository
+                                .sumByCashSessionIdAndPaymentMethod(sessionId, PaymentMethod.EFECTIVO);
+
+                BigDecimal totalArCashPayments = arPaymentRepository
+                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
+                                                sessionId, AccountReceivablePayment.PaymentMethod.EFECTIVO)
+                                .stream()
+                                .map(AccountReceivablePayment::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal totalManualInflows = cashMovementRepository
+                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.IN)
+                                .stream()
+                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
+                                .map(CashMovement::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                return new CashInflows(totalCashSales != null ? totalCashSales : BigDecimal.ZERO, 
+                                       totalArCashPayments != null ? totalArCashPayments : BigDecimal.ZERO, 
+                                       totalManualInflows != null ? totalManualInflows : BigDecimal.ZERO);
+        }
+
+        private CashOutflows calculateCashOutflows(Long sessionId) {
+                BigDecimal totalApCashPayments = apPaymentRepository
+                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
+                                                sessionId, AccountPayablePayment.PaymentMethod.EFECTIVO)
+                                .stream()
+                                .map(AccountPayablePayment::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal totalManualOutflows = cashMovementRepository
+                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.OUT)
+                                .stream()
+                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
+                                .map(CashMovement::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                return new CashOutflows(totalApCashPayments != null ? totalApCashPayments : BigDecimal.ZERO, 
+                                        totalManualOutflows != null ? totalManualOutflows : BigDecimal.ZERO);
+        }
+
         @Override
         @Transactional(readOnly = true)
         public SessionStatusResponse getCurrentSessionStatus(Long userId) {
@@ -180,43 +234,8 @@ public class CashSessionServiceImpl implements CashSessionService {
 
                 Long sessionId = session.getId();
 
-                // ── Entradas de efectivo ──────────────────────────────────────────────
-                // 1. Ventas cobradas en efectivo
-                BigDecimal totalCashSales = salePaymentRepository
-                                .sumByCashSessionIdAndPaymentMethod(sessionId, PaymentMethod.EFECTIVO);
-
-                // 2. Cobros de CxC (cuenta por cobrar) en efectivo durante este turno
-                BigDecimal totalArCashPayments = arPaymentRepository
-                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
-                                                sessionId, AccountReceivablePayment.PaymentMethod.EFECTIVO)
-                                .stream()
-                                .map(AccountReceivablePayment::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                // 3. Ingresos manuales (CashMovements tipo IN)
-                BigDecimal totalCashInflows = cashMovementRepository
-                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.IN)
-                                .stream()
-                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
-                                .map(CashMovement::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                // ── Salidas de efectivo ───────────────────────────────────────────────
-                // 4. Pagos a proveedores (CxP) en efectivo durante este turno
-                BigDecimal totalApCashPayments = apPaymentRepository
-                                .findByCashSessionIdAndPaymentMethodAndDeletedAtIsNull(
-                                                sessionId, AccountPayablePayment.PaymentMethod.EFECTIVO)
-                                .stream()
-                                .map(AccountPayablePayment::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                // 5. Egresos manuales (CashMovements tipo OUT)
-                BigDecimal totalCashOutflows = cashMovementRepository
-                                .findByCashSessionIdAndCashConceptType(sessionId, ConceptType.OUT)
-                                .stream()
-                                .filter(m -> !Boolean.TRUE.equals(m.getCashConcept().getIsSystem()))
-                                .map(CashMovement::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                CashInflows inflows = calculateCashInflows(sessionId);
+                CashOutflows outflows = calculateCashOutflows(sessionId);
 
                 // ── Métodos digitales de venta (solo visualización) ───────────────────
                 BigDecimal totalSalesYape = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
@@ -228,19 +247,16 @@ public class CashSessionServiceImpl implements CashSessionService {
                 BigDecimal totalSalesTransferencia = salePaymentRepository.sumByCashSessionIdAndPaymentMethod(sessionId,
                                 PaymentMethod.TRANSFERENCIA);
 
-                BigDecimal totalDigital = totalSalesYape
-                                .add(totalSalesPlin)
-                                .add(totalSalesTarjeta)
-                                .add(totalSalesTransferencia);
+                BigDecimal totalDigital = (totalSalesYape != null ? totalSalesYape : BigDecimal.ZERO)
+                                .add(totalSalesPlin != null ? totalSalesPlin : BigDecimal.ZERO)
+                                .add(totalSalesTarjeta != null ? totalSalesTarjeta : BigDecimal.ZERO)
+                                .add(totalSalesTransferencia != null ? totalSalesTransferencia : BigDecimal.ZERO);
 
                 // ── Saldo teórico ─────────────────────────────────────────────────────
                 // Apertura + entradas en efectivo - salidas en efectivo
                 BigDecimal calculatedBalance = session.getOpeningBalance()
-                                .add(totalCashSales)
-                                .add(totalArCashPayments)
-                                .add(totalCashInflows)
-                                .subtract(totalApCashPayments)
-                                .subtract(totalCashOutflows);
+                                .add(inflows.getTotal())
+                                .subtract(outflows.getTotal());
 
                 return new SessionStatusResponse(
                                 sessionId,
@@ -249,11 +265,11 @@ public class CashSessionServiceImpl implements CashSessionService {
                                 session.getStatus(),
                                 session.getOpeningBalance(),
                                 calculatedBalance,
-                                totalCashSales,
-                                totalArCashPayments,
-                                totalCashInflows,
-                                totalApCashPayments,
-                                totalCashOutflows,
+                                inflows.totalCashSales(),
+                                inflows.totalArCashPayments(),
+                                inflows.totalManualInflows(),
+                                outflows.totalApCashPayments(),
+                                outflows.totalManualOutflows(),
                                 totalSalesYape,
                                 totalSalesPlin,
                                 totalSalesTarjeta,

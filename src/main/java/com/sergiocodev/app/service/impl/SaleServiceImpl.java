@@ -1,10 +1,13 @@
 package com.sergiocodev.app.service.impl;
 
 import com.sergiocodev.app.service.interfaces.SaleService;
+import com.sergiocodev.app.service.interfaces.SaleInventoryService;
+import com.sergiocodev.app.service.interfaces.SalePaymentService;
+import com.sergiocodev.app.service.interfaces.SaleSunatService;
+import com.sergiocodev.app.service.interfaces.SaleInventoryService;
+import com.sergiocodev.app.service.interfaces.SalePaymentService;
+import com.sergiocodev.app.service.interfaces.SaleSunatService;
 
-import com.sergiocodev.app.service.interfaces.CashConceptService;
-import com.sergiocodev.app.service.interfaces.CashMovementService;
-import com.sergiocodev.app.service.interfaces.StockMovementService;
 import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
 import com.sergiocodev.app.dto.sale.CartCalculationRequest;
 import com.sergiocodev.app.dto.sale.CartCalculationResponse;
@@ -21,8 +24,6 @@ import com.sergiocodev.app.model.CashSession;
 import com.sergiocodev.app.model.Product;
 import com.sergiocodev.app.model.ProductLot;
 import com.sergiocodev.app.model.SaleItem;
-import com.sergiocodev.app.model.Inventory;
-import com.sergiocodev.app.model.StockMovement;
 import com.sergiocodev.app.model.SalePayment;
 import com.sergiocodev.app.repository.SaleRepository;
 import com.sergiocodev.app.repository.CustomerRepository;
@@ -30,27 +31,18 @@ import com.sergiocodev.app.repository.EstablishmentRepository;
 import com.sergiocodev.app.repository.UserRepository;
 import com.sergiocodev.app.repository.ProductRepository;
 import com.sergiocodev.app.repository.ProductLotRepository;
-import com.sergiocodev.app.repository.InventoryRepository;
-import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.CashSessionRepository;
 import com.sergiocodev.app.repository.ProductUnitRepository;
 import com.sergiocodev.app.model.ProductUnit;
 import com.sergiocodev.app.model.Customer;
 import com.sergiocodev.app.model.DocumentType;
-import com.sergiocodev.app.model.AccountReceivable;
-import com.sergiocodev.app.service.interfaces.DigitalSignatureService;
 import com.sergiocodev.app.model.Company;
-import com.sergiocodev.app.model.CashConcept;
 import com.sergiocodev.app.model.DocumentSequence;
-import com.sergiocodev.app.repository.AccountReceivableRepository;
 import com.sergiocodev.app.repository.CompanyRepository;
-import com.sergiocodev.app.repository.CashConceptRepository;
 import com.sergiocodev.app.repository.DocumentSequenceRepository;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
-import com.sergiocodev.app.util.XmlUblGenerator;
-import com.sergiocodev.app.util.SunatOseClient;
 import com.sergiocodev.app.util.PdfGenerator;
 import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
 import com.sergiocodev.app.model.Sale.SunatStatus;
@@ -76,22 +68,15 @@ public class SaleServiceImpl implements SaleService {
         private final UserRepository userRepository;
         private final ProductRepository productRepository;
         private final ProductLotRepository lotRepository;
-        private final InventoryRepository inventoryRepository;
-        private final StockMovementRepository stockMovementRepository;
         private final CashSessionRepository cashSessionRepository;
         private final ProductUnitRepository productUnitRepository;
-        private final AccountReceivableRepository accountReceivableRepository;
         private final DocumentSequenceRepository documentSequenceRepository;
         private final CompanyRepository companyRepository;
         private final SaleMapper mapper;
         private final jakarta.persistence.EntityManager entityManager;
-        private final XmlUblGenerator xmlUblGenerator;
-        private final DigitalSignatureService digitalSignatureService;
-        private final SunatOseClient sunatOseClient;
-        private final CashMovementService cashMovementService;
-        private final CashConceptService cashConceptService;
-        private final CashConceptRepository cashConceptRepository;
-        private final StockMovementService stockMovementService;
+        private final SaleInventoryService saleInventoryService;
+        private final SalePaymentService salePaymentService;
+        private final SaleSunatService saleSunatService;
 
         @Override
         @Transactional
@@ -158,7 +143,7 @@ public class SaleServiceImpl implements SaleService {
                         BigDecimal baseQuantity = ir.quantity().multiply(new BigDecimal(factor));
 
                         if (lot != null) {
-                                validateStock(request.establishmentId(), lot.getId(), baseQuantity);
+                                saleInventoryService.validateStock(request.establishmentId(), lot.getId(), baseQuantity);
                         }
 
                         SaleItem item = mapper.toItemEntity(ir);
@@ -181,63 +166,21 @@ public class SaleServiceImpl implements SaleService {
                         entity.getItems().add(item);
 
                         if (lot != null) {
-                                updateInventory(entity, item, baseQuantity);
+                                saleInventoryService.updateInventory(entity, item, baseQuantity);
                         }
                 }
 
                 calculateTotals(entity);
 
-                // 1. Process all payments and add them to the entity (for cascade save)
-                for (var pr : request.payments()) {
-                        SalePayment payment = mapper.toPaymentEntity(pr);
-                        payment.setSale(entity);
-                        payment.setCashSession(session);
-                        entity.getPayments().add(payment);
+                salePaymentService.processPayments(request, entity, session);
 
-                        // No check for CREDITO payment method anymore as it doesn't exist
-                        if (session != null) {
-                                CashConcept concept = cashConceptService
-                                                .findOrCreateSaleConcept(pr.paymentMethod().name());
-
-                                String description = "Venta (" + pr.paymentMethod().name() + "): " + entity.getSeries()
-                                                + "-" + entity.getNumber();
-                                cashMovementService.registerInternalMovement(session, entity.getUser(), concept,
-                                                pr.amount(),
-                                                entity.getSeries() + "-" + entity.getNumber(), description);
-                        }
-                }
-
-                // 2. Save the sale (this saves items and payments via cascade)
                 log.debug("Saving sale: items={}, payments={}, total={}",
                                 entity.getItems().size(), entity.getPayments().size(), entity.getTotal());
                 Sale savedSale = repository.save(entity);
                 log.info("Sale created successfully: id={}, series={}, number={}, total={}",
                                 savedSale.getId(), savedSale.getSeries(), savedSale.getNumber(), savedSale.getTotal());
 
-                // 3. Create AccountReceivable for credit sales
-                if (entity.getPaymentCondition() == Sale.PaymentCondition.CREDITO) {
-                        BigDecimal totalSale = entity.getTotal();
-                        BigDecimal amountPaid = entity.getPayments().stream()
-                                        .map(SalePayment::getAmount)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                        BigDecimal pendingBalance = totalSale.subtract(amountPaid);
-
-                        if (pendingBalance.compareTo(BigDecimal.ZERO) > 0) {
-                                AccountReceivable receivable = new AccountReceivable();
-                                receivable.setSale(savedSale);
-                                receivable.setCustomer(savedSale.getCustomer());
-                                receivable.setTotalAmount(totalSale);
-                                receivable.setAmountPaid(amountPaid);
-                                receivable.setPendingBalance(pendingBalance);
-                                receivable.setStatus(AccountReceivable.ReceivableStatus.PENDING);
-                                receivable.setDueDate(
-                                                request.dueDate() != null ? request.dueDate()
-                                                                : java.time.LocalDate.now().plusDays(30));
-                                accountReceivableRepository.save(receivable);
-                                log.info("Account receivable created for sale {}: pendingBalance={}", savedSale.getId(),
-                                                pendingBalance);
-                        }
-                }
+                salePaymentService.createAccountReceivableIfCredit(savedSale, request);
 
                 return mapper.toResponse(savedSale);
         }
@@ -290,38 +233,6 @@ public class SaleServiceImpl implements SaleService {
                 return response;
         }
 
-        private void validateStock(Long establishmentId, Long lotId, BigDecimal quantity) {
-                Inventory inventory = inventoryRepository.findByEstablishmentIdAndLotId(establishmentId, lotId)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Inventory not found for lot ID: " + lotId));
-
-                if (inventory.getQuantity().compareTo(quantity) < 0) {
-                        throw new StockInsufficientException(
-                                        "Insufficient stock for lot: " + inventory.getLot().getLotCode());
-                }
-        }
-
-        private void updateInventory(Sale sale, SaleItem item, BigDecimal baseQuantity) {
-                if (item.getLot() == null)
-                        return;
-
-                Inventory inventory = inventoryRepository
-                                .findByEstablishmentIdAndLotId(sale.getEstablishment().getId(), item.getLot().getId())
-                                .orElseThrow(
-                                                () -> new ResourceNotFoundException(
-                                                                "No inventory for lot: " + item.getLot().getLotCode()));
-
-                // Descontar en unidad base (ej: 2 blísteres × factor 10 = 20 tabletas
-                // descontadas)
-                inventory.setQuantity(inventory.getQuantity().subtract(baseQuantity));
-                inventory.setLastMovement(LocalDateTime.now());
-                inventoryRepository.save(inventory);
-
-                stockMovementService.recordSaleMovement(
-                                sale.getEstablishment(), item.getLot(),
-                                baseQuantity, inventory.getQuantity(),
-                                sale.getId(), sale.getUser());
-        }
 
         private Sale calculateTotals(Sale sale) {
                 BigDecimal total = BigDecimal.ZERO;
@@ -418,31 +329,12 @@ public class SaleServiceImpl implements SaleService {
         @Override
         @Transactional(readOnly = true)
         public String getXml(Long id) {
-                Sale sale = repository.findWithItemsById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + id));
-
-                StringBuilder xml = new StringBuilder();
-                xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-                xml.append("<Sale>\n");
-                xml.append("  <Id>").append(sale.getId()).append("</Id>\n");
-                xml.append("  <DocumentType>").append(sale.getDocumentType()).append("</DocumentType>\n");
-                xml.append("  <Series>").append(sale.getSeries()).append("</Series>\n");
-                xml.append("  <Number>").append(sale.getNumber()).append("</Number>\n");
-                xml.append("  <Date>").append(sale.getDate()).append("</Date>\n");
-                xml.append("  <Customer>").append(sale.getCustomer() != null ? sale.getCustomer().getName() : "")
-                                .append("</Customer>\n");
-                xml.append("  <SubTotal>").append(sale.getSubTotal()).append("</SubTotal>\n");
-                xml.append("  <Tax>").append(sale.getTax()).append("</Tax>\n");
-                xml.append("  <Total>").append(sale.getTotal()).append("</Total>\n");
-                xml.append("  <Status>").append(sale.getStatus()).append("</Status>\n");
-                xml.append("  <SunatStatus>").append(sale.getSunatStatus()).append("</SunatStatus>\n");
-                xml.append("</Sale>\n");
-                return xml.toString();
+                return saleSunatService.getXml(id);
         }
 
         @Override
         public String getCdr(Long id) {
-                return "<cdr>Placeholder for Sale " + id + "</cdr>";
+                return saleSunatService.getCdr(id);
         }
 
         @Override
@@ -477,56 +369,14 @@ public class SaleServiceImpl implements SaleService {
                 note.setStatus(Sale.SaleStatus.COMPLETED);
 
                 for (SaleItem originalItem : original.getItems()) {
-                        if (originalItem.getLot() != null) {
-                                Inventory inventory = inventoryRepository
-                                                .findByEstablishmentIdAndLotId(original.getEstablishment().getId(),
-                                                                originalItem.getLot().getId())
-                                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                                "Inventory not found for lot: "
-                                                                                + originalItem.getLot().getLotCode()));
-
-                                inventory.setQuantity(inventory.getQuantity().add(originalItem.getQuantity()));
-                                inventory.setLastMovement(LocalDateTime.now());
-                                inventoryRepository.save(inventory);
-
-                                stockMovementService.recordReversalMovement(
-                                                original.getEstablishment(), originalItem.getLot(),
-                                                originalItem.getQuantity(), inventory.getQuantity(),
-                                                "Credit note - " + reason, note.getId(), note.getUser());
-                        }
+                        saleInventoryService.reverseInventory(original, originalItem, "Credit note - " + reason, userId);
                 }
 
                 CashSession currentSession = cashSessionRepository
                                 .findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                                 .orElse(null);
 
-                if (currentSession != null) {
-                        BigDecimal refundAmount = original.getPayments().stream()
-                                        .map(SalePayment::getAmount)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                        if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-                                // Find outcome concept for sales (Nota de Crédito / Devolución)
-                                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT)
-                                                .stream()
-                                                .filter(c -> c.getName().toLowerCase().contains("devolucion")
-                                                                || c.getName().toLowerCase().contains("nota")
-                                                                || c.getName().toLowerCase().contains("egreso"))
-                                                .findFirst()
-                                                .orElseGet(() -> cashConceptRepository
-                                                                .findByType(CashConcept.ConceptType.OUT).stream()
-                                                                .findFirst()
-                                                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                                                "No se encontró un concepto de caja para egresos por devoluciones")));
-
-                                String description = "Nota de Crédito: " + note.getSeries() + "-" + note.getNumber()
-                                                + " (Ref: "
-                                                + original.getSeries() + "-" + original.getNumber() + ")";
-                                cashMovementService.registerInternalMovement(currentSession, note.getUser(), concept,
-                                                refundAmount,
-                                                note.getSeries() + "-" + note.getNumber(), description);
-                        }
-                }
+                salePaymentService.processRefund(original, note, userId, currentSession);
 
                 return mapper.toResponse(repository.save(note));
         }
@@ -550,235 +400,32 @@ public class SaleServiceImpl implements SaleService {
                 repository.save(sale);
 
                 for (SaleItem item : sale.getItems()) {
-                        if (item.getLot() != null) {
-                                Inventory inventory = inventoryRepository
-                                                .findByEstablishmentIdAndLotId(sale.getEstablishment().getId(),
-                                                                item.getLot().getId())
-                                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                                "Inventory not found for lot: "
-                                                                                + item.getLot().getLotCode()));
-                                inventory.setQuantity(inventory.getQuantity().add(item.getQuantity()));
-                                inventoryRepository.save(inventory);
-
-                                StockMovement movement = new StockMovement();
-                                movement.setLot(item.getLot());
-                                movement.setEstablishment(sale.getEstablishment());
-                                movement.setType(StockMovement.MovementType.VOID_RETURN);
-                                movement.setQuantity(item.getQuantity());
-                                movement.setBalanceAfter(inventory.getQuantity());
-                                movement.setReferenceTable("sales");
-                                movement.setReferenceId(sale.getId());
-                                movement.setUser(userRepository.findById(userId).orElse(sale.getUser()));
-                                movement.setCreatedAt(LocalDateTime.now());
-                                stockMovementRepository.save(movement);
-                        }
+                        saleInventoryService.reverseInventory(sale, item, "Void", userId);
                 }
 
                 CashSession currentSession = cashSessionRepository
                                 .findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                                 .orElse(null);
 
-                if (currentSession != null) {
-                        BigDecimal refundAmount = sale.getPayments().stream()
-                                        .map(SalePayment::getAmount)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                        if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-                                // Find outcome concept for sales (Invalidación / Anulación)
-                                CashConcept concept = cashConceptRepository.findByType(CashConcept.ConceptType.OUT)
-                                                .stream()
-                                                .filter(c -> c.getName().toLowerCase().contains("anulacion")
-                                                                || c.getName().toLowerCase().contains("egreso"))
-                                                .findFirst()
-                                                .orElseGet(() -> cashConceptRepository
-                                                                .findByType(CashConcept.ConceptType.OUT).stream()
-                                                                .findFirst()
-                                                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                                                "No se encontró un concepto de caja para egresos por anulaciones")));
-
-                                String description = "Anulación de Venta: " + sale.getSeries() + "-" + sale.getNumber();
-                                cashMovementService.registerInternalMovement(currentSession,
-                                                userRepository.findById(userId).orElse(sale.getUser()), concept,
-                                                refundAmount,
-                                                sale.getSeries() + "-" + sale.getNumber(), description);
-                        }
-                }
+                salePaymentService.processVoidRefund(sale, userId, currentSession);
         }
 
         @Override
         @Transactional(readOnly = true)
         public List<ProductForSaleResponse> listProductsForSale(Long establishmentId) {
-                List<Inventory> inventoryList = inventoryRepository.findAllByEstablishmentId(establishmentId);
-
-                return inventoryList.stream()
-                                .filter(inventory -> inventory.getLot() != null
-                                                && inventory.getLot().getExpiryDate() != null
-                                                && !inventory.getLot().getExpiryDate()
-                                                                .isBefore(java.time.LocalDate.now())
-                                                && inventory.getQuantity().compareTo(BigDecimal.ZERO) > 0)
-                                .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
-                                .flatMap(inventory -> {
-                                        ProductLot lot = inventory.getLot();
-                                        Product product = lot.getProduct();
-
-                                        String concentration = "";
-                                        if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                                                concentration = product.getIngredients().stream()
-                                                                .map(pi -> pi.getActiveIngredient().getName() + " "
-                                                                                + (pi.getConcentration() != null
-                                                                                                ? pi.getConcentration()
-                                                                                                : ""))
-                                                                .collect(Collectors.joining(", "));
-                                        }
-                                        final String finalConcentration = concentration;
-
-                                        return product.getUnits().stream()
-                                                        .map(pu -> new ProductForSaleResponse(
-                                                                        inventory.getId(),
-                                                                        product.getId(),
-                                                                        pu.getId(),
-                                                                        product.getTradeName(),
-                                                                        product.getGenericName(),
-                                                                        product.getDescription(),
-                                                                        product.getPresentation() != null ? product
-                                                                                        .getPresentation()
-                                                                                        .getDescription()
-                                                                                        : null,
-                                                                        finalConcentration,
-                                                                        product.getCategory() != null
-                                                                                        ? product.getCategory()
-                                                                                                        .getName()
-                                                                                        : null,
-                                                                        product.getLaboratory() != null
-                                                                                        ? product.getLaboratory()
-                                                                                                        .getName()
-                                                                                        : null,
-                                                                        pu.getPrice(),
-                                                                        inventory.getQuantity(),
-                                                                        lot.getExpiryDate(),
-                                                                        lot.getLotCode(),
-                                                                        lot.getId(),
-                                                                        product.getImageUrl(),
-                                                                        pu.getBarcode(),
-                                                                        inventory.getLocationShelf(),
-                                                                        pu.getUnitName(),
-                                                                        pu.getFactor(),
-                                                                        product.getTaxType() != null
-                                                                                        ? product.getTaxType().getRate()
-                                                                                        : BigDecimal.ZERO));
-                                }).collect(Collectors.toList());
+                return saleInventoryService.listProductsForSale(establishmentId);
         }
 
         @Override
         @Transactional(readOnly = true)
-        public List<ProductSearchResponse> searchProductsForPOS(String query,
-                        Long establishmentId) {
-                List<Inventory> inventoryList = inventoryRepository.searchProductsForPOS(query, establishmentId);
-                return inventoryList.stream()
-                                .filter(inventory -> inventory.getLot() != null
-                                                && inventory.getLot().getExpiryDate() != null
-                                                && !inventory.getLot().getExpiryDate()
-                                                                .isBefore(java.time.LocalDate.now())
-                                                && inventory.getQuantity().compareTo(BigDecimal.ZERO) > 0)
-                                .sorted(java.util.Comparator.comparing(inventory -> inventory.getLot().getExpiryDate()))
-                                .flatMap(inventory -> {
-                                        ProductLot lot = inventory.getLot();
-                                        Product product = lot.getProduct();
-
-                                        String concentration = "";
-                                        if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                                                concentration = product.getIngredients().stream()
-                                                                .map(pi -> pi.getActiveIngredient().getName() + " "
-                                                                                + (pi.getConcentration() != null
-                                                                                                ? pi.getConcentration()
-                                                                                                : ""))
-                                                                .collect(Collectors.joining(", "));
-                                        }
-                                        final String finalConcentration = concentration;
-
-                                        return product.getUnits().stream()
-                                                        .map(pu -> new ProductSearchResponse(
-                                                                        inventory.getId(),
-                                                                        product.getId(),
-                                                                        pu.getId(),
-                                                                        product.getTradeName(),
-                                                                        product.getGenericName(),
-                                                                        product.getDescription(),
-                                                                        product.getPresentation() != null ? product
-                                                                                        .getPresentation()
-                                                                                        .getDescription()
-                                                                                        : null,
-                                                                        finalConcentration,
-                                                                        product.getCategory() != null
-                                                                                        ? product.getCategory()
-                                                                                                        .getName()
-                                                                                        : null,
-                                                                        product.getLaboratory() != null
-                                                                                        ? product.getLaboratory()
-                                                                                                        .getName()
-                                                                                        : null,
-                                                                        pu.getPrice(),
-                                                                        inventory.getQuantity(),
-                                                                        lot.getExpiryDate(),
-                                                                        lot.getLotCode(),
-                                                                        lot.getId(),
-                                                                        product.getImageUrl(),
-                                                                        pu.getBarcode(),
-                                                                        inventory.getLocationShelf(),
-                                                                        pu.getUnitName(),
-                                                                        pu.getFactor(),
-                                                                        product.getTaxType() != null
-                                                                                        ? product.getTaxType().getRate()
-                                                                                        : BigDecimal.ZERO));
-                                }).collect(Collectors.toList());
+        public List<ProductSearchResponse> searchProductsForPOS(String query, Long establishmentId) {
+                return saleInventoryService.searchProductsForPOS(query, establishmentId);
         }
 
         @Override
         @Transactional(readOnly = true)
         public BarcodeScanResponse getProductByBarcode(String barcode, Long establishmentId) {
-                ProductUnit pu = productUnitRepository.findByBarcode(barcode).orElse(null);
-                if (pu == null) {
-                        return new BarcodeScanResponse(
-                                        null,
-                                        "Producto no encontrado",
-                                        barcode,
-                                        BigDecimal.ZERO,
-                                        null, null, null, BigDecimal.ZERO, "No stock available", null, BigDecimal.ZERO);
-                }
-
-                Product product = pu.getProduct();
-                Inventory inventory = inventoryRepository.findAllByEstablishmentId(establishmentId).stream()
-                                .filter(inv -> inv.getLot() != null
-                                                && inv.getLot().getProduct().getId().equals(product.getId())
-                                                && (inv.getLot().getExpiryDate() == null
-                                                                || !inv.getLot().getExpiryDate()
-                                                                                .isBefore(java.time.LocalDate.now()))
-                                                && inv.getQuantity().compareTo(BigDecimal.ZERO) > 0)
-                                .findFirst().orElse(null);
-
-                if (inventory == null) {
-                        return new BarcodeScanResponse(
-                                        null,
-                                        "Producto no encontrado",
-                                        barcode,
-                                        BigDecimal.ZERO,
-                                        null, null, null, BigDecimal.ZERO, "No stock available", null, BigDecimal.ZERO);
-                }
-
-                java.math.BigDecimal price = pu.getPrice();
-
-                return new BarcodeScanResponse(
-                                product.getId(),
-                                product.getTradeName(),
-                                barcode,
-                                price,
-                                inventory.getLot().getId(),
-                                inventory.getLot().getLotCode(),
-                                inventory.getLot().getExpiryDate(),
-                                inventory.getQuantity(),
-                                "Stock available",
-                                product.getImageUrl(),
-                                product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO);
+                return saleInventoryService.getProductByBarcode(barcode, establishmentId);
         }
 
         @Override
@@ -909,57 +556,7 @@ public class SaleServiceImpl implements SaleService {
         @Override
         @Transactional
         public EmitInvoiceResponse emitInvoiceToOSE(Long saleId) {
-                Sale sale = repository.findWithItemsById(saleId)
-                                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
-
-                if (sale.getSunatStatus() == SunatStatus.ACCEPTED) {
-                        throw new RuntimeException("La venta ya fue aceptada por SUNAT");
-                }
-
-                try {
-                        com.sergiocodev.app.model.Company company = companyRepository.findMainCompany()
-                                        .orElseThrow(() -> new RuntimeException("Company not configured"));
-
-                        // 1. Generate XML
-                        String xml = xmlUblGenerator.generateInvoiceXml(sale, company);
-                        String fileName = sale.getSeries() + "-" + sale.getNumber() + ".xml";
-
-                        // 2. Sign XML
-                        String signedXml = digitalSignatureService.signXml(xml);
-
-                        // 3. Send to OSE
-                        SunatOseClient.SunatOseResponse oseResponse = sunatOseClient.sendInvoice(signedXml, fileName);
-
-                        // 4. Update Sale
-                        if ("0".equals(oseResponse.getStatusCode())) {
-                                sale.setSunatStatus(SunatStatus.ACCEPTED);
-                        } else {
-                                sale.setSunatStatus(SunatStatus.REJECTED);
-                        }
-
-                        sale.setSunatMessage(oseResponse.getStatusMessage());
-                        sale.setXmlUrl("mock/path/" + fileName);
-                        sale.setCdrUrl("mock/path/R-" + fileName);
-                        sale.setHashCpe("MOCK_HASH");
-                        sale.setSunatResponseJson("{\"ticket\": \"" + oseResponse.getTicket() + "\"}");
-
-                        repository.save(sale);
-
-                        return EmitInvoiceResponse.builder()
-                                        .saleId(sale.getId())
-                                        .sunatStatus(sale.getSunatStatus().name())
-                                        .sunatMessage(sale.getSunatMessage())
-                                        .xmlUrl(sale.getXmlUrl())
-                                        .cdrUrl(sale.getCdrUrl())
-                                        .hashCpe(sale.getHashCpe())
-                                        .build();
-
-                } catch (Exception e) {
-                        sale.setSunatStatus(SunatStatus.REJECTED);
-                        sale.setSunatMessage(e.getMessage());
-                        repository.save(sale);
-                        throw new RuntimeException("Error emitiendo a SUNAT: " + e.getMessage());
-                }
+                return saleSunatService.emitInvoiceToOSE(saleId);
         }
 
         private String generateNextNumber(Long establishmentId, Sale.SaleDocumentType saleDocType, String series) {
