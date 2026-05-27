@@ -133,7 +133,12 @@ public class GlobalExceptionHandler {
             String message = error.getDefaultMessage();
             errors.put(field, message);
         });
-        return ResponseEntity.badRequest().body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(), "Validation failed"));
+        return ResponseEntity.badRequest().body(
+                ResponseApi.<Map<String, String>>builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .message("Validation failed")
+                        .data(errors)
+                        .build());
     }
 
         /**

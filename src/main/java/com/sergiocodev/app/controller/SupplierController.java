@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.sergiocodev.app.dto.supplier.SupplierDetailResponse;
+import com.sergiocodev.app.dto.supplier.SupplierSummaryResponse;
 
 @RestController
 @RequestMapping("/api/v1/suppliers")
@@ -37,6 +41,18 @@ public class SupplierController {
     @Operation(summary = "Listar proveedores")
     public ResponseEntity<ResponseApi<List<SupplierResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    }
+
+    @GetMapping("/paged")
+    @Operation(summary = "Listar proveedores paginados con detalles")
+    public ResponseEntity<ResponseApi<Page<SupplierDetailResponse>>> getPaged(Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSupplierDetailsPaged(pageable)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Obtener resumen de proveedores")
+    public ResponseEntity<ResponseApi<SupplierSummaryResponse>> getSummary() {
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary()));
     }
 
     @GetMapping("/{id}")

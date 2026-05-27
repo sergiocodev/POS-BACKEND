@@ -2,7 +2,8 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +16,8 @@ import java.time.LocalDateTime;
 }, uniqueConstraints = {
     @UniqueConstraint(name = "ux_inventory_estab_lot", columnNames = { "establishment_id", "lot_id" })
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Inventory {

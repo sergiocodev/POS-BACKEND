@@ -2,7 +2,8 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.HashSet;
@@ -10,7 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @org.hibernate.annotations.SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
@@ -52,7 +54,7 @@ public class User {
         updatedAt = Instant.now();
     }
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 

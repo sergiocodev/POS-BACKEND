@@ -6,6 +6,7 @@ import com.sergiocodev.app.service.interfaces.CashConceptService;
 import com.sergiocodev.app.service.interfaces.CashMovementService;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
+import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentRequest;
 import com.sergiocodev.app.dto.accountpayable.AccountPayablePaymentResponse;
@@ -47,16 +48,16 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
 
         if (payable.getStatus() == AccountPayable.PayableStatus.PAID
                 || payable.getStatus() == AccountPayable.PayableStatus.CANCELED) {
-            throw new RuntimeException("Cannot make payment on a " + payable.getStatus() + " account");
+            throw new BadRequestException("Cannot make payment on a " + payable.getStatus() + " account");
         }
 
         if (request.amount().compareTo(payable.getPendingBalance()) > 0) {
-            throw new RuntimeException("Payment amount exceeds pending balance");
+            throw new BadRequestException("Payment amount exceeds pending balance");
         }
 
         // Register cash movement for all payment methods
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                .orElseThrow(() -> new RuntimeException("Debe tener una sesión de caja abierta para realizar pagos"));
+                .orElseThrow(() -> new BadRequestException("Debe tener una sesión de caja abierta para realizar pagos"));
 
         AccountPayablePayment payment = new AccountPayablePayment();
         payment.setAccountPayable(payable);
@@ -153,10 +154,10 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
     @Transactional
     public void cancel(Long id) {
         AccountPayablePayment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
         if (payment.getDeletedAt() != null) {
-            throw new RuntimeException("Payment already canceled");
+            throw new BadRequestException("Payment already canceled");
         }
 
         AccountPayable payable = payment.getAccountPayable();

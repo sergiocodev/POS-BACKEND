@@ -2,7 +2,8 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -16,7 +17,8 @@ import java.util.Set;
 @Entity
 @Table(name = "purchases", uniqueConstraints = @UniqueConstraint(name = "ux_purchases_doc", columnNames = {
         "supplier_id", "document_type", "series", "number" }))
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE purchases SET deleted_at = NOW() WHERE id = ?")

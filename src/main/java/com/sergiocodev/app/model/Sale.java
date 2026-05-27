@@ -3,7 +3,8 @@ package com.sergiocodev.app.model;
 import jakarta.persistence.*;
 import jakarta.persistence.Index;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,7 +23,8 @@ import org.hibernate.annotations.FetchMode;
         @Index(name = "idx_sale_cash_session", columnList = "cash_session_id"),
         @Index(name = "idx_sale_voided", columnList = "is_voided")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Sale {

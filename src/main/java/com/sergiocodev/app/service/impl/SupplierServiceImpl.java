@@ -26,6 +26,10 @@ public class SupplierServiceImpl implements SupplierService {
         entity.setPhone(request.phone());
         entity.setEmail(request.email());
         entity.setAddress(request.address());
+        if (request.category() != null) entity.setCategory(request.category());
+        if (request.contactName() != null) entity.setContactName(request.contactName());
+        if (request.status() != null) entity.setStatus(request.status());
+        if (request.rating() != null) entity.setRating(request.rating());
         return new SupplierResponse(repository.save(entity));
     }
 
@@ -55,6 +59,10 @@ public class SupplierServiceImpl implements SupplierService {
         entity.setPhone(request.phone());
         entity.setEmail(request.email());
         entity.setAddress(request.address());
+        if (request.category() != null) entity.setCategory(request.category());
+        if (request.contactName() != null) entity.setContactName(request.contactName());
+        if (request.status() != null) entity.setStatus(request.status());
+        if (request.rating() != null) entity.setRating(request.rating());
         return new SupplierResponse(repository.save(entity));
     }
 
@@ -62,5 +70,23 @@ public class SupplierServiceImpl implements SupplierService {
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<com.sergiocodev.app.dto.supplier.SupplierDetailResponse> getSupplierDetailsPaged(org.springframework.data.domain.Pageable pageable) {
+        return repository.getSupplierDetailsPaged(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sergiocodev.app.dto.supplier.SupplierSummaryResponse getSummary() {
+        return new com.sergiocodev.app.dto.supplier.SupplierSummaryResponse(
+            repository.countActiveSuppliers(),
+            repository.countEvaluatingSuppliers(),
+            repository.countExpiredSuppliers(),
+            repository.calculateTotalSpendCurrentYear(),
+            repository.calculateAverageRating()
+        );
     }
 }

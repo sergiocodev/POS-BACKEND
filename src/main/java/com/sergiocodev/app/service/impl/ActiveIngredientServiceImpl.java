@@ -3,6 +3,7 @@ import com.sergiocodev.app.service.interfaces.ActiveIngredientService;
 
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientRequest;
 import com.sergiocodev.app.dto.activeingredient.ActiveIngredientResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.mapper.ActiveIngredientMapper;
 import com.sergiocodev.app.model.ActiveIngredient;
 import com.sergiocodev.app.repository.ActiveIngredientRepository;
@@ -39,14 +40,14 @@ public class ActiveIngredientServiceImpl implements ActiveIngredientService {
     public ActiveIngredientResponse getById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Active ingredient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Active ingredient not found"));
     }
 
     @Override
     @Transactional
     public ActiveIngredientResponse update(Long id, ActiveIngredientRequest request) {
         ActiveIngredient entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Active ingredient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Active ingredient not found"));
         mapper.updateEntity(request, entity);
         return mapper.toResponse(repository.save(entity));
     }

@@ -2,7 +2,8 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,7 +13,8 @@ import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "cash_movements")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE cash_movements SET deleted_at = NOW() WHERE id = ?")

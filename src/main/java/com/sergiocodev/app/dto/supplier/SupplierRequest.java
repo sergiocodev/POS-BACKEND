@@ -12,5 +12,14 @@ public record SupplierRequest(
 
         @Size(max = 255, message = "Email cannot exceed 255 characters") String email,
 
-        @Size(max = 255, message = "Address cannot exceed 255 characters") String address) {
+        @Size(max = 255, message = "Address cannot exceed 255 characters") String address,
+        
+        @Size(max = 100, message = "Category cannot exceed 100 characters") String category,
+        
+        @Size(max = 255, message = "Contact name cannot exceed 255 characters") String contactName,
+        
+        com.sergiocodev.app.model.Supplier.SupplierStatus status,
+        
+        java.math.BigDecimal rating
+) {
 }

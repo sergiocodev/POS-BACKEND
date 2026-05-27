@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/purchases")
@@ -39,6 +44,52 @@ public class PurchaseController {
     @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_LISTA + "')")
     public ResponseEntity<ResponseApi<List<PurchaseResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    }
+
+    @GetMapping("/paged")
+    @Operation(summary = "Listar compras con paginación")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_LISTA + "')")
+    public ResponseEntity<ResponseApi<Page<PurchaseResponse>>> getAllPaged(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) String documentType,
+            @RequestParam(required = false) String series,
+            @RequestParam(required = false) String number,
+            @RequestParam(required = false) String supplierName,
+            @RequestParam(required = false) String supplierDocument,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String total,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String columnDate,
+            @PageableDefault(size = 50, sort = "issueDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity
+                .ok(ResponseApi.success(service.getAllPaged(startDate, endDate, documentType, series, number,
+                        supplierName, supplierDocument, userName, status, total, paymentMethod,
+                        columnDate, pageable)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Obtener resumen de totales filtrados")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_LISTA + "')")
+    public ResponseEntity<ResponseApi<com.sergiocodev.app.dto.purchase.PurchaseSummaryResponse>> getSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) String documentType,
+            @RequestParam(required = false) String series,
+            @RequestParam(required = false) String number,
+            @RequestParam(required = false) String supplierName,
+            @RequestParam(required = false) String supplierDocument,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String total,
+            @RequestParam(required = false) String paymentMethod,
+            @RequestParam(required = false) String columnDate) {
+
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(startDate, endDate, documentType, series,
+                number,
+                supplierName, supplierDocument, userName, status, total, paymentMethod, columnDate)));
     }
 
     @GetMapping("/{id}")

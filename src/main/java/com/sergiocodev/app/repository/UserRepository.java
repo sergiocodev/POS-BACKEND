@@ -4,6 +4,7 @@ import com.sergiocodev.app.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -28,7 +29,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param username El nombre de usuario a buscar.
      * @return Usuario envuelto en un Optional si está activo y existe.
      */
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.username = :username AND u.deletedAt IS NULL")
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u WHERE u.username = :username AND u.deletedAt IS NULL")
     Optional<User> findActiveByUsername(@Param("username") String username);
 
     /**
@@ -49,7 +51,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param email El correo electrónico.
      * @return Usuario si existe bajo alguno de estos identificadores y no está eliminado.
      */
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE (u.username = :username OR u.email = :email) AND u.deletedAt IS NULL")
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u WHERE (u.username = :username OR u.email = :email) AND u.deletedAt IS NULL")
     java.util.Optional<User> findActiveByUsernameOrEmail(String username, String email);
 
     /**

@@ -12,11 +12,17 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 
-@Repository
-public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-        @EntityGraph(attributePaths = { "items", "supplier", "establishment", "user" })
+@Repository
+public interface PurchaseRepository extends JpaRepository<Purchase, Long>, JpaSpecificationExecutor<Purchase> {
+
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment", "user" })
         java.util.List<Purchase> findAll();
+
+        @Override
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment", "user" })
+        org.springframework.data.domain.Page<Purchase> findAll(org.springframework.data.jpa.domain.Specification<Purchase> spec, org.springframework.data.domain.Pageable pageable);
 
         /**
          * Recupera un historial paginado de compras realizadas en un establecimiento dentro de un rango de fechas.
@@ -28,7 +34,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
          * @param pageable        Configuración estandar para orden y límites offset del repositorio.
          * @return Lote de compras ya procesadas o completadas por un administrador.
          */
-        @EntityGraph(attributePaths = { "items", "supplier", "establishment", "user" })
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment", "user" })
         @Query("SELECT p FROM Purchase p WHERE p.establishment.id = :establishmentId " +
                         "AND p.issueDate >= :startDate AND p.issueDate <= :endDate " +
                         "ORDER BY p.issueDate DESC")
@@ -47,7 +53,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
          * @param endDate         Cota o techo límite.
          * @return Representación flat para construir los reportes tabulares o de PDF.
          */
-        @EntityGraph(attributePaths = { "items", "supplier", "establishment" })
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment" })
         @Query("SELECT p FROM Purchase p WHERE p.establishment.id = :establishmentId " +
                         "AND p.issueDate >= :startDate AND p.issueDate <= :endDate " +
                         "ORDER BY p.issueDate DESC")

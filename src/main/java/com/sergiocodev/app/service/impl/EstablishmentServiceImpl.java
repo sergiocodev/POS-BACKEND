@@ -3,6 +3,7 @@ import com.sergiocodev.app.service.interfaces.EstablishmentService;
 
 import com.sergiocodev.app.dto.establishment.EstablishmentRequest;
 import com.sergiocodev.app.dto.establishment.EstablishmentResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.Establishment;
 import com.sergiocodev.app.repository.EstablishmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,14 +41,14 @@ public class EstablishmentServiceImpl implements EstablishmentService {
     public EstablishmentResponse getById(Long id) {
         return repository.findById(id)
                 .map(EstablishmentResponse::new)
-                .orElseThrow(() -> new RuntimeException("Establishment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Establishment not found"));
     }
 
     @Override
     @Transactional
     public EstablishmentResponse update(Long id, EstablishmentRequest request) {
         Establishment entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Establishment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Establishment not found"));
         entity.setName(request.name());
         entity.setAddress(request.address());
         entity.setCodeSunat(request.codeSunat());

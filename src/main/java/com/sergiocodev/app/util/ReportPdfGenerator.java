@@ -247,9 +247,9 @@ public class ReportPdfGenerator {
         // Group by Therapeutic Action
         Map<String, List<SalesByProductReport>> groupedByAction = reports.stream()
                 .collect(Collectors.groupingBy(
-                        r -> (r.getTherapeuticAction() == null || r.getTherapeuticAction().isEmpty())
+                        r -> (r.therapeuticAction() == null || r.therapeuticAction().isEmpty())
                                 ? "SIN ACCIÓN TERAPÉUTICA"
-                                : r.getTherapeuticAction(),
+                                : r.therapeuticAction(),
                         java.util.TreeMap::new,
                         Collectors.toList()));
 
@@ -258,9 +258,9 @@ public class ReportPdfGenerator {
 
         // Calculate totals first for the summary
         for (List<SalesByProductReport> actionProducts : groupedByAction.values()) {
-            grandTotalQty += actionProducts.stream().mapToLong(SalesByProductReport::getQuantitySold).sum();
+            grandTotalQty += actionProducts.stream().mapToLong(SalesByProductReport::quantitySold).sum();
             grandTotalRevenue = grandTotalRevenue.add(actionProducts.stream()
-                    .map(SalesByProductReport::getTotalRevenue)
+                    .map(SalesByProductReport::totalRevenue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add));
         }
 
@@ -283,9 +283,9 @@ public class ReportPdfGenerator {
 
         for (Map.Entry<String, List<SalesByProductReport>> entry : groupedByAction.entrySet()) {
             String actionName = entry.getKey();
-            long qty = entry.getValue().stream().mapToLong(SalesByProductReport::getQuantitySold).sum();
+            long qty = entry.getValue().stream().mapToLong(SalesByProductReport::quantitySold).sum();
             BigDecimal total = entry.getValue().stream()
-                    .map(SalesByProductReport::getTotalRevenue)
+                    .map(SalesByProductReport::totalRevenue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             summaryTable.addCell(createCell(actionName, NORMAL_FONT, Element.ALIGN_CENTER));
@@ -325,18 +325,18 @@ public class ReportPdfGenerator {
 
             // Sort products by lab and name within action
             List<SalesByProductReport> sortedProducts = actionEntry.getValue().stream()
-                    .sorted(java.util.Comparator.comparing(SalesByProductReport::getLaboratoryName)
-                            .thenComparing(SalesByProductReport::getProductName))
+                    .sorted(java.util.Comparator.comparing(SalesByProductReport::laboratoryName)
+                            .thenComparing(SalesByProductReport::productName))
                     .collect(Collectors.toList());
 
             for (SalesByProductReport report : sortedProducts) {
-                table.addCell(createCell(report.getProductName(), NORMAL_FONT, Element.ALIGN_CENTER));
-                table.addCell(createCell(report.getLaboratoryName(), NORMAL_FONT, Element.ALIGN_CENTER));
-                table.addCell(createCell(String.valueOf(report.getQuantitySold()), NORMAL_FONT, Element.ALIGN_CENTER));
-                table.addCell(createCell(report.getTotalRevenue().toPlainString(), NORMAL_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(report.productName(), NORMAL_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(report.laboratoryName(), NORMAL_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(String.valueOf(report.quantitySold()), NORMAL_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(report.totalRevenue().toPlainString(), NORMAL_FONT, Element.ALIGN_CENTER));
 
-                actionTotalRevenue = actionTotalRevenue.add(report.getTotalRevenue());
-                actionTotalQty += report.getQuantitySold();
+                actionTotalRevenue = actionTotalRevenue.add(report.totalRevenue());
+                actionTotalQty += report.quantitySold();
             }
 
             // Subtotal row for the action
@@ -746,9 +746,9 @@ public class ReportPdfGenerator {
         addDateHeader(document, startDate, endDate);
 
         // Summary
-        BigDecimal grandTotalRevenue = reports.stream().map(SalesByProductReport::getTotalRevenue)
+        BigDecimal grandTotalRevenue = reports.stream().map(SalesByProductReport::totalRevenue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        long grandTotalQty = reports.stream().mapToLong(SalesByProductReport::getQuantitySold).sum();
+        long grandTotalQty = reports.stream().mapToLong(SalesByProductReport::quantitySold).sum();
 
         PdfPTable summaryTable = new PdfPTable(new float[] { 5f, 3f, 2f, 2.5f });
         summaryTable.setWidthPercentage(100);
@@ -766,14 +766,14 @@ public class ReportPdfGenerator {
                 new Color(240, 240, 240), BOLD_FONT);
 
         List<SalesByProductReport> sortedProducts = reports.stream()
-                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
                 .collect(Collectors.toList());
 
         for (SalesByProductReport report : sortedProducts) {
-            summaryTable.addCell(createCell(report.getProductName(), NORMAL_FONT, Element.ALIGN_CENTER));
-            summaryTable.addCell(createCell(report.getCategoryName(), NORMAL_FONT, Element.ALIGN_CENTER));
-            summaryTable.addCell(createCell(String.valueOf(report.getQuantitySold()), NORMAL_FONT, Element.ALIGN_CENTER));
-            summaryTable.addCell(createCell(report.getTotalRevenue().toPlainString(), NORMAL_FONT, Element.ALIGN_CENTER));
+            summaryTable.addCell(createCell(report.productName(), NORMAL_FONT, Element.ALIGN_CENTER));
+            summaryTable.addCell(createCell(report.categoryName(), NORMAL_FONT, Element.ALIGN_CENTER));
+            summaryTable.addCell(createCell(String.valueOf(report.quantitySold()), NORMAL_FONT, Element.ALIGN_CENTER));
+            summaryTable.addCell(createCell(report.totalRevenue().toPlainString(), NORMAL_FONT, Element.ALIGN_CENTER));
         }
 
         PdfPCell totalLabelCell = createCell("TOTAL GENERAL", BOLD_FONT, Element.ALIGN_CENTER);

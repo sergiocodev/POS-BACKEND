@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,42 +41,43 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final CashMovementService cashMovementService;
     private final CashConceptService cashConceptService;
     private final StockMovementService stockMovementService;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
     public PurchaseResponse create(PurchaseRequest request, Long userId) {
         Purchase entity = purchaseMapper.toEntity(request);
-        entity.setSupplier(supplierRepository.findById(request.getSupplierId())
-                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + request.getSupplierId())));
-        entity.setEstablishment(establishmentRepository.findById(request.getEstablishmentId())
+        entity.setSupplier(supplierRepository.findById(request.supplierId())
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found: " + request.supplierId())));
+        entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
                 .orElseThrow(
                         () -> new ResourceNotFoundException(
-                                "Establishment not found: " + request.getEstablishmentId())));
+                                "Establishment not found: " + request.establishmentId())));
         entity.setUser(userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId)));
         entity.setArrivalDate(LocalDateTime.now());
         entity.setStatus(Purchase.PurchaseStatus.RECEIVED);
 
-        for (var ir : request.getItems()) {
-            Product product = productRepository.findById(ir.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.getProductId()));
+        for (var ir : request.items()) {
+            Product product = productRepository.findById(ir.productId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + ir.productId()));
 
-            ProductUnit productUnit = productUnitRepository.findById(ir.getProductUnitId())
+            ProductUnit productUnit = productUnitRepository.findById(ir.productUnitId())
                     .orElseThrow(
-                            () -> new ResourceNotFoundException("ProductUnit not found: " + ir.getProductUnitId()));
+                            () -> new ResourceNotFoundException("ProductUnit not found: " + ir.productUnitId()));
 
-            ProductLot lot = findOrCreateLot(product, ir.getLotCode(), ir.getExpiryDate());
+            ProductLot lot = findOrCreateLot(product, ir.lotCode(), ir.expiryDate());
 
             PurchaseItem item = purchaseMapper.toItemEntity(ir);
             item.setPurchase(entity);
             item.setProduct(product);
             item.setProductUnit(productUnit);
 
-            BigDecimal itemTotal = ir.getUnitCost().multiply(new BigDecimal(ir.getQuantity()));
+            BigDecimal itemTotal = ir.unitCost().multiply(new BigDecimal(ir.quantity()));
             item.setTotalCost(itemTotal);
             entity.getItems().add(item);
 
-            updateInventory(entity, lot, ir.getQuantity(), ir.getBonusQuantity(), ir.getUnitCost(), productUnit);
+            updateInventory(entity, lot, ir.quantity(), ir.bonusQuantity(), ir.unitCost(), productUnit);
         }
 
         calculateTotals(entity);
@@ -83,11 +87,11 @@ public class PurchaseServiceImpl implements PurchaseService {
         BigDecimal totalAmount = savedEntity.getTotal();
         BigDecimal initialPayment = BigDecimal.ZERO;
 
-        if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH) {
+        if (request.paymentCondition() == PurchaseRequest.PaymentCondition.CASH) {
             initialPayment = totalAmount;
-        } else if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CREDIT
-                && request.getInitialPayment() != null) {
-            initialPayment = request.getInitialPayment();
+        } else if (request.paymentCondition() == PurchaseRequest.PaymentCondition.CREDIT
+                && request.initialPayment() != null) {
+            initialPayment = request.initialPayment();
         }
 
         BigDecimal pendingBalance = totalAmount.subtract(initialPayment);
@@ -107,13 +111,13 @@ public class PurchaseServiceImpl implements PurchaseService {
         payable.setAmountPaid(initialPayment);
         payable.setPendingBalance(pendingBalance);
         payable.setStatus(status);
-        if (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CREDIT && request.getDueDate() != null) {
-            payable.setDueDate(request.getDueDate());
+        if (request.paymentCondition() == PurchaseRequest.PaymentCondition.CREDIT && request.dueDate() != null) {
+            payable.setDueDate(request.dueDate());
         }
         AccountPayable savedPayable = accountPayableRepository.save(payable);
 
         if (initialPayment.compareTo(BigDecimal.ZERO) > 0) {
-            if (request.getPaymentMethod() == null) {
+            if (request.paymentMethod() == null) {
                 throw new IllegalArgumentException("Payment method is required when there is an initial payment.");
             }
 
@@ -126,16 +130,16 @@ public class PurchaseServiceImpl implements PurchaseService {
             payment.setUser(savedEntity.getUser());
             payment.setCashSession(session);
             payment.setAmount(initialPayment);
-            payment.setPaymentMethod(request.getPaymentMethod());
+            payment.setPaymentMethod(request.paymentMethod());
             payment.setPaymentDate(LocalDateTime.now());
             accountPayablePaymentRepository.save(payment);
 
-            CashConcept concept = cashConceptService.findOrCreatePurchaseConcept(request.getPaymentMethod().name());
+            CashConcept concept = cashConceptService.findOrCreatePurchaseConcept(request.paymentMethod().name());
 
             String description = "Compra "
-                    + (request.getPaymentCondition() == PurchaseRequest.PaymentCondition.CASH ? "al contado"
+                    + (request.paymentCondition() == PurchaseRequest.PaymentCondition.CASH ? "al contado"
                             : "con pago inicial")
-                    + " (" + request.getPaymentMethod().name() + ") - Proveedor: "
+                    + " (" + request.paymentMethod().name() + ") - Proveedor: "
                     + savedEntity.getSupplier().getName();
 
             cashMovementService.registerInternalMovement(session, savedEntity.getUser(), concept, initialPayment,
@@ -210,6 +214,91 @@ public class PurchaseServiceImpl implements PurchaseService {
         return repository.findAll().stream()
                 .map(purchaseMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PurchaseResponse> getAllPaged(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String supplierName,
+            String supplierDocument,
+            String userName,
+            String status,
+            String total,
+            String paymentMethod,
+            String columnDate,
+            Pageable pageable) {
+
+        org.springframework.data.jpa.domain.Specification<Purchase> spec = com.sergiocodev.app.specification.PurchaseSpecification
+                .filterPurchases(
+                        startDate, endDate, documentType, series, number, supplierName,
+                        supplierDocument, userName, status,
+                        total, paymentMethod, columnDate);
+
+        Page<Purchase> purchases = repository.findAll(spec, pageable);
+        return purchases.map(purchaseMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sergiocodev.app.dto.purchase.PurchaseSummaryResponse getSummary(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String documentType,
+            String series,
+            String number,
+            String supplierName,
+            String supplierDocument,
+            String userName,
+            String status,
+            String total,
+            String paymentMethod,
+            String columnDate) {
+
+        jakarta.persistence.criteria.CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        jakarta.persistence.criteria.CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
+        jakarta.persistence.criteria.Root<Purchase> root = query.from(Purchase.class);
+        query.distinct(true);
+
+        jakarta.persistence.criteria.Predicate predicate = com.sergiocodev.app.specification.PurchaseSpecification
+                .buildPredicate(
+                        root, cb, startDate, endDate, documentType, series, number,
+                        supplierName, supplierDocument, userName, status,
+                        total, paymentMethod, columnDate);
+
+        query.where(predicate);
+        query.multiselect(root.get("documentType"), cb.sum(root.get("total")));
+        query.groupBy(root.get("documentType"));
+
+        java.util.List<Object[]> results = entityManager.createQuery(query).getResultList();
+
+        java.math.BigDecimal totalFacturas = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalBoletas = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalGuiaRemision = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalNeto = java.math.BigDecimal.ZERO;
+
+        for (Object[] result : results) {
+            Purchase.PurchaseDocumentType type = (Purchase.PurchaseDocumentType) result[0];
+            java.math.BigDecimal sum = (java.math.BigDecimal) result[1];
+            if (sum == null)
+                sum = java.math.BigDecimal.ZERO;
+
+            if (type != null) {
+                switch (type) {
+                    case FACTURA -> totalFacturas = sum;
+                    case BOLETA -> totalBoletas = sum;
+                    case GUIA -> totalGuiaRemision = sum;
+                }
+            }
+            totalNeto = totalNeto.add(sum);
+        }
+
+        return new com.sergiocodev.app.dto.purchase.PurchaseSummaryResponse(
+                totalFacturas, totalBoletas, totalGuiaRemision, totalNeto);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.sergiocodev.app.service.interfaces.ProductService;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.mapper.ProductMapper;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
@@ -55,14 +56,14 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
     }
 
     @Override
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         mapper.updateEntity(request, entity);
 
         mapBasicInfo(request, entity);
@@ -89,7 +90,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse toggleStatus(Long id) {
         Product entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         // status is managed via deleted_at or in product_units now (active was removed
         // from Product)
         return mapper.toResponse(repository.save(entity));
@@ -118,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
             entity.getIngredients().clear();
             request.ingredients().forEach(ir -> {
                 ActiveIngredient activeIngredient = activeIngredientRepository.findById(ir.activeIngredientId())
-                        .orElseThrow(() -> new RuntimeException(
+                        .orElseThrow(() -> new ResourceNotFoundException(
                                 "Active ingredient not found with id: " + ir.activeIngredientId()));
 
                 ProductIngredient pi = new ProductIngredient();
@@ -140,7 +141,7 @@ public class ProductServiceImpl implements ProductService {
             entity.getTherapeuticActions().clear();
             List<TherapeuticAction> actions = therapeuticActionRepository.findAllById(request.therapeuticActionIds());
             if (actions.size() != request.therapeuticActionIds().size()) {
-                throw new RuntimeException("Some therapeutic actions were not found");
+                throw new ResourceNotFoundException("Some therapeutic actions were not found");
             }
             entity.getTherapeuticActions().addAll(actions);
         }

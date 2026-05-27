@@ -4,6 +4,8 @@ import com.sergiocodev.app.service.interfaces.AccountReceivableService;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableResponse;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableDashboardResponse;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.AccountReceivable;
 import com.sergiocodev.app.model.Customer;
 import com.sergiocodev.app.model.Sale;
@@ -40,12 +42,12 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
     @Transactional
     public AccountReceivableResponse create(AccountReceivableRequest request) {
         Sale sale = saleRepository.findById(request.saleId())
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
         Customer customer = customerRepository.findById(request.customerId())
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
         if (repository.findBySaleId(sale.getId()).isPresent()) {
-            throw new RuntimeException("Account Receivable already exists for this sale");
+            throw new BadRequestException("Account Receivable already exists for this sale");
         }
 
         AccountReceivable receivable = new AccountReceivable();
@@ -172,14 +174,14 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
     public AccountReceivableResponse getById(Long id) {
         return repository.findById(id)
                 .map(this::mapToResponse)
-                .orElseThrow(() -> new RuntimeException("Account Receivable not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account Receivable not found"));
     }
 
     @Override
     @Transactional
     public void cancel(Long id) {
         AccountReceivable receivable = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account Receivable not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account Receivable not found"));
 
         receivable.setStatus(AccountReceivable.ReceivableStatus.CANCELED);
         repository.save(receivable);

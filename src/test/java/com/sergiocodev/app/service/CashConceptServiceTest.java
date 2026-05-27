@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.sergiocodev.app.service.interfaces.CashConceptService;
+import com.sergiocodev.app.service.impl.CashConceptServiceImpl;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,7 +23,7 @@ class CashConceptServiceTest {
     private CashConceptRepository cashConceptRepository;
 
     @InjectMocks
-    private CashConceptService cashConceptService;
+    private CashConceptServiceImpl cashConceptService;
 
     private List<CashConcept> emptyInList;
     private List<CashConcept> emptyOutList;

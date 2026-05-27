@@ -1,35 +1,28 @@
 package com.sergiocodev.app.dto.purchase;
 
 import com.sergiocodev.app.model.Purchase;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PurchaseResponse {
-    private Long id;
-    private String supplierName;
-    private String establishmentName;
-    private String username;
-    private Purchase.PurchaseDocumentType documentType;
-    private String series;
-    private String number;
-    private LocalDate issueDate;
-    private LocalDateTime arrivalDate;
-    private BigDecimal subTotal;
-    private BigDecimal tax;
-    private BigDecimal total;
-    private Purchase.PurchaseStatus status;
-    private Purchase.PaymentCondition paymentCondition;
-    private String notes;
-    private LocalDateTime createdAt;
-    private List<PurchaseItemResponse> items;
-    private com.sergiocodev.app.dto.company.CompanyMinimalResponse company;
-}
+public record PurchaseResponse(
+    Long id,
+    String supplierName,
+    String establishmentName,
+    String username,
+    Purchase.PurchaseDocumentType documentType,
+    String series,
+    String number,
+    LocalDate issueDate,
+    LocalDateTime arrivalDate,
+    BigDecimal subTotal,
+    BigDecimal tax,
+    BigDecimal total,
+    Purchase.PurchaseStatus status,
+    Purchase.PaymentCondition paymentCondition,
+    String notes,
+    LocalDateTime createdAt,
+    List<PurchaseItemResponse> items,
+    com.sergiocodev.app.dto.company.CompanyMinimalResponse company
+) {}

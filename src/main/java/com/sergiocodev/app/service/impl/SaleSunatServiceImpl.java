@@ -7,6 +7,7 @@ import com.sergiocodev.app.repository.CompanyRepository;
 import com.sergiocodev.app.model.Sale;
 import com.sergiocodev.app.model.Sale.SunatStatus;
 import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
+import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.util.XmlUblGenerator;
 import com.sergiocodev.app.util.SunatOseClient;
@@ -27,15 +28,15 @@ public class SaleSunatServiceImpl implements SaleSunatService {
     @Override
     public EmitInvoiceResponse emitInvoiceToOSE(Long saleId) {
         Sale sale = repository.findWithItemsById(saleId)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada"));
 
         if (sale.getSunatStatus() == SunatStatus.ACCEPTED) {
-            throw new RuntimeException("La venta ya fue aceptada por SUNAT");
+            throw new BadRequestException("La venta ya fue aceptada por SUNAT");
         }
 
         try {
             com.sergiocodev.app.model.Company company = companyRepository.findMainCompany()
-                    .orElseThrow(() -> new RuntimeException("Company not configured"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Company not configured"));
 
             // 1. Generate XML
             String xml = xmlUblGenerator.generateInvoiceXml(sale, company);
@@ -75,7 +76,7 @@ public class SaleSunatServiceImpl implements SaleSunatService {
             sale.setSunatStatus(SunatStatus.REJECTED);
             sale.setSunatMessage(e.getMessage());
             repository.save(sale);
-            throw new RuntimeException("Error emitiendo a SUNAT: " + e.getMessage());
+            throw new BadRequestException("Error emitiendo a SUNAT: " + e.getMessage());
         }
     }
 

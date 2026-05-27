@@ -2,14 +2,16 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "suppliers")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE suppliers SET deleted_at = NOW() WHERE id = ?")
@@ -37,4 +39,21 @@ public class Supplier {
 
     @Column(name = "deleted_at")
     private java.time.LocalDateTime deletedAt;
+
+    @Column(length = 100)
+    private String category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private SupplierStatus status = SupplierStatus.ACTIVO;
+
+    @Column(precision = 3, scale = 1)
+    private java.math.BigDecimal rating = java.math.BigDecimal.ZERO;
+
+    @Column(name = "contact_name", length = 255)
+    private String contactName;
+
+    public enum SupplierStatus {
+        ACTIVO, EN_EVALUACION, VENCIDO
+    }
 }

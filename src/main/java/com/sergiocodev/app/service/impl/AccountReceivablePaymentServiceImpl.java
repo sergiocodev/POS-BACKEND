@@ -4,6 +4,8 @@ import com.sergiocodev.app.service.interfaces.AccountReceivablePaymentService;
 
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentResponse;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 
@@ -41,19 +43,19 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
     @Transactional
     public AccountReceivablePaymentResponse create(AccountReceivablePaymentRequest request, Long userId) {
         AccountReceivable receivable = receivableRepository.findById(request.accountReceivableId())
-                .orElseThrow(() -> new RuntimeException("Account Receivable not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account Receivable not found"));
         CashSession cashSession = cashSessionRepository.findById(request.cashSessionId())
-                .orElseThrow(() -> new RuntimeException("Cash Session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cash Session not found"));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (receivable.getStatus() == AccountReceivable.ReceivableStatus.PAID
                 || receivable.getStatus() == AccountReceivable.ReceivableStatus.CANCELED) {
-            throw new RuntimeException("Cannot make payment on a " + receivable.getStatus() + " account");
+            throw new BadRequestException("Cannot make payment on a " + receivable.getStatus() + " account");
         }
 
         if (request.amount().compareTo(receivable.getPendingBalance()) > 0) {
-            throw new RuntimeException("Payment amount exceeds pending balance");
+            throw new BadRequestException("Payment amount exceeds pending balance");
         }
 
         AccountReceivablePayment payment = new AccountReceivablePayment();
@@ -141,10 +143,10 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
     @Transactional
     public void cancel(Long id) {
         AccountReceivablePayment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
         if (payment.getDeletedAt() != null) {
-            throw new RuntimeException("Payment already canceled");
+            throw new BadRequestException("Payment already canceled");
         }
 
         AccountReceivable receivable = payment.getAccountReceivable();

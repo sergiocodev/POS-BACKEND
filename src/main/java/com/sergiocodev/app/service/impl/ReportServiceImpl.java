@@ -746,7 +746,7 @@ public class ReportServiceImpl implements ReportService {
                                                         quantitySold,
                                                         totalRevenue);
                                 })
-                                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
                                 .collect(Collectors.toList());
         }
 
@@ -903,7 +903,7 @@ public class ReportServiceImpl implements ReportService {
                                                         quantitySold,
                                                         totalRevenue);
                                 })
-                                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
                                 .collect(Collectors.toList());
         }
 
@@ -1148,7 +1148,7 @@ public class ReportServiceImpl implements ReportService {
                                                         quantitySold,
                                                         totalRevenue);
                                 })
-                                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                                .sorted((a, b) -> b.totalRevenue().compareTo(a.totalRevenue()))
                                 .collect(Collectors.toList());
         }
 

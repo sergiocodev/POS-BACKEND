@@ -32,7 +32,7 @@ public class SunatController {
     @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_COMPROBANTES + "')")
     public ResponseEntity<ResponseApi<EmitInvoiceResponse>> emitInvoiceToOSE(
             @Valid @RequestBody EmitInvoiceRequest request) {
-        EmitInvoiceResponse response = saleService.emitInvoiceToOSE(request.getSaleId());
+        EmitInvoiceResponse response = saleService.emitInvoiceToOSE(request.saleId());
         return ResponseEntity.ok(ResponseApi.success(response, "Document sent to SUNAT"));
     }
 

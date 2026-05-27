@@ -2,7 +2,8 @@ package com.sergiocodev.app.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.time.Instant;
 
@@ -11,7 +12,8 @@ import java.time.Instant;
     @Index(name = "idx_token_jti", columnList = "jti"),
     @Index(name = "idx_token_expiry", columnList = "expiryDate")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class TokenBlacklist {

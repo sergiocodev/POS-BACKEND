@@ -3,6 +3,7 @@ import com.sergiocodev.app.service.interfaces.EmployeeService;
 
 import com.sergiocodev.app.dto.employee.EmployeeRequest;
 import com.sergiocodev.app.dto.employee.EmployeeResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.Employee;
 import com.sergiocodev.app.repository.EmployeeRepository;
 import com.sergiocodev.app.repository.UserRepository;
@@ -28,7 +29,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         entity.setDocumentNumber(request.documentNumber());
         if (request.userId() != null) {
             entity.setUser(userRepository.findById(request.userId())
-                    .orElseThrow(() -> new RuntimeException("User not found")));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found")));
         }
         return new EmployeeResponse(repository.save(entity));
     }
@@ -46,20 +47,20 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeResponse getById(Long id) {
         return repository.findById(id)
                 .map(EmployeeResponse::new)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
     }
 
     @Override
     @Transactional
     public EmployeeResponse update(Long id, EmployeeRequest request) {
         Employee entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         entity.setFirstName(request.firstName());
         entity.setLastName(request.lastName());
         entity.setDocumentNumber(request.documentNumber());
         if (request.userId() != null) {
             entity.setUser(userRepository.findById(request.userId())
-                    .orElseThrow(() -> new RuntimeException("User not found")));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found")));
         } else {
             entity.setUser(null);
         }

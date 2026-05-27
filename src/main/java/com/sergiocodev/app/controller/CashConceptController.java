@@ -44,8 +44,8 @@ public class CashConceptController {
     @Operation(summary = "Crear un concepto manual de caja")
     public ResponseEntity<ResponseApi<CashConcept>> create(@RequestBody com.sergiocodev.app.dto.CashConceptRequest request) {
         CashConcept concept = new CashConcept();
-        concept.setName(request.getName().toUpperCase());
-        concept.setType(request.getType());
+        concept.setName(request.name().toUpperCase());
+        concept.setType(request.type());
         concept.setIsSystem(false); // Manually created concepts are never system concepts
         return ResponseEntity.ok(ResponseApi.success(repository.save(concept)));
     }

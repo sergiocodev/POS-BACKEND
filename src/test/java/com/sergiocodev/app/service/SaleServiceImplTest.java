@@ -27,6 +27,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.sergiocodev.app.service.impl.SaleServiceImpl;
+import com.sergiocodev.app.service.interfaces.SaleInventoryService;
+import com.sergiocodev.app.service.interfaces.SalePaymentService;
+import com.sergiocodev.app.service.interfaces.SaleSunatService;
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -101,6 +105,18 @@ class SaleServiceImplTest {
 
     @Mock
     private StockMovementService stockMovementService;
+
+    @Mock
+    private SaleInventoryService saleInventoryService;
+
+    @Mock
+    private SalePaymentService salePaymentService;
+
+    @Mock
+    private SaleSunatService saleSunatService;
+
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private SaleServiceImpl saleService;

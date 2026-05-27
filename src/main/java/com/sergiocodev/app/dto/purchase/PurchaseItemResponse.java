@@ -1,22 +1,15 @@
 package com.sergiocodev.app.dto.purchase;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PurchaseItemResponse {
-        private Long id;
-        private String productName;
-        private String lotCode;
-        private LocalDate expiryDate;
-        private Integer quantity;
-        private Integer bonusQuantity;
-        private BigDecimal unitCost;
-        private BigDecimal totalCost;
-}
+public record PurchaseItemResponse(
+    Long id,
+    String productName,
+    String lotCode,
+    LocalDate expiryDate,
+    Integer quantity,
+    Integer bonusQuantity,
+    BigDecimal unitCost,
+    BigDecimal totalCost
+) {}

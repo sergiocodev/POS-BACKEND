@@ -3,6 +3,8 @@ import com.sergiocodev.app.service.interfaces.TherapeuticActionService;
 
 import com.sergiocodev.app.dto.therapeuticaction.TherapeuticActionRequest;
 import com.sergiocodev.app.dto.therapeuticaction.TherapeuticActionResponse;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.mapper.TherapeuticActionMapper;
 import com.sergiocodev.app.model.TherapeuticAction;
 import com.sergiocodev.app.repository.TherapeuticActionRepository;
@@ -33,14 +35,14 @@ public class TherapeuticActionServiceImpl implements TherapeuticActionService {
     public TherapeuticActionResponse findById(Long id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Therapeutic Action not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Therapeutic Action not found"));
     }
 
     @Override
     @Transactional
     public TherapeuticActionResponse create(TherapeuticActionRequest request) {
         if (repository.existsByName(request.name())) {
-            throw new RuntimeException("Therapeutic Action with name " + request.name() + " already exists");
+            throw new BadRequestException("Therapeutic Action with name " + request.name() + " already exists");
         }
         TherapeuticAction entity = mapper.toEntity(request);
         return mapper.toResponse(repository.save(entity));
@@ -50,10 +52,10 @@ public class TherapeuticActionServiceImpl implements TherapeuticActionService {
     @Transactional
     public TherapeuticActionResponse update(Long id, TherapeuticActionRequest request) {
         TherapeuticAction entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Therapeutic Action not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Therapeutic Action not found"));
 
         if (!entity.getName().equalsIgnoreCase(request.name()) && repository.existsByName(request.name())) {
-            throw new RuntimeException("Therapeutic Action with name " + request.name() + " already exists");
+            throw new BadRequestException("Therapeutic Action with name " + request.name() + " already exists");
         }
 
         mapper.updateEntity(request, entity);
@@ -64,7 +66,7 @@ public class TherapeuticActionServiceImpl implements TherapeuticActionService {
     @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Therapeutic Action not found");
+            throw new ResourceNotFoundException("Therapeutic Action not found");
         }
         repository.deleteById(id);
     }

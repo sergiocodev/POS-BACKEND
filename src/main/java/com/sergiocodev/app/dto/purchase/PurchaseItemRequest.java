@@ -3,35 +3,32 @@ package com.sergiocodev.app.dto.purchase;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PurchaseItemRequest {
+public record PurchaseItemRequest(
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    Long productId,
 
     @NotNull(message = "Product unit ID is required")
-    private Long productUnitId;
+    Long productUnitId,
 
     @NotBlank(message = "Lot code is required")
     @Size(max = 100, message = "Lot code cannot exceed 100 characters")
-    private String lotCode;
+    String lotCode,
 
     @NotNull(message = "Expiry date is required")
-    private LocalDate expiryDate;
+    LocalDate expiryDate,
 
     @NotNull(message = "Quantity is required")
-    private Integer quantity;
+    Integer quantity,
 
-    private Integer bonusQuantity = 0;
+    Integer bonusQuantity,
 
     @NotNull(message = "Unit cost is required")
-    private BigDecimal unitCost;
+    BigDecimal unitCost
+) {
+    public PurchaseItemRequest {
+        if (bonusQuantity == null) bonusQuantity = 0;
+    }
 }

@@ -7,6 +7,9 @@ import com.sergiocodev.app.dto.stocktransfer.StockTransferItemRequest;
 import com.sergiocodev.app.dto.stocktransfer.StockTransferItemResponse;
 import com.sergiocodev.app.dto.stocktransfer.StockTransferRequest;
 import com.sergiocodev.app.dto.stocktransfer.StockTransferResponse;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
+import com.sergiocodev.app.exception.StockInsufficientException;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -35,14 +38,14 @@ public class StockTransferServiceImpl implements StockTransferService {
         @Transactional
         public StockTransferResponse create(StockTransferRequest request, Long userId) {
                 Establishment source = establishmentRepository.findById(request.sourceEstablishmentId())
-                                .orElseThrow(() -> new RuntimeException("Source establishment not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Source establishment not found"));
                 Establishment target = establishmentRepository.findById(request.targetEstablishmentId())
-                                .orElseThrow(() -> new RuntimeException("Target establishment not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Target establishment not found"));
                 User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
                 if (source.getId().equals(target.getId())) {
-                        throw new RuntimeException("Source and target establishment cannot be the same");
+                        throw new BadRequestException("Source and target establishment cannot be the same");
                 }
 
                 StockTransfer transfer = new StockTransfer();
@@ -53,14 +56,14 @@ public class StockTransferServiceImpl implements StockTransferService {
 
                 for (StockTransferItemRequest ir : request.items()) {
                         Product product = productRepository.findById(ir.productId())
-                                        .orElseThrow(() -> new RuntimeException("Product not found"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
                         ProductLot lot = lotRepository.findById(ir.lotId())
-                                        .orElseThrow(() -> new RuntimeException("Lot not found"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Lot not found"));
                         ProductUnit unit = productUnitRepository.findById(ir.unitId())
-                                        .orElseThrow(() -> new RuntimeException("Unit not found"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Unit not found"));
 
                         if (!unit.getProduct().getId().equals(product.getId())) {
-                                throw new RuntimeException("Unit does not belong to the selected product");
+                                throw new BadRequestException("Unit does not belong to the selected product");
                         }
 
                         BigDecimal baseQuantity = ir.quantity().multiply(new BigDecimal(unit.getFactor()));
@@ -68,10 +71,10 @@ public class StockTransferServiceImpl implements StockTransferService {
                         // Validate source inventory
                         Inventory sourceInventory = inventoryRepository
                                         .findByEstablishmentIdAndLotId(source.getId(), lot.getId())
-                                        .orElseThrow(() -> new RuntimeException("Product not in source inventory"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Product not in source inventory"));
 
                         if (sourceInventory.getQuantity().compareTo(baseQuantity) < 0) {
-                                throw new RuntimeException(
+                                throw new StockInsufficientException(
                                                 "Insufficient stock in source establishment for product: "
                                                                 + product.getTradeName());
                         }
@@ -109,19 +112,19 @@ public class StockTransferServiceImpl implements StockTransferService {
         public StockTransferResponse getById(Long id) {
                 return repository.findById(id)
                                 .map(this::mapToResponse)
-                                .orElseThrow(() -> new RuntimeException("Stock transfer not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Stock transfer not found"));
         }
 
         @Override
         @Transactional
         public StockTransferResponse dispatchTransfer(Long id, Long userId) {
                 StockTransfer transfer = repository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Stock transfer not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Stock transfer not found"));
                 User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
                 if (transfer.getStatus() != StockTransfer.TransferStatus.PENDING) {
-                        throw new RuntimeException("Only PENDING transfers can be dispatched");
+                        throw new BadRequestException("Only PENDING transfers can be dispatched");
                 }
 
                 // Deduct from source
@@ -131,10 +134,10 @@ public class StockTransferServiceImpl implements StockTransferService {
 
                         Inventory sourceInventory = inventoryRepository.findByEstablishmentIdAndLotId(
                                         transfer.getSourceEstablishment().getId(), item.getLot().getId())
-                                        .orElseThrow(() -> new RuntimeException("Inventory not found"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
 
                         if (sourceInventory.getQuantity().compareTo(baseQuantity) < 0) {
-                                throw new RuntimeException("Insufficient stock in source establishment");
+                                throw new StockInsufficientException("Insufficient stock in source establishment");
                         }
 
                         sourceInventory.setQuantity(sourceInventory.getQuantity().subtract(baseQuantity));
@@ -155,12 +158,12 @@ public class StockTransferServiceImpl implements StockTransferService {
         @Transactional
         public StockTransferResponse receiveTransfer(Long id, Long userId) {
                 StockTransfer transfer = repository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Stock transfer not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Stock transfer not found"));
                 User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
                 if (transfer.getStatus() != StockTransfer.TransferStatus.IN_TRANSIT) {
-                        throw new RuntimeException("Only IN_TRANSIT transfers can be received");
+                        throw new BadRequestException("Only IN_TRANSIT transfers can be received");
                 }
 
                 // Add to target
@@ -202,16 +205,16 @@ public class StockTransferServiceImpl implements StockTransferService {
         @Transactional
         public StockTransferResponse cancelTransfer(Long id, Long userId) {
                 StockTransfer transfer = repository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Stock transfer not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Stock transfer not found"));
 
                 if (transfer.getStatus() == StockTransfer.TransferStatus.COMPLETED) {
-                        throw new RuntimeException("Cannot cancel COMPLETED transfers");
+                        throw new BadRequestException("Cannot cancel COMPLETED transfers");
                 }
 
                 if (transfer.getStatus() == StockTransfer.TransferStatus.IN_TRANSIT) {
                         // Revert deduction from source
                         User user = userRepository.findById(userId)
-                                        .orElseThrow(() -> new RuntimeException("User not found"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
                         for (StockTransferItem item : transfer.getItems()) {
                                 BigDecimal baseQuantity = item.getQuantity()
@@ -219,7 +222,7 @@ public class StockTransferServiceImpl implements StockTransferService {
 
                                 Inventory sourceInventory = inventoryRepository.findByEstablishmentIdAndLotId(
                                                 transfer.getSourceEstablishment().getId(), item.getLot().getId())
-                                                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+                                                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
 
                                 sourceInventory.setQuantity(sourceInventory.getQuantity().add(baseQuantity));
                                 inventoryRepository.save(sourceInventory);

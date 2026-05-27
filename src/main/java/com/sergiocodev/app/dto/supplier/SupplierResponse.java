@@ -8,7 +8,11 @@ public record SupplierResponse(
         String ruc,
         String phone,
         String email,
-        String address) {
+        String address,
+        String category,
+        String status,
+        java.math.BigDecimal rating,
+        String contactName) {
     public SupplierResponse(Supplier supplier) {
         this(
                 supplier.getId(),
@@ -16,6 +20,10 @@ public record SupplierResponse(
                 supplier.getRuc(),
                 supplier.getPhone(),
                 supplier.getEmail(),
-                supplier.getAddress());
+                supplier.getAddress(),
+                supplier.getCategory(),
+                supplier.getStatus() != null ? supplier.getStatus().name() : null,
+                supplier.getRating(),
+                supplier.getContactName());
     }
 }

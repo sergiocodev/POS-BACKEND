@@ -7,6 +7,8 @@ import com.sergiocodev.app.service.interfaces.InventoryService;
 import com.sergiocodev.app.dto.sunat.VoidInvoiceRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentRequest;
 import com.sergiocodev.app.dto.voideddocument.VoidedDocumentResponse;
+import com.sergiocodev.app.exception.BadRequestException;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.Sale;
 import com.sergiocodev.app.model.VoidedDocument;
 import com.sergiocodev.app.model.VoidedDocumentItem;
@@ -43,15 +45,15 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         public VoidedDocumentResponse create(VoidedDocumentRequest request, Long userId) {
                 VoidedDocument entity = new VoidedDocument();
                 entity.setEstablishment(establishmentRepository.findById(request.establishmentId())
-                                .orElseThrow(() -> new RuntimeException("Establishment not found")));
+                                .orElseThrow(() -> new ResourceNotFoundException("Establishment not found")));
                 entity.setUser(userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found")));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found")));
                 entity.setIssueDate(request.issueDate());
                 entity.setSunatStatus(VoidedDocument.VoidedSunatStatus.PENDING);
 
                 for (Long saleId : request.saleIds()) {
                         Sale sale = saleRepository.findById(saleId)
-                                        .orElseThrow(() -> new RuntimeException("Sale not found: " + saleId));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + saleId));
 
                         sale.setVoided(true);
                         sale.setVoidedAt(LocalDateTime.now());
@@ -84,7 +86,7 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         public VoidedDocumentResponse getById(Long id) {
                 return repository.findById(id)
                                 .map(VoidedDocumentResponse::new)
-                                .orElseThrow(() -> new RuntimeException("Voided document not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Voided document not found"));
         }
 
         @Override
@@ -92,7 +94,7 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         public VoidedDocumentResponse updateSunatStatus(Long id, VoidedDocument.VoidedSunatStatus status,
                         String description) {
                 VoidedDocument doc = repository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Voided document not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Voided document not found"));
                 doc.setSunatStatus(status);
                 doc.setSunatDescription(description);
                 return new VoidedDocumentResponse(repository.save(doc));
@@ -124,11 +126,11 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
         @Transactional
         public VoidedDocumentResponse voidInvoice(VoidInvoiceRequest request,
                         Long userId) {
-                Sale sale = saleRepository.findById(request.getSaleId())
-                                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + request.getSaleId()));
+                Sale sale = saleRepository.findById(request.saleId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada: " + request.saleId()));
 
                 if (sale.isVoided()) {
-                        throw new RuntimeException("La venta ya está anulada");
+                        throw new BadRequestException("La venta ya está anulada");
                 }
 
                 VoidedDocument entity = new VoidedDocument();
@@ -143,14 +145,14 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
                 VoidedDocumentItem item = new VoidedDocumentItem();
                 item.setVoidedDocument(entity);
                 item.setSale(sale);
-                item.setDescription(request.getReason());
+                item.setDescription(request.reason());
                 entity.getItems().add(item);
 
                 entity = repository.save(entity);
 
                 try {
                         com.sergiocodev.app.model.Company company = companyRepository.findMainCompany()
-                                        .orElseThrow(() -> new RuntimeException("Company not configured"));
+                                        .orElseThrow(() -> new ResourceNotFoundException("Company not configured"));
 
                         String xml = xmlUblGenerator.generateVoidedDocumentXml(entity, company);
                         String fileName = ticket + ".xml";
@@ -169,7 +171,7 @@ public class VoidedDocumentServiceImpl implements VoidedDocumentService {
 
                                 sale.setVoided(true);
                                 sale.setVoidedAt(LocalDateTime.now());
-                                sale.setVoidReason(request.getReason());
+                                sale.setVoidReason(request.reason());
                                 sale.setSunatStatus(Sale.SunatStatus.VOIDED);
                                 saleRepository.save(sale);
 
