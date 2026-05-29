@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface CashMovementService {
-    Page<CashMovementResponse> findAll(Pageable pageable);
+    Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type, String reference, String username, Pageable pageable);
     List<CashMovementResponse> findBySessionId(Long sessionId);
     CashMovementResponse createManualMovement(CashMovementRequest request);
     CashMovementResponse registerInternalMovement(CashSession session, User user, CashConcept concept, BigDecimal amount, String reference, String description);

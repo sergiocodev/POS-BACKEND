@@ -45,8 +45,12 @@ public class SupplierController {
 
     @GetMapping("/paged")
     @Operation(summary = "Listar proveedores paginados con detalles")
-    public ResponseEntity<ResponseApi<Page<SupplierDetailResponse>>> getPaged(Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.getSupplierDetailsPaged(pageable)));
+    public ResponseEntity<ResponseApi<Page<SupplierDetailResponse>>> getPaged(
+            @RequestParam(required = false) String providerInfo,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String contactInfo,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSupplierDetailsPaged(providerInfo, category, contactInfo, pageable)));
     }
 
     @GetMapping("/summary")

@@ -48,6 +48,14 @@ public class CashSessionController {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
+    @GetMapping("/paged")
+    @Operation(summary = "Listar sesiones de efectivo con paginación")
+    public ResponseEntity<ResponseApi<org.springframework.data.domain.Page<CashSessionResponse>>> getAllPaged(
+            @RequestParam(required = false) Long establishmentId,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "openedAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(establishmentId, pageable)));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una sesión de efectivo por ID")
     public ResponseEntity<ResponseApi<CashSessionResponse>> getById(@PathVariable Long id) {
@@ -78,5 +86,12 @@ public class CashSessionController {
     @Operation(summary = "Historial de cierres", description = "Listado de sesiones cerradas del usuario")
     public ResponseEntity<ResponseApi<List<CashSessionResponse>>> getHistory(@RequestParam Long userId) {
         return ResponseEntity.ok(ResponseApi.success(service.getHistory(userId)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Resumen de cajas", description = "Obtiene un resumen de cajas abiertas, cerradas y montos totales")
+    public ResponseEntity<ResponseApi<List<com.sergiocodev.app.dto.cashsession.CashSessionSummaryResponse>>> getSummary(
+            @RequestParam(required = false) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(establishmentId)));
     }
 }

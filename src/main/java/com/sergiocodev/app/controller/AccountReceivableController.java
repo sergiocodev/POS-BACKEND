@@ -3,7 +3,9 @@ package com.sergiocodev.app.controller;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableRequest;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableResponse;
 import com.sergiocodev.app.dto.accountreceivable.AccountReceivableDashboardResponse;
+import com.sergiocodev.app.dto.accountreceivable.AccountReceivablePaymentResponse;
 import com.sergiocodev.app.service.interfaces.AccountReceivableService;
+import com.sergiocodev.app.service.interfaces.AccountReceivablePaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ import com.sergiocodev.app.dto.ResponseApi;
 public class AccountReceivableController {
 
     private final AccountReceivableService service;
+    private final AccountReceivablePaymentService paymentService;
 
     @PostMapping
     public ResponseEntity<AccountReceivableResponse> create(@Valid @RequestBody AccountReceivableRequest request) {
@@ -55,6 +58,11 @@ public class AccountReceivableController {
     @GetMapping("/{id}")
     public ResponseEntity<AccountReceivableResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
+    }
+
+    @GetMapping("/{id}/payments")
+    public ResponseEntity<ResponseApi<List<AccountReceivablePaymentResponse>>> getPayments(@PathVariable Long id) {
+        return ResponseEntity.ok(ResponseApi.success(paymentService.getByAccountReceivableId(id)));
     }
 
     @GetMapping("/dashboard")

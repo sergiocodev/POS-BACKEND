@@ -11,7 +11,7 @@ import java.util.Optional;
  * Repositorio para la gestión de cuentas por pagar (deudas a proveedores).
  */
 @Repository
-public interface AccountPayableRepository extends JpaRepository<AccountPayable, Long> {
+public interface AccountPayableRepository extends JpaRepository<AccountPayable, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<AccountPayable> {
     /**
      * Obtiene las cuentas por pagar asociadas a un proveedor específico.
      * @param supplierId ID del proveedor.
@@ -32,4 +32,34 @@ public interface AccountPayableRepository extends JpaRepository<AccountPayable, 
      * @return La cuenta por pagar envuelta en Optional.
      */
     Optional<AccountPayable> findByPurchaseId(Long purchaseId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses")
+    java.math.BigDecimal getTotalPendingBalance(@org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate < CURRENT_DATE")
+    java.math.BigDecimal getOverdueBalance(@org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(a) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= CURRENT_DATE")
+    Long getCountUpcomingDue(@org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.totalAmount), 0) FROM AccountPayable a WHERE a.status != :canceledStatus")
+    java.math.BigDecimal getTotalExpectedAmount(@org.springframework.data.repository.query.Param("canceledStatus") AccountPayable.PayableStatus canceledStatus);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.amountPaid), 0) FROM AccountPayable a WHERE a.status != :canceledStatus")
+    java.math.BigDecimal getTotalCollectedAmount(@org.springframework.data.repository.query.Param("canceledStatus") AccountPayable.PayableStatus canceledStatus);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses AND a.createdAt >= :start AND a.createdAt <= :end")
+    java.math.BigDecimal getPendingBalanceCreatedBetween(@org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end, @org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= :start AND a.dueDate <= :end")
+    java.math.BigDecimal getOverdueBalanceDueBetween(@org.springframework.data.repository.query.Param("start") java.time.LocalDate start, @org.springframework.data.repository.query.Param("end") java.time.LocalDate end, @org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(a) FROM AccountPayable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= :start AND a.dueDate <= :end")
+    Long getCountDueBetween(@org.springframework.data.repository.query.Param("start") java.time.LocalDate start, @org.springframework.data.repository.query.Param("end") java.time.LocalDate end, @org.springframework.data.repository.query.Param("excludedStatuses") List<AccountPayable.PayableStatus> excludedStatuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.totalAmount), 0) FROM AccountPayable a WHERE a.status != :canceledStatus AND a.createdAt >= :start AND a.createdAt <= :end")
+    java.math.BigDecimal getExpectedAmountCreatedBetween(@org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end, @org.springframework.data.repository.query.Param("canceledStatus") AccountPayable.PayableStatus canceledStatus);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.amountPaid), 0) FROM AccountPayable a WHERE a.status != :canceledStatus AND a.createdAt >= :start AND a.createdAt <= :end")
+    java.math.BigDecimal getCollectedAmountCreatedBetween(@org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end, @org.springframework.data.repository.query.Param("canceledStatus") AccountPayable.PayableStatus canceledStatus);
 }

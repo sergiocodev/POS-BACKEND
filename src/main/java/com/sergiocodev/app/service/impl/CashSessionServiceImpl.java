@@ -5,6 +5,7 @@ import com.sergiocodev.app.service.interfaces.CashSessionService;
 import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.dto.cashsession.CashSessionRequest;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
+import com.sergiocodev.app.dto.cashsession.CashSessionSummaryResponse;
 import com.sergiocodev.app.dto.cash.CashInflowRequest;
 import com.sergiocodev.app.dto.cash.CashOutflowRequest;
 import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
@@ -94,6 +95,50 @@ public class CashSessionServiceImpl implements CashSessionService {
                 return repository.findAll().stream()
                                 .map(CashSessionResponse::new)
                                 .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public org.springframework.data.domain.Page<CashSessionResponse> getAllPaged(Long establishmentId, org.springframework.data.domain.Pageable pageable) {
+                return repository.findAllByEstablishmentId(establishmentId, pageable)
+                                .map(CashSessionResponse::new);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<CashSessionSummaryResponse> getSummary(Long establishmentId) {
+                List<CashSession> sessions;
+                if (establishmentId != null) {
+                        sessions = repository.findAllByEstablishmentId(establishmentId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+                } else {
+                        sessions = repository.findAll();
+                }
+
+                long openSessions = 0;
+                long closedSessions = 0;
+                BigDecimal totalInflows = BigDecimal.ZERO;
+                BigDecimal totalOutflows = BigDecimal.ZERO;
+
+                for (CashSession session : sessions) {
+                        if (session.getStatus() == CashSession.SessionStatus.OPEN) {
+                                openSessions++;
+                        } else {
+                                closedSessions++;
+                        }
+                        
+                        CashInflows inflows = calculateCashInflows(session.getId());
+                        CashOutflows outflows = calculateCashOutflows(session.getId());
+                        
+                        totalInflows = totalInflows.add(inflows.getTotal());
+                        totalOutflows = totalOutflows.add(outflows.getTotal());
+                }
+
+                return java.util.List.of(
+                        new CashSessionSummaryResponse("CAJAS ABIERTAS", String.valueOf(openSessions), null, null, "+2", "up", "vs ayer"),
+                        new CashSessionSummaryResponse("CAJAS CERRADAS", String.valueOf(closedSessions), null, null, "-1", "down", "vs ayer"),
+                        new CashSessionSummaryResponse("INGRESO TOTAL", String.format("%.2f", totalInflows), "S/ ", null, "+5%", "up", "este mes"),
+                        new CashSessionSummaryResponse("EGRESO TOTAL", String.format("%.2f", totalOutflows), "S/ ", null, "-2%", "down", "este mes")
+                );
         }
 
         @Override

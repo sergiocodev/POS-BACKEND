@@ -15,7 +15,7 @@ public interface SupplierService {
 
     void delete(Long id);
 
-    org.springframework.data.domain.Page<com.sergiocodev.app.dto.supplier.SupplierDetailResponse> getSupplierDetailsPaged(org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<com.sergiocodev.app.dto.supplier.SupplierDetailResponse> getSupplierDetailsPaged(String providerInfo, String category, String contactInfo, org.springframework.data.domain.Pageable pageable);
 
     com.sergiocodev.app.dto.supplier.SupplierSummaryResponse getSummary();
 }

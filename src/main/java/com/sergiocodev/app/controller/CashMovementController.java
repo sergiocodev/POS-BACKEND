@@ -30,8 +30,15 @@ public class CashMovementController {
 
     @GetMapping
     @Operation(summary = "Listar todos los movimientos", description = "Retorna una lista paginada de todos los movimientos de caja.")
-    public ResponseEntity<ResponseApi<Page<CashMovementResponse>>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.findAll(pageable)));
+    public ResponseEntity<ResponseApi<Page<CashMovementResponse>>> getAll(
+            @RequestParam(required = false) String createdAt,
+            @RequestParam(required = false) String conceptName,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String reference,
+            @RequestParam(required = false) String username,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.findAll(createdAt, conceptName, description, type, reference, username, pageable)));
     }
 
     @GetMapping("/session/{sessionId}")

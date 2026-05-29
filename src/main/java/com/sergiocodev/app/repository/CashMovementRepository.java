@@ -7,11 +7,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 /**
  * Repositorio para registrar movimientos manuales o automáticos de efectivo en caja.
  */
 @Repository
-public interface CashMovementRepository extends JpaRepository<CashMovement, Long> {
+public interface CashMovementRepository extends JpaRepository<CashMovement, Long>, JpaSpecificationExecutor<CashMovement> {
     /**
      * Obtiene todos los movimientos realizados en una sesión de caja.
      * @param cashSessionId ID de la sesión.

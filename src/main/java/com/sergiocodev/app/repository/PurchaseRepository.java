@@ -61,4 +61,43 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long>, JpaSp
                         @Param("establishmentId") Long establishmentId,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
+
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment", "user" })
+        @Query("SELECT p FROM Purchase p WHERE p.establishment.id = :establishmentId " +
+                        "AND p.issueDate >= :startDate AND p.issueDate <= :endDate " +
+                        "AND (:supplierIds IS NULL OR p.supplier.id IN :supplierIds) " +
+                        "AND (:statuses IS NULL OR p.status IN :statuses) " +
+                        "AND (:buyerIds IS NULL OR p.user.id IN :buyerIds) " +
+                        "AND (:paymentConditions IS NULL OR p.paymentCondition IN :paymentConditions) " +
+                        "ORDER BY p.issueDate DESC")
+        List<Purchase> findByFilters(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        @Param("supplierIds") List<Long> supplierIds,
+                        @Param("statuses") List<com.sergiocodev.app.model.Purchase.PurchaseStatus> statuses,
+                        @Param("buyerIds") List<Long> buyerIds,
+                        @Param("paymentConditions") List<com.sergiocodev.app.model.Purchase.PaymentCondition> paymentConditions);
+
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment" })
+        @Query("SELECT DISTINCT p FROM Purchase p JOIN p.items i WHERE p.establishment.id = :establishmentId " +
+                        "AND p.issueDate >= :startDate AND p.issueDate <= :endDate " +
+                        "AND (:categoryIds IS NULL OR i.product.category.id IN :categoryIds) " +
+                        "ORDER BY p.issueDate DESC")
+        List<Purchase> findByCategoryFilters(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        @Param("categoryIds") List<Long> categoryIds);
+
+        @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment" })
+        @Query("SELECT DISTINCT p FROM Purchase p JOIN p.items i WHERE p.establishment.id = :establishmentId " +
+                        "AND p.issueDate >= :startDate AND p.issueDate <= :endDate " +
+                        "AND (:productId IS NULL OR i.product.id = :productId) " +
+                        "ORDER BY p.issueDate DESC")
+        List<Purchase> findByProductFilters(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        @Param("productId") Long productId);
 }

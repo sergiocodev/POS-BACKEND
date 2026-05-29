@@ -7,6 +7,7 @@ import com.sergiocodev.app.dto.cash.OpenDailySessionRequest;
 import com.sergiocodev.app.dto.cash.SessionStatusResponse;
 import com.sergiocodev.app.dto.cashsession.CashSessionRequest;
 import com.sergiocodev.app.dto.cashsession.CashSessionResponse;
+import com.sergiocodev.app.dto.cashsession.CashSessionSummaryResponse;
 import com.sergiocodev.app.dto.cashmovement.CashMovementResponse;
 
 import java.math.BigDecimal;
@@ -18,6 +19,8 @@ public interface CashSessionService {
         CashSessionResponse closeSession(Long id, BigDecimal closingBalance);
 
         List<CashSessionResponse> getAll();
+        
+        org.springframework.data.domain.Page<CashSessionResponse> getAllPaged(Long establishmentId, org.springframework.data.domain.Pageable pageable);
 
         CashSessionResponse getById(Long id);
 
@@ -36,6 +39,8 @@ public interface CashSessionService {
         CashMovementResponse registerCashOutflow(CashOutflowRequest request);
 
         CashMovementResponse registerCashInflow(CashInflowRequest request);
+
+        List<CashSessionSummaryResponse> getSummary(Long establishmentId);
 
         CashSessionResponse closeSessionAndReport(CloseSessionRequest request);
 }

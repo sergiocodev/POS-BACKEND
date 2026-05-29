@@ -472,5 +472,245 @@ public class ReportController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    // ── Purchase PDF Endpoints ──
+
+    @GetMapping("/pdf/purchases/comprobantes")
+    @Operation(summary = "Generar PDF de compras")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getPurchasesFilteredPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId) throws Exception {
+
+        List<PurchaseReport> purchases = service.getPurchases(start, end, establishmentId);
+        byte[] pdfBytes = ReportPdfGenerator.generatePurchaseComprobantesReport(
+                purchases,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_compras_comprobantes.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/status")
+    @Operation(summary = "Generar PDF de compras por estado")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getPurchasesByStatusPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.PurchaseDebtReport> debts = service.getPurchaseDebtStatus(start, end, establishmentId);
+        
+        byte[] pdfBytes = com.sergiocodev.app.util.PurchaseDebtPdfGenerator.generateDebtReport(
+                debts,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_compras_estado.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/categories")
+    @Operation(summary = "Generar PDF de compras por categoria")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getPurchasesByCategoryPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId,
+            @RequestParam(required = false) List<Long> categoryIds) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.PurchasesByCategoryDetailReport> purchases = service.getPurchasesByCategoryDetail(start, end, establishmentId, categoryIds);
+        byte[] pdfBytes = ReportPdfGenerator.generatePurchaseCategoriesReport(
+                purchases,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_compras_categorias.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/price-history")
+    @Operation(summary = "Generar PDF de historial de precios")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getProductPriceHistoryPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId,
+            @RequestParam(required = false) Long productId) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.ProductPriceHistoryReport> reports = service.getProductPriceHistory(start, end, establishmentId, productId);
+        byte[] pdfBytes = ReportPdfGenerator.generateProductPriceHistoryReport(
+                reports,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_precios_compra.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/supplier")
+    @Operation(summary = "Generar PDF de compras por proveedor")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getPurchasesBySupplierPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId,
+            @RequestParam(required = false) List<Long> supplierIds) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.PurchasesBySupplierReport> purchases = service.getPurchasesBySupplier(start, end, establishmentId, supplierIds);
+        
+        byte[] pdfBytes = ReportPdfGenerator.generatePurchasesBySupplierReport(
+                purchases,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_compras_proveedor.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/accounts-payable")
+    @Operation(summary = "Generar PDF de cuentas por pagar")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getAccountsPayableBySupplierPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId,
+            @RequestParam(required = false) List<Long> supplierIds) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.AccountsPayableSupplierReport> reports = service.getAccountsPayableBySupplier(start, end, establishmentId, supplierIds);
+        
+        byte[] pdfBytes = ReportPdfGenerator.generateAccountsPayableBySupplierReport(
+                reports,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_cuentas_pagar.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/purchases/buyer")
+    @Operation(summary = "Generar PDF de compras por comprador")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    public ResponseEntity<byte[]> getPurchasesByBuyerPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId,
+            @RequestParam(required = false) List<Long> buyerIds) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.PurchasesByBuyerReport> reports = service.getPurchasesByBuyer(start, end, establishmentId, buyerIds);
+        byte[] pdfBytes = ReportPdfGenerator.generatePurchasesByBuyerReport(
+                reports,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_compras_comprador.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    // ── Cash Box PDF Endpoints ──
+
+    @GetMapping("/pdf/cash/sessions")
+    @Operation(summary = "Generar PDF de historial de sesiones de caja")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    public ResponseEntity<byte[]> getCashSessionsPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.CashSessionReport> sessions = service.getCashSessions(start, end, establishmentId);
+        byte[] pdfBytes = ReportPdfGenerator.generateCashSessionsReport(
+                sessions,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_sesiones_caja.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/cash/movements")
+    @Operation(summary = "Generar PDF de movimientos de caja por período")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    public ResponseEntity<byte[]> getCashMovementsPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam Long establishmentId) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.CashMovementReport> movements = service.getCashMovementsByPeriod(start, end, establishmentId);
+        byte[] pdfBytes = ReportPdfGenerator.generateCashMovementsReport(
+                movements,
+                companyService.getCompany(),
+                start.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")),
+                end.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "reporte_movimientos_caja.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/pdf/cash/sessions/{sessionId}/arqueo")
+    @Operation(summary = "Generar PDF de arqueo de una sesión de caja")
+    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    public ResponseEntity<byte[]> getCashArqueoPdf(
+            @PathVariable Long sessionId) throws Exception {
+
+        List<com.sergiocodev.app.dto.report.CashSessionReport> sessions = service.getCashSessions(
+                java.time.LocalDateTime.of(2000, 1, 1, 0, 0),
+                java.time.LocalDateTime.now(),
+                null);
+
+        com.sergiocodev.app.dto.report.CashSessionReport session = sessions.stream()
+                .filter(s -> s.sessionId().equals(sessionId))
+                .findFirst()
+                .orElseThrow(() -> new com.sergiocodev.app.exception.ResourceNotFoundException("Session not found: " + sessionId));
+
+        List<com.sergiocodev.app.dto.report.CashMovementReport> movements = service.getCashMovementsBySession(sessionId);
+
+        byte[] pdfBytes = ReportPdfGenerator.generateCashArqueoReport(
+                session,
+                movements,
+                companyService.getCompany());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "arqueo_caja_" + sessionId + ".pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
 }
 

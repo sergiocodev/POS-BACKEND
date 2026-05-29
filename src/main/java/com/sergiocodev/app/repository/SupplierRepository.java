@@ -28,9 +28,17 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
         )
         FROM Supplier s
         LEFT JOIN Purchase p ON p.supplier.id = s.id AND p.status = 'RECEIVED'
+        WHERE (:providerInfo IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :providerInfo, '%')) OR s.ruc LIKE CONCAT('%', :providerInfo, '%'))
+        AND (:category IS NULL OR LOWER(s.category) LIKE LOWER(CONCAT('%', :category, '%')))
+        AND (:contactInfo IS NULL OR LOWER(s.contactName) LIKE LOWER(CONCAT('%', :contactInfo, '%')) OR LOWER(s.email) LIKE LOWER(CONCAT('%', :contactInfo, '%')))
         GROUP BY s.id, s.name, s.ruc, s.category, s.contactName, s.email, s.status, s.rating
     """)
-    Page<SupplierDetailResponse> getSupplierDetailsPaged(Pageable pageable);
+    Page<SupplierDetailResponse> getSupplierDetailsPaged(
+        @org.springframework.data.repository.query.Param("providerInfo") String providerInfo,
+        @org.springframework.data.repository.query.Param("category") String category,
+        @org.springframework.data.repository.query.Param("contactInfo") String contactInfo,
+        Pageable pageable
+    );
 
     @Query("""
         SELECT COUNT(s) FROM Supplier s WHERE s.status = 'ACTIVO'

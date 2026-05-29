@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import com.sergiocodev.app.dto.accountpayable.AccountPayableDashboardResponse;
 
 @RestController
 @RequestMapping("/api/v1/account-payables")
@@ -33,6 +37,23 @@ public class AccountPayableController {
     @Operation(summary = "Listar todas las cuentas por pagar")
     public ResponseEntity<ResponseApi<List<AccountPayableResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<Page<AccountPayableResponse>>> getAllPaged(
+            @RequestParam(required = false) String supplierName,
+            @RequestParam(required = false) String purchaseIdentifier,
+            @RequestParam(required = false) String createdAt,
+            @RequestParam(required = false) String dueDate,
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<AccountPayableResponse> paged = service.getAllPaged(supplierName, purchaseIdentifier, createdAt, dueDate, status, pageable);
+        return ResponseEntity.ok(ResponseApi.success(paged));
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<ResponseApi<List<AccountPayableDashboardResponse>>> getDashboard() {
+        return ResponseEntity.ok(ResponseApi.success(service.getDashboard()));
     }
 
     @GetMapping("/supplier/{supplierId}")

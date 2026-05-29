@@ -27,6 +27,21 @@ public interface ReportService {
 
     List<PurchaseReport> getPurchases(LocalDateTime start, LocalDateTime end, Long establishmentId);
 
+
+    List<PurchaseDebtReport> getPurchaseDebtStatus(LocalDateTime start, LocalDateTime end, Long establishmentId);
+
+
+    List<PurchasesByCategoryDetailReport> getPurchasesByCategoryDetail(LocalDateTime start, LocalDateTime end, Long establishmentId, List<Long> categoryIds);
+
+    List<PurchasesBySupplierReport> getPurchasesBySupplier(LocalDateTime start, LocalDateTime end, Long establishmentId, List<Long> supplierIds);
+
+    List<AccountsPayableSupplierReport> getAccountsPayableBySupplier(LocalDateTime start, LocalDateTime end, Long establishmentId, List<Long> supplierIds);
+
+    List<ProductPriceHistoryReport> getProductPriceHistory(LocalDateTime start, LocalDateTime end, Long establishmentId, Long productId);
+
+    List<PurchasesByBuyerReport> getPurchasesByBuyer(LocalDateTime start, LocalDateTime end, Long establishmentId, List<Long> buyerIds);
+
+
     List<SalesReport> getSales(LocalDateTime start, LocalDateTime end, Long establishmentId);
 
     SalesSummaryReport getSalesSummary(LocalDateTime start, LocalDateTime end, Long establishmentId);
@@ -96,5 +111,16 @@ public interface ReportService {
     /** PDF Cliente: detalle de ventas de un cliente */
     List<SalesReport> getSalesByCustomerDetail(LocalDateTime start, LocalDateTime end,
             Long establishmentId, List<Long> customerIds);
+
+    // ── Reportes de Caja ──
+
+    /** PDF Caja: historial de sesiones por período y establecimiento */
+    List<CashSessionReport> getCashSessions(LocalDateTime start, LocalDateTime end, Long establishmentId);
+
+    /** PDF Caja: movimientos de una sesión específica */
+    List<CashMovementReport> getCashMovementsBySession(Long sessionId);
+
+    /** PDF Caja: movimientos de todas las sesiones del período */
+    List<CashMovementReport> getCashMovementsByPeriod(LocalDateTime start, LocalDateTime end, Long establishmentId);
 }
 

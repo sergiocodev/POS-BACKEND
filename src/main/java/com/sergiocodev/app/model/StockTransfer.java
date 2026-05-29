@@ -42,14 +42,14 @@ public class StockTransfer {
     private LocalDateTime sentAt = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dispatched_by_id")
+    @JoinColumn(name = "dispatched_by_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User dispatchedBy;
 
     @Column(name = "received_at")
     private LocalDateTime receivedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "received_by_id")
+    @JoinColumn(name = "received_by_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User receivedBy;
 
     @Column(columnDefinition = "TEXT")

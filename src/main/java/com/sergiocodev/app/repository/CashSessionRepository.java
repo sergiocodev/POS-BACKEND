@@ -34,4 +34,19 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
          */
         java.util.Optional<CashSession> findByCashRegisterIdAndStatus(Long cashRegisterId,
                         CashSession.SessionStatus status);
+
+        @org.springframework.data.jpa.repository.Query("SELECT c FROM CashSession c WHERE (:establishmentId IS NULL OR c.cashRegister.establishment.id = :establishmentId)")
+        org.springframework.data.domain.Page<CashSession> findAllByEstablishmentId(
+                @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, 
+                org.springframework.data.domain.Pageable pageable);
+
+        @org.springframework.data.jpa.repository.Query(
+                "SELECT c FROM CashSession c WHERE " +
+                "(:establishmentId IS NULL OR c.cashRegister.establishment.id = :establishmentId) AND " +
+                "c.openedAt >= :start AND c.openedAt <= :end " +
+                "ORDER BY c.openedAt DESC")
+        java.util.List<CashSession> findByEstablishmentAndDateRange(
+                @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId,
+                @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start,
+                @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 }

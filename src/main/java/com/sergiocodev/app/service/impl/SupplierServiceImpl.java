@@ -74,8 +74,8 @@ public class SupplierServiceImpl implements SupplierService {
 
     @Override
     @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<com.sergiocodev.app.dto.supplier.SupplierDetailResponse> getSupplierDetailsPaged(org.springframework.data.domain.Pageable pageable) {
-        return repository.getSupplierDetailsPaged(pageable);
+    public org.springframework.data.domain.Page<com.sergiocodev.app.dto.supplier.SupplierDetailResponse> getSupplierDetailsPaged(String providerInfo, String category, String contactInfo, org.springframework.data.domain.Pageable pageable) {
+        return repository.getSupplierDetailsPaged(providerInfo, category, contactInfo, pageable);
     }
 
     @Override

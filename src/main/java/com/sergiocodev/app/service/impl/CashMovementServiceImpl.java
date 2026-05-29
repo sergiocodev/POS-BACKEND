@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -35,8 +36,38 @@ public class CashMovementServiceImpl implements CashMovementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CashMovementResponse> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(CashMovementResponse::new);
+    public Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type, String reference, String username, Pageable pageable) {
+        Specification<CashMovement> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+
+            if (createdAt != null && !createdAt.isBlank()) {
+                predicates.add(cb.like(root.get("createdAt").as(String.class), "%" + createdAt + "%"));
+            }
+            if (conceptName != null && !conceptName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("cashConcept").get("name")), "%" + conceptName.toLowerCase() + "%"));
+            }
+            if (description != null && !description.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("description")), "%" + description.toLowerCase() + "%"));
+            }
+            if (type != null && !type.isBlank()) {
+                String typeUpper = type.toUpperCase();
+                CashConcept.ConceptType conceptType = typeUpper.contains("IN") ? CashConcept.ConceptType.IN : 
+                                                    (typeUpper.contains("EG") || typeUpper.contains("OUT") ? CashConcept.ConceptType.OUT : null);
+                if (conceptType != null) {
+                    predicates.add(cb.equal(root.join("cashConcept").get("type"), conceptType));
+                }
+            }
+            if (reference != null && !reference.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("reference")), "%" + reference.toLowerCase() + "%"));
+            }
+            if (username != null && !username.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("user").get("username")), "%" + username.toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(CashMovementResponse::new);
     }
 
     @Override
