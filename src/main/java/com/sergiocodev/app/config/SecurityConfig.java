@@ -28,6 +28,9 @@ public class SecurityConfig {
         @Value("${app.cors.allowed-origins:http://localhost:4200}")
         private String allowedOrigins;
 
+        @Value("${app.swagger.secured:true}")
+        private boolean swaggerSecured;
+
         public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
                 this.jwtAuthFilter = jwtAuthFilter;
         }
@@ -37,17 +40,28 @@ public class SecurityConfig {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .authorizeHttpRequests(auth -> auth
+                                .authorizeHttpRequests(auth -> {
                                                 // Public endpoints - NO authentication required
-                                                .requestMatchers("/api/v1/auth/**").permitAll()
-                                                .requestMatchers("/api/auth/**").permitAll()
-                                                .requestMatchers("/uploads/**").permitAll()
-        .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/swagger-resources/**", "/webjars/**")
-            .hasRole("ADMIN")
+                                                auth.requestMatchers("/api/v1/auth/**").permitAll();
+                                                auth.requestMatchers("/api/auth/**").permitAll();
+                                                auth.requestMatchers("/uploads/**").permitAll();
+
+                                                // Swagger endpoints - configurable via app.swagger.secured
+                                                // In production (true = default): requires ADMIN role
+                                                // In development (false): open access for testing
+                                                if (swaggerSecured) {
+                                                    auth.requestMatchers("/swagger-ui.html", "/swagger-ui/**",
+                                                            "/v3/api-docs/**",
+                                                            "/swagger-resources/**", "/webjars/**").hasRole("ADMIN");
+                                                } else {
+                                                    auth.requestMatchers("/swagger-ui.html", "/swagger-ui/**",
+                                                            "/v3/api-docs/**",
+                                                            "/swagger-resources/**", "/webjars/**").permitAll();
+                                                }
+
                                                 // ALL other endpoints require JWT authentication
-                                                .anyRequest().authenticated())
+                                                auth.anyRequest().authenticated();
+                                        })
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 // JWT filter runs before standard authentication

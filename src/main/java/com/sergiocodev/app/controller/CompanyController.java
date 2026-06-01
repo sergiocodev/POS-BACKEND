@@ -6,7 +6,7 @@ import com.sergiocodev.app.service.interfaces.CompanyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import org.springframework.web.bind.annotation.*;
 import com.sergiocodev.app.util.PermissionConstants;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,7 +27,7 @@ public class CompanyController {
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS + "')")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
     public ResponseEntity<CompanyResponse> updateCompany(@Valid @RequestBody CompanyRequest request) {
         return ResponseEntity.ok(companyService.updateCompany(request));
     }

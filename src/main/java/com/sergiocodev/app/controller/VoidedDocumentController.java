@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Voided Documents", description = "API para gestión de bajas de documentos SUNAT")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_BAJAS + "')")
+@RequiresPermission(PermissionConstants.FACTURACION_BAJAS)
 public class VoidedDocumentController {
 
     private final VoidedDocumentService service;

@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Categories", description = "Endpoints para la gestión de categorías")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_CATEGORIAS + "')")
+@RequiresPermission(PermissionConstants.FARMACIA_CATEGORIAS)
 public class CategoryController {
 
     private final CategoryService categoryService;

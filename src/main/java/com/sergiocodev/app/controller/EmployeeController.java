@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Employees", description = "Endpoints para la gestión de empleados")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_PERSONAL + "')")
+@RequiresPermission(PermissionConstants.CONFIGURACION_PERSONAL)
 public class EmployeeController {
 
     private final EmployeeService service;

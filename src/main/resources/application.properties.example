@@ -28,6 +28,11 @@ app.cors.allowed-origins=*
 springdoc.api-docs.path=/v3/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
 
+# Swagger Security
+# Set to 'true' (default) to require ADMIN role for Swagger UI access (production).
+# Set to 'false' to allow public access to Swagger UI (development).
+app.swagger.secured=true
+
 # Jackson Configuration
 spring.jackson.deserialization.fail-on-null-for-primitives=false
 

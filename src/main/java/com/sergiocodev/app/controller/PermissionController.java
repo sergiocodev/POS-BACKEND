@@ -12,7 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Tag(name = "Permisos", description = "Endpoints para la gestión de permisos del sistema")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.CONFIGURACION_ROLES + "')")
+@RequiresPermission(PermissionConstants.CONFIGURACION_ROLES)
 public class PermissionController {
 
     private final PermissionService permissionService;

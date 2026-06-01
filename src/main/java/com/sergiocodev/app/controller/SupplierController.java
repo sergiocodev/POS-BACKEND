@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -25,7 +25,7 @@ import com.sergiocodev.app.dto.supplier.SupplierSummaryResponse;
 @RequiredArgsConstructor
 @Tag(name = "Suppliers", description = "Endpoints para la gestión de proveedores")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_PROVEEDORES + "')")
+@RequiresPermission(PermissionConstants.COMPRAS_PROVEEDORES)
 public class SupplierController {
 
     private final SupplierService service;

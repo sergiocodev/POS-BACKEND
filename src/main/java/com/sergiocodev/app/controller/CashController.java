@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 
 @RestController
@@ -24,7 +24,7 @@ import com.sergiocodev.app.util.PermissionConstants;
 @RequiredArgsConstructor
 @Tag(name = "Cash Management", description = "Endpoints para la gestión de caja (Tesorería)")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_APERTURA_CIERRE + "')")
+@RequiresPermission(PermissionConstants.CAJA_APERTURA_CIERRE)
 public class CashController {
 
     private final CashSessionService service;

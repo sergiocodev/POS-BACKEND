@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 
@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Brands", description = "Endpoints para la gestión de marcas")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.FARMACIA_MARCAS + "')")
+@RequiresPermission(PermissionConstants.FARMACIA_MARCAS)
 public class BrandController {
 
     private final BrandService brandService;

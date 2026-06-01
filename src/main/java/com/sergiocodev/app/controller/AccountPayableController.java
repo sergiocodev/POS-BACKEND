@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -28,7 +28,7 @@ import com.sergiocodev.app.dto.accountpayable.AccountPayableDashboardResponse;
 @RequiredArgsConstructor
 @Tag(name = "Account Payables", description = "Endpoints para la gestión de cuentas por pagar a proveedores")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_CUENTAS_PAGAR + "')")
+@RequiresPermission(PermissionConstants.COMPRAS_CUENTAS_PAGAR)
 public class AccountPayableController {
 
     private final AccountPayableService service;

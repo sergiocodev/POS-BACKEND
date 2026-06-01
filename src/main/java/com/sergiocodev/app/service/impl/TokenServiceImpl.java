@@ -5,11 +5,13 @@ import com.sergiocodev.app.model.TokenBlacklist;
 import com.sergiocodev.app.repository.TokenBlacklistRepository;
 import com.sergiocodev.app.service.interfaces.TokenService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenServiceImpl implements TokenService {
@@ -37,7 +39,7 @@ public class TokenServiceImpl implements TokenService {
                 tokenBlacklistRepository.save(entry);
             }
         } catch (Exception e) {
-            // Log the error without exposing details
+            log.warn("Error al invalidar token: {}", e.getMessage());
         }
     }
 

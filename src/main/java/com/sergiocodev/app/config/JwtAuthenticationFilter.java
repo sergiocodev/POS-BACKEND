@@ -1,6 +1,10 @@
 package com.sergiocodev.app.config;
 
 import com.sergiocodev.app.repository.TokenBlacklistRepository;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SecurityException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,11 +85,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
             }
-        } catch (Exception e) {
-            log.error("Token JWT malformado, expirado o inválido: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            log.warn("Token JWT expirado para el usuario: {}", e.getClaims().getSubject());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Token JWT malformado o inválido\"}");
+            response.getWriter().write("{\"error\":\"Token JWT expirado\"}");
+            return;
+        } catch (MalformedJwtException | UnsupportedJwtException | SecurityException e) {
+            log.warn("Token JWT malformado o con firma inválida: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token JWT inválido\"}");
+            return;
+        } catch (IllegalArgumentException e) {
+            log.warn("Claims JWT vacío o inválido: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token JWT inválido\"}");
+            return;
+        } catch (Exception e) {
+            log.error("Error inesperado durante autenticación JWT: {}", e.getMessage(), e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Error de autenticación\"}");
             return;
         }
 

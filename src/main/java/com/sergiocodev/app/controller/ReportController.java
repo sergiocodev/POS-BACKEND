@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import com.sergiocodev.app.util.ReportPdfGenerator;
 import com.sergiocodev.app.service.interfaces.CompanyService;
@@ -38,7 +38,7 @@ public class ReportController {
 
     @GetMapping("/sales-daily")
     @Operation(summary = "Reporte de ventas del día")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<DailySalesReport>> getDailySales(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
             @RequestParam Long establishmentId) {
@@ -47,7 +47,7 @@ public class ReportController {
 
     @GetMapping("/profitability")
     @Operation(summary = "Reporte de utilidad y rentabilidad")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<ProfitabilityReport>>> getProfitability(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -57,14 +57,14 @@ public class ReportController {
 
     @GetMapping("/sunat-status")
     @Operation(summary = "Estado de comprobantes SUNAT")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.FACTURACION_COMPROBANTES + "')")
+    @RequiresPermission(PermissionConstants.FACTURACION_COMPROBANTES)
     public ResponseEntity<ResponseApi<List<SunatStatusReport>>> getSunatStatus(@RequestParam Long establishmentId) {
         return ResponseEntity.ok(ResponseApi.success(service.getSunatStatus(establishmentId)));
     }
 
     @GetMapping("/top-products")
     @Operation(summary = "Ranking de Productos (Pareto)")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<TopProductReport>>> getTopProducts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -77,7 +77,7 @@ public class ReportController {
 
     @GetMapping("/sales-by-category")
     @Operation(summary = "Ventas por Familia/Categoría")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<CategorySalesReport>>> getSalesByCategory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -87,7 +87,7 @@ public class ReportController {
 
     @GetMapping("/sales-by-employee")
     @Operation(summary = "Rendimiento de Vendedores")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<EmployeeSalesReport>>> getSalesByEmployee(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -97,7 +97,7 @@ public class ReportController {
 
     @GetMapping("/hourly-heat")
     @Operation(summary = "Mapa de Calor por Horas")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<HourlyHeatReport>>> getHourlyHeat(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -107,7 +107,7 @@ public class ReportController {
 
     @GetMapping("/low-rotation")
     @Operation(summary = "Productos de Baja Rotación (Huesos)")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<LowRotationReport>>> getLowRotation(
             @RequestParam(defaultValue = "90") int days,
             @RequestParam Long establishmentId) {
@@ -116,7 +116,7 @@ public class ReportController {
 
     @GetMapping("/purchases")
     @Operation(summary = "Reporte de compras por período")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<ResponseApi<List<PurchaseReport>>> getPurchases(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -126,7 +126,7 @@ public class ReportController {
 
     @GetMapping("/sales")
     @Operation(summary = "Reporte de ventas detallado por período")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesReport>>> getSales(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -136,7 +136,7 @@ public class ReportController {
 
     @GetMapping("/sales/summary")
     @Operation(summary = "Resumen agregado de ventas por período")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<SalesSummaryReport>> getSalesSummary(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -148,7 +148,7 @@ public class ReportController {
 
     @GetMapping("/sales/filtered")
     @Operation(summary = "Ventas filtradas por tipo de comprobante y serie")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesReport>>> getSalesFiltered(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -161,7 +161,7 @@ public class ReportController {
 
     @GetMapping("/pdf/comprobantes")
     @Operation(summary = "Generar PDF de reporte por comprobantes")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesFilteredPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -189,7 +189,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-series")
     @Operation(summary = "Ventas agrupadas por serie de comprobante")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesBySeriesReport>>> getSalesBySeries(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -199,7 +199,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-payment-method")
     @Operation(summary = "Ventas agrupadas por método de pago")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesByPaymentMethodReport>>> getSalesByPaymentMethod(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -209,7 +209,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-laboratory")
     @Operation(summary = "Ventas agrupadas por laboratorio")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesByLaboratoryReport>>> getSalesByLaboratory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -219,7 +219,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-employee-category")
     @Operation(summary = "Ventas cruzadas por vendedor y categoría")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesByEmployeeCategoryReport>>> getSalesByEmployeeCategory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -230,7 +230,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-category-detail")
     @Operation(summary = "Ventas por categoría con detalle de productos")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesByCategoryDetailReport>>> getSalesByCategoryDetail(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -241,7 +241,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-product")
     @Operation(summary = "Ventas agrupadas por producto")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<com.sergiocodev.app.dto.report.SalesByProductReport>>> getSalesByProduct(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -252,7 +252,7 @@ public class ReportController {
 
     @GetMapping("/sales/series")
     @Operation(summary = "Obtener series disponibles por establecimiento y tipo de documento")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<String>>> getAvailableSeries(
             @RequestParam Long establishmentId,
             @RequestParam(required = false) com.sergiocodev.app.model.Sale.SaleDocumentType documentType) {
@@ -262,7 +262,7 @@ public class ReportController {
 
     @GetMapping("/pdf/categories")
     @Operation(summary = "Generar PDF de reporte por categorías")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesByCategoryPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -289,7 +289,7 @@ public class ReportController {
 
     @GetMapping("/pdf/products")
     @Operation(summary = "Generar PDF de reporte por productos con filtros")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesByProductFiltersPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -318,7 +318,7 @@ public class ReportController {
 
     @GetMapping("/pdf/series")
     @Operation(summary = "Generar PDF de reporte por establecimiento y serie")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesBySeriesPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -345,7 +345,7 @@ public class ReportController {
 
     @GetMapping("/pdf/seller")
     @Operation(summary = "Generar PDF de ventas por vendedor")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesBySellerPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -373,7 +373,7 @@ public class ReportController {
 
     @GetMapping("/pdf/seller-categories")
     @Operation(summary = "Generar PDF de ventas por categoría de un vendedor")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesBySellerCategoriesPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -403,7 +403,7 @@ public class ReportController {
 
     @GetMapping("/pdf/seller-products")
     @Operation(summary = "Generar PDF de ventas por producto de un vendedor")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesBySellerProductsPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -435,7 +435,7 @@ public class ReportController {
 
     @GetMapping("/sales/by-customer")
     @Operation(summary = "Ventas agrupadas por cliente")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<ResponseApi<List<SalesByCustomerReport>>> getSalesByCustomer(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -447,7 +447,7 @@ public class ReportController {
 
     @GetMapping("/pdf/customer")
     @Operation(summary = "Generar PDF de ventas por cliente")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.VENTAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.VENTAS_REPORTES)
     public ResponseEntity<byte[]> getSalesByCustomerPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -477,7 +477,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/comprobantes")
     @Operation(summary = "Generar PDF de compras")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getPurchasesFilteredPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -499,7 +499,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/status")
     @Operation(summary = "Generar PDF de compras por estado")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getPurchasesByStatusPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -522,7 +522,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/categories")
     @Operation(summary = "Generar PDF de compras por categoria")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getPurchasesByCategoryPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -545,7 +545,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/price-history")
     @Operation(summary = "Generar PDF de historial de precios")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getProductPriceHistoryPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -568,7 +568,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/supplier")
     @Operation(summary = "Generar PDF de compras por proveedor")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getPurchasesBySupplierPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -592,7 +592,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/accounts-payable")
     @Operation(summary = "Generar PDF de cuentas por pagar")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getAccountsPayableBySupplierPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -616,7 +616,7 @@ public class ReportController {
 
     @GetMapping("/pdf/purchases/buyer")
     @Operation(summary = "Generar PDF de compras por comprador")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.COMPRAS_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.COMPRAS_REPORTES)
     public ResponseEntity<byte[]> getPurchasesByBuyerPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -641,7 +641,7 @@ public class ReportController {
 
     @GetMapping("/pdf/cash/sessions")
     @Operation(summary = "Generar PDF de historial de sesiones de caja")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.CAJA_REPORTES)
     public ResponseEntity<byte[]> getCashSessionsPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -663,7 +663,7 @@ public class ReportController {
 
     @GetMapping("/pdf/cash/movements")
     @Operation(summary = "Generar PDF de movimientos de caja por período")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.CAJA_REPORTES)
     public ResponseEntity<byte[]> getCashMovementsPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -685,7 +685,7 @@ public class ReportController {
 
     @GetMapping("/pdf/cash/sessions/{sessionId}/arqueo")
     @Operation(summary = "Generar PDF de arqueo de una sesión de caja")
-    @PreAuthorize("hasAuthority('" + PermissionConstants.CAJA_REPORTES + "')")
+    @RequiresPermission(PermissionConstants.CAJA_REPORTES)
     public ResponseEntity<byte[]> getCashArqueoPdf(
             @PathVariable Long sessionId) throws Exception {
 

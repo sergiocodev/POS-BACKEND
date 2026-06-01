@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 @RequiredArgsConstructor
 @Tag(name = "Products", description = "Endpoints para la gestión de productos")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('" + PermissionConstants.INVENTARIO_CATALOGO + "')")
+@RequiresPermission(PermissionConstants.INVENTARIO_CATALOGO)
 @ApiVersion(1)
 public class ProductController {
 

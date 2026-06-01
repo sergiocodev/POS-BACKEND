@@ -13,6 +13,7 @@ import com.sergiocodev.app.repository.AccountReceivableRepository;
 import com.sergiocodev.app.repository.CustomerRepository;
 import com.sergiocodev.app.repository.SaleRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountReceivableServiceImpl implements AccountReceivableService {
@@ -110,7 +112,9 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
                 else if (statusUpper.contains("ANUL") || statusUpper.contains("CANC")) mappedStatus = AccountReceivable.ReceivableStatus.CANCELED;
                 else {
                     try { mappedStatus = AccountReceivable.ReceivableStatus.valueOf(statusUpper); }
-                    catch (IllegalArgumentException ignored) {}
+                    catch (IllegalArgumentException e) {
+                        log.debug("Estado no reconocido: '{}', ignorando filtro", statusUpper);
+                    }
                 }
                 if (mappedStatus != null) {
                     predicates.add(cb.equal(root.get("status"), mappedStatus));
@@ -130,13 +134,15 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
         // Handle ISO format: yyyy-MM-dd
         if (dateStr.matches("\\d{4}-\\d{1,2}-\\d{1,2}")) {
             try {
-                String[] parts = dateStr.split("-");
+                String[] parts = dateStr.split("-"                );
                 return LocalDate.of(
                     Integer.parseInt(parts[0]),
                     Integer.parseInt(parts[1]),
                     Integer.parseInt(parts[2])
                 );
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Error al parsear fecha ISO '{}': {}", dateStr, e.getMessage());
+            }
         }
 
         // Handle d/M/yyyy, dd/MM/yyyy, d/M (assumes current year)
@@ -147,7 +153,9 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
                 int month = Integer.parseInt(parts[1]);
                 int year  = parts.length == 3 ? Integer.parseInt(parts[2]) : LocalDate.now().getYear();
                 return LocalDate.of(year, month, day);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Error al parsear fecha d/M '{}': {}", dateStr, e.getMessage());
+            }
         }
 
         return null;
