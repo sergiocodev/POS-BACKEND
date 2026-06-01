@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +34,14 @@ public class PharmaceuticalFormController {
 
     public ResponseEntity<ResponseApi<List<PharmaceuticalFormResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findAll()));
+    }
+
+    @Operation(summary = "List pharmaceutical forms paged")
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<Page<PharmaceuticalFormResponse>>> getPaged(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(pharmaceuticalFormService.findAllPaged(name, pageable)));
     }
 
     @Operation(summary = "Get pharmaceutical form by ID")

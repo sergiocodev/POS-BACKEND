@@ -6,11 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 /**
  * Repositorio para la gestión de lotes de productos o cargamentos específicos.
  */
 @Repository
-public interface ProductLotRepository extends JpaRepository<ProductLot, Long> {
+public interface ProductLotRepository extends JpaRepository<ProductLot, Long>, JpaSpecificationExecutor<ProductLot> {
     /**
      * Lista los lotes de un producto ordenados por su fecha de vencimiento.
      * Facilita el cumplimiento de la política FEFO (First Expired, First Out).

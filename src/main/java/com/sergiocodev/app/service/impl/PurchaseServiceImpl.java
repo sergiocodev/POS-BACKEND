@@ -180,7 +180,11 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         BigDecimal newQty = inventory.getQuantity().add(new BigDecimal(totalBaseUnits));
         inventory.setQuantity(newQty);
-        inventory.setCostPrice(unitCost);
+        // Convertir costo a unidad base: unitCost / factor
+        // Ejemplo: S/40.00 por caja / factor 20 = S/2.00 por unidad base
+        BigDecimal costPerBaseUnit = unitCost.divide(
+                new BigDecimal(factor), 4, java.math.RoundingMode.HALF_UP);
+        inventory.setCostPrice(costPerBaseUnit);
         inventory.setLastMovement(LocalDateTime.now());
         inventoryRepository.save(inventory);
 

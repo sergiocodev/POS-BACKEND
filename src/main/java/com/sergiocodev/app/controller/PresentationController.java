@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +39,14 @@ public class PresentationController {
     @Operation(summary = "Listar presentaciones")
     public ResponseEntity<ResponseApi<List<PresentationResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    }
+
+    @GetMapping("/paged")
+    @Operation(summary = "Listar presentaciones paginadas")
+    public ResponseEntity<ResponseApi<Page<PresentationResponse>>> getPaged(
+            @RequestParam(required = false) String description,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(description, pageable)));
     }
 
     @GetMapping("/GetPresentationById/{id}")

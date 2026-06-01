@@ -10,6 +10,11 @@ import com.sergiocodev.app.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +44,25 @@ public class ProductLotServiceImpl implements ProductLotService {
         return repository.findAll().stream()
                 .map(ProductLotResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductLotResponse> getAllPaged(String productName, String lotCode, Pageable pageable) {
+        Specification<ProductLot> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (productName != null && !productName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("product").get("tradeName")), "%" + productName.toLowerCase() + "%"));
+            }
+            if (lotCode != null && !lotCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("lotCode")), "%" + lotCode.toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(ProductLotResponse::new);
     }
 
     @Override

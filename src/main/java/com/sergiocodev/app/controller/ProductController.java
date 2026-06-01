@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.sergiocodev.app.config.ApiVersion;
 import java.util.List;
 
@@ -50,6 +52,19 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId) {
         return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId, brandId)));
+    }
+
+    @GetMapping("/paged")
+    @Operation(summary = "Listar productos paginados", description = "Retorna una lista paginada de todos los productos.")
+    public ResponseEntity<ResponseApi<Page<ProductResponse>>> getPaged(
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String tradeName,
+            @RequestParam(required = false) String therapeuticActionNames,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String brandName,
+            @RequestParam(required = false) String laboratoryName,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, tradeName, therapeuticActionNames, categoryName, brandName, laboratoryName, pageable)));
     }
 
     @GetMapping("/search")

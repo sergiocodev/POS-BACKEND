@@ -11,6 +11,8 @@ import com.sergiocodev.app.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +43,13 @@ public class CategoryServiceImpl implements CategoryService {
                 .stream()
                 .map(categoryMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CategoryResponse> findAllPaged(String name, Pageable pageable) {
+        return categoryRepository.findAllPaged(name, pageable)
+                .map(categoryMapper::toResponse);
     }
 
     @Override

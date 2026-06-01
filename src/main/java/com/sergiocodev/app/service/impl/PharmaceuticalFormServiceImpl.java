@@ -10,6 +10,8 @@ import com.sergiocodev.app.repository.PharmaceuticalFormRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +29,13 @@ public class PharmaceuticalFormServiceImpl implements PharmaceuticalFormService 
         return pharmaceuticalFormRepository.findAll().stream()
                 .map(pharmaceuticalFormMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PharmaceuticalFormResponse> findAllPaged(String name, Pageable pageable) {
+        return pharmaceuticalFormRepository.findAllPaged(name, pageable)
+                .map(pharmaceuticalFormMapper::toResponse);
     }
 
     @Override

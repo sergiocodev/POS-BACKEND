@@ -6,12 +6,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 /**
  * Repositorio para el registro de movimientos de stock (Kardex).
  * Registra entradas, salidas y ajustes de inventario.
  */
 @Repository
-public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
+public interface StockMovementRepository extends JpaRepository<StockMovement, Long>, JpaSpecificationExecutor<StockMovement> {
     /**
      * Lista movimientos de stock para un producto específico, ordenado por fecha descendente.
      */

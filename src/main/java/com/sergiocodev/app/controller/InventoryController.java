@@ -65,8 +65,12 @@ public class InventoryController {
     @Operation(summary = "Listar inventario por establecimiento con paginación")
     public ResponseEntity<ResponseApi<Page<InventoryResponse>>> getByEstablishmentPaged(
             @PathVariable Long establishmentId,
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String lotCode,
+            @RequestParam(required = false) String expirationDate,
+            @RequestParam(required = false) String quantity,
             @PageableDefault(size = 50, sort = "quantity") Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishmentPaged(establishmentId, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishmentPaged(establishmentId, productName, lotCode, expirationDate, quantity, pageable)));
     }
 
     @GetMapping("/establishment/{establishmentId}")

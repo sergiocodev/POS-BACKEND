@@ -18,7 +18,7 @@ public interface InventoryService {
     List<InventoryResponse> getByEstablishment(Long establishmentId);
 
     /** Paginated inventory by establishment */
-    Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, Pageable pageable);
+    Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, String productName, String lotCode, String expirationDate, String quantity, Pageable pageable);
 
     InventoryResponse getById(Long id);
 

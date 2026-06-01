@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.sergiocodev.app.util.PermissionConstants;
@@ -48,6 +50,14 @@ public class BrandController {
     public ResponseEntity<ResponseApi<List<BrandResponse>>> getAllBrands() {
         List<BrandResponse> brands = brandService.getAllBrands();
         return ResponseEntity.ok(ResponseApi.success(brands));
+    }
+
+    @Operation(summary = "Listar marcas paginadas", description = "Retorna una lista paginada de todas las marcas.")
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<Page<BrandResponse>>> getPaged(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(brandService.findAllPaged(name, pageable)));
     }
 
     @Operation(summary = "Obtener marca por ID", description = "Obtiene una marca específica por su ID")

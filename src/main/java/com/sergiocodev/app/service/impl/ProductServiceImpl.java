@@ -13,6 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +54,40 @@ public class ProductServiceImpl implements ProductService {
         return repository.findAllWithFilters(categoryId, brandId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String brandName, String laboratoryName, Pageable pageable) {
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (code != null && !code.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("code")), "%" + code.toLowerCase() + "%"));
+            }
+            if (tradeName != null && !tradeName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("tradeName")), "%" + tradeName.toLowerCase() + "%"));
+            }
+            if (categoryName != null && !categoryName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("category").get("name")), "%" + categoryName.toLowerCase() + "%"));
+            }
+            if (brandName != null && !brandName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("brand").get("name")), "%" + brandName.toLowerCase() + "%"));
+            }
+            if (laboratoryName != null && !laboratoryName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("laboratory").get("name")), "%" + laboratoryName.toLowerCase() + "%"));
+            }
+            if (therapeuticActionNames != null && !therapeuticActionNames.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("therapeuticActions").get("name")), "%" + therapeuticActionNames.toLowerCase() + "%"));
+            }
+
+            // Para evitar duplicados cuando hay múltiples acciones terapéuticas unidas
+            query.distinct(true);
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(mapper::toResponse);
     }
 
     @Override

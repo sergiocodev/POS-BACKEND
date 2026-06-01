@@ -19,6 +19,9 @@ public interface PurchaseMapper {
     PurchaseResponse toResponse(Purchase entity);
 
     @Mapping(target = "productName", source = "product.tradeName")
+    @Mapping(target = "productUnitId", source = "productUnit.id")
+    @Mapping(target = "unitName", source = "productUnit.unitName")
+    @Mapping(target = "factor", source = "productUnit.factor")
     PurchaseItemResponse toItemResponse(PurchaseItem item);
 
     @Mapping(target = "id", ignore = true)

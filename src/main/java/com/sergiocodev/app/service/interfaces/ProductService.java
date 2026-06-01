@@ -12,6 +12,8 @@ public interface ProductService {
 
     List<ProductResponse> getAll(Long categoryId, Long brandId);
 
+    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String brandName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
+
     ProductResponse getById(Long id);
 
     ProductResponse update(Long id, ProductRequest request);

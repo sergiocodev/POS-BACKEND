@@ -39,6 +39,15 @@ public class ProductLotController {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
+    @GetMapping("/paged")
+    @Operation(summary = "Listar lotes de productos con paginación")
+    public ResponseEntity<ResponseApi<org.springframework.data.domain.Page<ProductLotResponse>>> getAllPaged(
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String lotCode,
+            @org.springframework.data.web.PageableDefault(size = 50, sort = "expiryDate") org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(productName, lotCode, pageable)));
+    }
+
     @GetMapping("/product/{productId}")
     @Operation(summary = "Listado de lotes de productos por ID")
     public ResponseEntity<ResponseApi<List<ProductLotResponse>>> getByProductId(@PathVariable Long productId) {

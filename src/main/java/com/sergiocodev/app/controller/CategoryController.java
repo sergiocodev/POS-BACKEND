@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +51,14 @@ public class CategoryController {
     public ResponseEntity<ResponseApi<List<CategoryResponse>>> getAllCategory() {
         List<CategoryResponse> categories = categoryService.getAllCategory();
         return ResponseEntity.ok(ResponseApi.success(categories));
+    }
+
+    @Operation(summary = "Listar categorías paginadas", description = "Retorna una lista paginada de categorías.")
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<Page<CategoryResponse>>> getPaged(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(categoryService.findAllPaged(name, pageable)));
     }
 
     @Operation(summary = "Obtener categoría por ID", description = "Obtiene una categoría específica por su ID")

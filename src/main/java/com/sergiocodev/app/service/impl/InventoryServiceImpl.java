@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -297,14 +300,37 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, Pageable pageable) {
-        List<Inventory> all = repository.findAllByEstablishmentId(establishmentId);
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), all.size());
-        List<Inventory> page = all.subList(Math.min(start, all.size()), end);
-        return new org.springframework.data.domain.PageImpl<>(
-                page.stream().map(mapper::toResponse).collect(Collectors.toList()),
-                pageable,
-                all.size());
+    public Page<InventoryResponse> getByEstablishmentPaged(Long establishmentId, String productName, String lotCode, String expirationDate, String quantity, Pageable pageable) {
+        Specification<Inventory> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Always filter by establishment
+            predicates.add(cb.equal(root.join("establishment").get("id"), establishmentId));
+
+            if (productName != null && !productName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("lot").join("product").get("tradeName")), "%" + productName.toLowerCase() + "%"));
+            }
+            if (lotCode != null && !lotCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("lot").get("lotCode")), "%" + lotCode.toLowerCase() + "%"));
+            }
+            if (expirationDate != null && !expirationDate.isBlank()) {
+                // If it is stored as Date/String, we do a simple like or skip it since it's hard to filter dates with strings safely without parse.
+                // Assuming format YYYY-MM-DD or similar text search if possible. Alternatively, skipping complex date string match.
+                // Wait, it is a LocalDate. We can try casting to string if supported, or skip for now to prevent DB crashes.
+                predicates.add(cb.like(root.join("lot").get("expiryDate").as(String.class), "%" + expirationDate + "%"));
+            }
+            if (quantity != null && !quantity.isBlank()) {
+                try {
+                    java.math.BigDecimal qty = new java.math.BigDecimal(quantity.trim());
+                    predicates.add(cb.equal(root.get("quantity"), qty));
+                } catch (NumberFormatException e) {
+                    // Ignore invalid quantity filter
+                }
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(mapper::toResponse);
     }
 }

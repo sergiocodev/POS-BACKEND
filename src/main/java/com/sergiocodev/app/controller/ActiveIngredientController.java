@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,15 @@ public class ActiveIngredientController {
     @Operation(summary = "Listar ingredientes activos")
     public ResponseEntity<ResponseApi<List<ActiveIngredientResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar ingredientes activos paginados")
+    public ResponseEntity<ResponseApi<Page<ActiveIngredientResponse>>> getPaged(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String description,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(name, description, pageable)));
     }
 
     @GetMapping("/search")

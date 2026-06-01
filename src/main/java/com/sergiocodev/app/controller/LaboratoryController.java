@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,14 @@ public class LaboratoryController {
     @Operation(summary = "Listar laboratorios")
     public ResponseEntity<ResponseApi<List<LaboratoryResponse>>> getAllLaboratory() {
         return ResponseEntity.ok(ResponseApi.success(service.getAllLaboratory()));
+    }
+
+    @GetMapping("/paged")
+    @Operation(summary = "Listar laboratorios paginados")
+    public ResponseEntity<ResponseApi<Page<LaboratoryResponse>>> getPaged(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(name, pageable)));
     }
 
     @GetMapping("/GetLaboratoryById/{id}")

@@ -46,9 +46,21 @@ public class StockMovementController {
     }
 
     @GetMapping("/establishment/{establishmentId}")
-    @Operation(summary = "Listar movimientos por establecimiento")
-    public ResponseEntity<ResponseApi<List<StockMovementResponse>>> getByEstablishment(
-            @PathVariable Long establishmentId) {
+    @Operation(summary = "Listar movimientos de stock por establecimiento")
+    public ResponseEntity<ResponseApi<List<StockMovementResponse>>> getByEstablishment(@PathVariable Long establishmentId) {
         return ResponseEntity.ok(ResponseApi.success(service.getByEstablishment(establishmentId)));
+    }
+
+    @GetMapping("/establishment/{establishmentId}/paged")
+    @Operation(summary = "Listar movimientos de stock por establecimiento con paginación")
+    public ResponseEntity<ResponseApi<org.springframework.data.domain.Page<StockMovementResponse>>> getByEstablishmentPaged(
+            @PathVariable Long establishmentId,
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String lotCode,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String reason,
+            @RequestParam(required = false) String userName,
+            @org.springframework.data.web.PageableDefault(size = 50, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getByEstablishmentPaged(establishmentId, productName, lotCode, type, reason, userName, pageable)));
     }
 }

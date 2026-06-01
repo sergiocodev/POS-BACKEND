@@ -11,6 +11,8 @@ import com.sergiocodev.app.repository.BrandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +43,13 @@ public class BrandServiceImpl implements BrandService {
                 .stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BrandResponse> findAllPaged(String name, Pageable pageable) {
+        return brandRepository.findAllPaged(name, pageable)
+                .map(mapper::toResponse);
     }
 
     @Override

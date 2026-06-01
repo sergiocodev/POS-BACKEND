@@ -11,6 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -69,6 +74,42 @@ public class StockMovementServiceImpl implements StockMovementService {
         return repository.findByEstablishmentIdOrderByCreatedAtDesc(establishmentId).stream()
                 .map(StockMovementResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<StockMovementResponse> getByEstablishmentPaged(Long establishmentId, String productName, String lotCode, String type, String reason, String userName, Pageable pageable) {
+        Specification<StockMovement> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(cb.equal(root.join("establishment").get("id"), establishmentId));
+
+            if (productName != null && !productName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("lot").join("product").get("tradeName")), "%" + productName.toLowerCase() + "%"));
+            }
+            if (lotCode != null && !lotCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("lot").get("lotCode")), "%" + lotCode.toLowerCase() + "%"));
+            }
+            if (type != null && !type.isBlank()) {
+                // type is an enum in StockMovement, we have to parse it or just compare string. 
+                // Wait, type is StockMovement.MovementType
+                try {
+                    predicates.add(cb.equal(root.get("type"), StockMovement.MovementType.valueOf(type.toUpperCase())));
+                } catch (IllegalArgumentException e) {
+                    // Ignore if enum doesn't match
+                }
+            }
+            if (reason != null && !reason.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("reason")), "%" + reason.toLowerCase() + "%"));
+            }
+            if (userName != null && !userName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.join("user").get("name")), "%" + userName.toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repository.findAll(spec, pageable).map(StockMovementResponse::new);
     }
 
     /**

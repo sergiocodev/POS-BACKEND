@@ -1,7 +1,10 @@
 package com.sergiocodev.app.dto.inventory;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import com.sergiocodev.app.dto.productunit.ProductUnitResponse;
 
 public record InventoryResponse(
                 Long id,
@@ -16,5 +19,8 @@ public record InventoryResponse(
                 String locationShelf,
                 BigDecimal costPrice,
                 BigDecimal salesPrice,
-                LocalDateTime lastMovement) {
+                String unitName,
+                List<ProductUnitResponse> units,
+                LocalDateTime lastMovement,
+                LocalDate expiryDate) {
 }
