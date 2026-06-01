@@ -4,9 +4,6 @@ import com.sergiocodev.app.service.interfaces.SaleService;
 import com.sergiocodev.app.service.interfaces.SaleInventoryService;
 import com.sergiocodev.app.service.interfaces.SalePaymentService;
 import com.sergiocodev.app.service.interfaces.SaleSunatService;
-import com.sergiocodev.app.service.interfaces.SaleInventoryService;
-import com.sergiocodev.app.service.interfaces.SalePaymentService;
-import com.sergiocodev.app.service.interfaces.SaleSunatService;
 
 import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
 import com.sergiocodev.app.dto.sale.CartCalculationRequest;
@@ -73,7 +70,6 @@ public class SaleServiceImpl implements SaleService {
         private final DocumentSequenceRepository documentSequenceRepository;
         private final CompanyRepository companyRepository;
         private final SaleMapper mapper;
-        private final jakarta.persistence.EntityManager entityManager;
         private final SaleInventoryService saleInventoryService;
         private final SalePaymentService salePaymentService;
         private final SaleSunatService saleSunatService;
@@ -618,50 +614,9 @@ public class SaleServiceImpl implements SaleService {
                         String paymentMethod,
                         String columnDate) {
 
-                jakarta.persistence.criteria.CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-                jakarta.persistence.criteria.CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
-                jakarta.persistence.criteria.Root<Sale> root = query.from(Sale.class);
-                query.distinct(true); // Added for safety with joins
-
-                jakarta.persistence.criteria.Predicate predicate = com.sergiocodev.app.specification.SaleSpecification
-                                .buildPredicate(
-                                                root, cb, startDate, endDate, documentType, series, number,
-                                                customerName, customerDocument, vendedorName, status, sunatStatus,
-                                                total, paymentMethod, columnDate);
-
-                query.where(predicate);
-                query.multiselect(root.get("documentType"), cb.sum(root.get("total")));
-                query.groupBy(root.get("documentType"));
-
-                java.util.List<Object[]> results = entityManager.createQuery(query).getResultList();
-
-                java.math.BigDecimal totalFacturas = java.math.BigDecimal.ZERO;
-                java.math.BigDecimal totalBoletas = java.math.BigDecimal.ZERO;
-                java.math.BigDecimal totalNotaCredito = java.math.BigDecimal.ZERO;
-                java.math.BigDecimal totalNotaDebito = java.math.BigDecimal.ZERO;
-                java.math.BigDecimal totalNotaVenta = java.math.BigDecimal.ZERO;
-                java.math.BigDecimal totalNeto = java.math.BigDecimal.ZERO;
-
-                for (Object[] result : results) {
-                        Sale.SaleDocumentType type = (Sale.SaleDocumentType) result[0];
-                        java.math.BigDecimal sum = (java.math.BigDecimal) result[1];
-                        if (sum == null)
-                                sum = java.math.BigDecimal.ZERO;
-
-                        if (type != null) {
-                                switch (type) {
-                                        case FACTURA -> totalFacturas = sum;
-                                        case BOLETA -> totalBoletas = sum;
-                                        case NOTA_CREDITO -> totalNotaCredito = sum;
-                                        case NOTA_DEBITO -> totalNotaDebito = sum;
-                                        case NOTA_DE_VENTA, TICKET -> totalNotaVenta = totalNotaVenta.add(sum);
-                                }
-                        }
-                        totalNeto = totalNeto.add(sum);
-                }
-
-                return new com.sergiocodev.app.dto.sale.SaleSummaryResponse(
-                                totalFacturas, totalBoletas, totalNotaCredito, totalNotaDebito, totalNotaVenta,
-                                totalNeto);
+                return repository.getSaleSummary(
+                        startDate, endDate, documentType, series, number,
+                        customerName, customerDocument, vendedorName, status, sunatStatus,
+                        total, paymentMethod, columnDate);
         }
 }

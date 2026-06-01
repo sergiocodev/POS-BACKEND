@@ -30,7 +30,6 @@ import com.sergiocodev.app.service.impl.SaleServiceImpl;
 import com.sergiocodev.app.service.interfaces.SaleInventoryService;
 import com.sergiocodev.app.service.interfaces.SalePaymentService;
 import com.sergiocodev.app.service.interfaces.SaleSunatService;
-import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -114,9 +113,6 @@ class SaleServiceImplTest {
 
     @Mock
     private SaleSunatService saleSunatService;
-
-    @Mock
-    private EntityManager entityManager;
 
     @InjectMocks
     private SaleServiceImpl saleService;

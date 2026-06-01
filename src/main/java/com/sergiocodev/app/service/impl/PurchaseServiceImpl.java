@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,7 +40,6 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final CashMovementService cashMovementService;
     private final CashConceptService cashConceptService;
     private final StockMovementService stockMovementService;
-    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -263,46 +261,10 @@ public class PurchaseServiceImpl implements PurchaseService {
             String paymentMethod,
             String columnDate) {
 
-        jakarta.persistence.criteria.CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        jakarta.persistence.criteria.CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
-        jakarta.persistence.criteria.Root<Purchase> root = query.from(Purchase.class);
-        query.distinct(true);
-
-        jakarta.persistence.criteria.Predicate predicate = com.sergiocodev.app.specification.PurchaseSpecification
-                .buildPredicate(
-                        root, cb, startDate, endDate, documentType, series, number,
-                        supplierName, supplierDocument, userName, status,
-                        total, paymentMethod, columnDate);
-
-        query.where(predicate);
-        query.multiselect(root.get("documentType"), cb.sum(root.get("total")));
-        query.groupBy(root.get("documentType"));
-
-        java.util.List<Object[]> results = entityManager.createQuery(query).getResultList();
-
-        java.math.BigDecimal totalFacturas = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal totalBoletas = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal totalGuiaRemision = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal totalNeto = java.math.BigDecimal.ZERO;
-
-        for (Object[] result : results) {
-            Purchase.PurchaseDocumentType type = (Purchase.PurchaseDocumentType) result[0];
-            java.math.BigDecimal sum = (java.math.BigDecimal) result[1];
-            if (sum == null)
-                sum = java.math.BigDecimal.ZERO;
-
-            if (type != null) {
-                switch (type) {
-                    case FACTURA -> totalFacturas = sum;
-                    case BOLETA -> totalBoletas = sum;
-                    case GUIA -> totalGuiaRemision = sum;
-                }
-            }
-            totalNeto = totalNeto.add(sum);
-        }
-
-        return new com.sergiocodev.app.dto.purchase.PurchaseSummaryResponse(
-                totalFacturas, totalBoletas, totalGuiaRemision, totalNeto);
+        return repository.getPurchaseSummary(
+                startDate, endDate, documentType, series, number,
+                supplierName, supplierDocument, userName, status,
+                total, paymentMethod, columnDate);
     }
 
     @Override

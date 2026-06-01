@@ -15,7 +15,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @Repository
-public interface PurchaseRepository extends JpaRepository<Purchase, Long>, JpaSpecificationExecutor<Purchase> {
+public interface PurchaseRepository extends JpaRepository<Purchase, Long>, JpaSpecificationExecutor<Purchase>, PurchaseRepositoryCustom {
 
         @EntityGraph(attributePaths = { "items", "items.product", "items.productUnit", "supplier", "establishment", "user" })
         java.util.List<Purchase> findAll();

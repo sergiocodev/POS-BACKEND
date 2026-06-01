@@ -57,6 +57,16 @@ public class CashSessionServiceImpl implements CashSessionService {
         @Override
         @Transactional
         public CashSessionResponse openSession(CashSessionRequest request, Long userId) {
+                List<CashSession> activeSessions = repository.findByUserIdAndStatusOrderByOpenedAtDesc(userId, CashSession.SessionStatus.OPEN);
+                if (!activeSessions.isEmpty()) {
+                        throw new BadRequestException("El usuario ya tiene una sesión de caja abierta. Debe cerrarla primero.");
+                }
+
+                repository.findByCashRegisterIdAndStatus(request.cashRegisterId(), CashSession.SessionStatus.OPEN)
+                                .ifPresent(s -> {
+                                        throw new BadRequestException("Already exists an open session for this cash register");
+                                });
+
                 CashSession entity = new CashSession();
                 entity.setCashRegister(registerRepository.findById(request.cashRegisterId())
                                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -194,6 +204,11 @@ public class CashSessionServiceImpl implements CashSessionService {
         @Override
         @Transactional
         public CashSessionResponse openDailySession(OpenDailySessionRequest request) {
+                List<CashSession> activeSessions = repository.findByUserIdAndStatusOrderByOpenedAtDesc(request.userId(), CashSession.SessionStatus.OPEN);
+                if (!activeSessions.isEmpty()) {
+                        throw new BadRequestException("El usuario ya tiene una sesión de caja abierta. Debe cerrarla primero.");
+                }
+
                 repository.findByCashRegisterIdAndStatus(request.cashRegisterId(), CashSession.SessionStatus.OPEN)
                                 .ifPresent(s -> {
                                         throw new BadRequestException(

@@ -5,6 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +17,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -169,6 +173,45 @@ public class GlobalExceptionHandler {
                         BadRequestException ex, WebRequest request) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+        }
+
+        /**
+         * Handles AccessDeniedException (403)
+         */
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ResponseApi<Object>> handleAccessDenied(
+                        AccessDeniedException ex, WebRequest request) {
+                log.warn("Access denied: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ResponseApi.error(HttpStatus.FORBIDDEN.value(),
+                                                "No tiene permisos para acceder a este recurso"));
+        }
+
+        /**
+         * Handles HttpMessageNotReadableException (malformed JSON body)
+         */
+        @ExceptionHandler(HttpMessageNotReadableException.class)
+        public ResponseEntity<ResponseApi<Object>> handleHttpMessageNotReadable(
+                        HttpMessageNotReadableException ex, WebRequest request) {
+                log.warn("Malformed request body: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(),
+                                                "El cuerpo de la solicitud no es válido. Verifique el formato JSON."));
+        }
+
+        /**
+         * Handles ConstraintViolationException (validation on path/query params)
+         */
+        @ExceptionHandler(ConstraintViolationException.class)
+        public ResponseEntity<ResponseApi<Object>> handleConstraintViolation(
+                        ConstraintViolationException ex, WebRequest request) {
+                String details = ex.getConstraintViolations().stream()
+                                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                                .collect(Collectors.joining(", "));
+                log.warn("Constraint violation: {}", details);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ResponseApi.error(HttpStatus.BAD_REQUEST.value(),
+                                                "Error de validación: " + details));
         }
 
         /**

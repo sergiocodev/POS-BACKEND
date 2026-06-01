@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sale_items")
@@ -16,6 +17,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE sale_items SET deleted_at = NOW() WHERE id = ?")
+@org.hibernate.annotations.SQLRestriction("deleted_at IS NULL")
 public class SaleItem {
 
     @Id
@@ -62,4 +65,7 @@ public class SaleItem {
 
     @Column(name = "increase_reason", length = 100)
     private String increaseReason;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

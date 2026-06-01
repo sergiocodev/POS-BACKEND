@@ -16,7 +16,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @Repository
-public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale> {
+public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale>, SaleRepositoryCustom {
 
         /**
          * Cuenta rápidamente de forma algorítmica las ventas exitosamente completadas
@@ -94,7 +94,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("endDate") LocalDateTime endDate,
                         Pageable pageable);
 
-        /** Sales for reports: paginated (no EntityGraph for aggregate queries) */
+        /** Sales for reports: paginated with eager loading to avoid N+1 */
+        @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         @Query("SELECT s FROM Sale s WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
                         "AND s.isVoided = false AND s.date >= :startDate AND s.date <= :endDate " +
                         "ORDER BY s.date DESC")
@@ -208,4 +209,25 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("endDate") LocalDateTime endDate,
                         @Param("documentType") Sale.SaleDocumentType documentType,
                         @Param("series") String series);
+
+        /** Lightweight query: product ID → name mapping (evita cargar ventas completas solo para nombres) */
+        @Query("SELECT si.product.id, si.product.tradeName FROM SaleItem si JOIN si.sale s " +
+                        "WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+                        "AND s.isVoided = false AND s.date >= :startDate AND s.date <= :endDate " +
+                        "GROUP BY si.product.id, si.product.tradeName")
+        List<Object[]> findProductNameMapping(
+                        @Param("establishmentId") Long establishmentId,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /**
+         * Aggregate query: última fecha de venta por producto.
+         * Reemplaza el N+1 de getLowRotation que hacía una query por producto.
+         */
+        @Query("SELECT si.product.id, MAX(s.date) FROM SaleItem si JOIN si.sale s " +
+                        "WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
+                        "AND s.isVoided = false " +
+                        "GROUP BY si.product.id")
+        List<Object[]> findLastSaleDateByProduct(
+                        @Param("establishmentId") Long establishmentId);
 }
