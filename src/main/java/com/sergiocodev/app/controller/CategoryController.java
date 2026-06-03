@@ -37,7 +37,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
-    @PostMapping("/CreateNewCategory")
+    @PostMapping
     public ResponseEntity<ResponseApi<CategoryResponse>> createNewCategory(
             @Valid @RequestBody CategoryRequest request) {
         CategoryResponse response = categoryService.createNewCategory(request);
@@ -47,7 +47,7 @@ public class CategoryController {
 
     @Operation(summary = "Listar categorías", description = "Obtiene la lista de todas las categorías registradas")
     @ApiResponse(responseCode = "200", description = "List of categories obtained successfully")
-    @GetMapping("/GetAllCategory")
+    @GetMapping
     public ResponseEntity<ResponseApi<List<CategoryResponse>>> getAllCategory() {
         List<CategoryResponse> categories = categoryService.getAllCategory();
         return ResponseEntity.ok(ResponseApi.success(categories));
@@ -66,7 +66,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category found"),
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
-    @GetMapping("/GetCategoryById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ResponseApi<CategoryResponse>> getCategoryById(@PathVariable Long id) {
         CategoryResponse response = categoryService.getCategoryById(id);
         return ResponseEntity.ok(ResponseApi.success(response));
@@ -79,7 +79,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Category not found"),
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
-    @PutMapping("/UpdateCategoryById/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ResponseApi<CategoryResponse>> updateCategoryById(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request) {
@@ -92,7 +92,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
-    @DeleteMapping("/DeleteCategoryById/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ResponseApi<Void>> deleteCategoryById(@PathVariable Long id) {
         categoryService.deleteCategoryById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Categoría eliminada exitosamente"));

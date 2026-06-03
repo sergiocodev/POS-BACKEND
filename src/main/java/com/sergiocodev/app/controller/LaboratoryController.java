@@ -28,7 +28,7 @@ public class LaboratoryController {
 
     private final LaboratoryService service;
 
-    @PostMapping("/CreateNewLaboratory")
+    @PostMapping
     @Operation(summary = "Crear laboratorio")
     public ResponseEntity<ResponseApi<LaboratoryResponse>> createNewLaboratory(
             @Valid @RequestBody LaboratoryRequest request) {
@@ -36,7 +36,7 @@ public class LaboratoryController {
                 .body(ResponseApi.success(service.createNewLaboratory(request), "Laboratorio creado exitosamente"));
     }
 
-    @GetMapping("/GetAllLaboratory")
+    @GetMapping
     @Operation(summary = "Listar laboratorios")
     public ResponseEntity<ResponseApi<List<LaboratoryResponse>>> getAllLaboratory() {
         return ResponseEntity.ok(ResponseApi.success(service.getAllLaboratory()));
@@ -50,13 +50,13 @@ public class LaboratoryController {
         return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(name, pageable)));
     }
 
-    @GetMapping("/GetLaboratoryById/{id}")
+    @GetMapping("/{id}")
     @Operation(summary = "Obtener laboratorio por ID")
     public ResponseEntity<ResponseApi<LaboratoryResponse>> getLaboratoryById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getLaboratoryById(id)));
     }
 
-    @PutMapping("/UpdateLaboratoryById/{id}")
+    @PutMapping("/{id}")
     @Operation(summary = "Actualizar laboratorio")
     public ResponseEntity<ResponseApi<LaboratoryResponse>> updateLaboratoryById(@PathVariable Long id,
             @Valid @RequestBody LaboratoryRequest request) {
@@ -65,7 +65,7 @@ public class LaboratoryController {
                         "Laboratorio actualizado exitosamente"));
     }
 
-    @DeleteMapping("/DeleteLaboratoryById/{id}")
+    @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar laboratorio")
     public ResponseEntity<ResponseApi<Void>> deleteLaboratoryById(@PathVariable Long id) {
         service.deleteLaboratoryById(id);

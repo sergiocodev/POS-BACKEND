@@ -1,11 +1,13 @@
 package com.sergiocodev.app.service.impl;
 
 import com.sergiocodev.app.dto.external.ExternalConsultationResponse;
+import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.service.interfaces.ExternalConsultationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -57,6 +59,8 @@ public class ExternalConsultationServiceImpl implements ExternalConsultationServ
             } else {
                 throw new RuntimeException("Error en la consulta externa: " + response.getStatusCode());
             }
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new ResourceNotFoundException("Documento no encontrado en el servicio externo");
         } catch (Exception e) {
             throw new RuntimeException("Error al conectar con el servicio de consulta externa: " + e.getMessage());
         }

@@ -37,7 +37,7 @@ public class BrandController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
-    @PostMapping("/CreateNewBrand")
+    @PostMapping
     public ResponseEntity<ResponseApi<BrandResponse>> createNewBrand(@Valid @RequestBody BrandRequest request) {
         BrandResponse response = brandService.createNewBrand(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,7 +46,7 @@ public class BrandController {
 
     @Operation(summary = "Listar marcas", description = "Obtiene la lista de todas las marcas registradas")
     @ApiResponse(responseCode = "200", description = "List of brands obtained successfully")
-    @GetMapping("/GetAllBrands")
+    @GetMapping
     public ResponseEntity<ResponseApi<List<BrandResponse>>> getAllBrands() {
         List<BrandResponse> brands = brandService.getAllBrands();
         return ResponseEntity.ok(ResponseApi.success(brands));
@@ -65,7 +65,7 @@ public class BrandController {
             @ApiResponse(responseCode = "200", description = "Brand found"),
             @ApiResponse(responseCode = "404", description = "Brand not found")
     })
-    @GetMapping("/GetBrandById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ResponseApi<BrandResponse>> getBrandById(@PathVariable Long id) {
         BrandResponse response = brandService.getBrandById(id);
         return ResponseEntity.ok(ResponseApi.success(response));
@@ -78,7 +78,7 @@ public class BrandController {
             @ApiResponse(responseCode = "404", description = "Brand not found"),
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
-    @PutMapping("/UpdateBrandById/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ResponseApi<BrandResponse>> updateBrandById(
             @PathVariable Long id,
             @Valid @RequestBody BrandRequest request) {
@@ -91,7 +91,7 @@ public class BrandController {
             @ApiResponse(responseCode = "204", description = "Brand deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Brand not found")
     })
-    @DeleteMapping("/DeleteBrandById/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ResponseApi<Void>> deleteBrandById(@PathVariable Long id) {
         brandService.deleteBrandById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Marca eliminada exitosamente"));

@@ -28,7 +28,7 @@ public class ActiveIngredientController {
 
     private final ActiveIngredientService service;
 
-    @PostMapping("/CreateNewActiveIngredient")
+    @PostMapping
     @Operation(summary = "Crear ingrediente activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
             @Valid @RequestBody ActiveIngredientRequest request) {
@@ -36,13 +36,13 @@ public class ActiveIngredientController {
                 .body(ResponseApi.success(service.create(request), "Ingrediente activo creado exitosamente"));
     }
 
-    @GetMapping("/GetAllActiveIngredients")
+    @GetMapping
     @Operation(summary = "Listar ingredientes activos")
     public ResponseEntity<ResponseApi<List<ActiveIngredientResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
-    @GetMapping
+    @GetMapping("/paged")
     @Operation(summary = "Listar ingredientes activos paginados")
     public ResponseEntity<ResponseApi<Page<ActiveIngredientResponse>>> getPaged(
             @RequestParam(required = false) String name,
@@ -57,13 +57,13 @@ public class ActiveIngredientController {
         return ResponseEntity.ok(ResponseApi.success(service.search(query)));
     }
 
-    @GetMapping("/GetActiveIngredientById/{id}")
+    @GetMapping("/{id}")
     @Operation(summary = "Obtener ingrediente activo por ID")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
-    @PutMapping("/UpdateActiveIngredientById/{id}")
+    @PutMapping("/{id}")
     @Operation(summary = "Actualizar ingrediente activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> update(@PathVariable Long id,
             @Valid @RequestBody ActiveIngredientRequest request) {
@@ -71,7 +71,7 @@ public class ActiveIngredientController {
                 .ok(ResponseApi.success(service.update(id, request), "Ingrediente activo actualizado exitosamente"));
     }
 
-    @DeleteMapping("/DeleteActiveIngredientById/{id}")
+    @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar ingrediente activo")
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
