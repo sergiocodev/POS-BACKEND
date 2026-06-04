@@ -454,7 +454,7 @@ class SaleServiceImplTest {
             // Act & Assert
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> saleService.cancel(999L));
+                    () -> saleService.cancel(999L, 1L));
 
             assertEquals("Sale not found: 999", exception.getMessage());
             verify(repository).findById(999L);
@@ -472,7 +472,7 @@ class SaleServiceImplTest {
             when(repository.save(any(Sale.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // Act
-            saleService.cancel(1L);
+            saleService.cancel(1L, 1L);
 
             // Assert
             assertEquals(Sale.SaleStatus.CANCELED, sale.getStatus());
