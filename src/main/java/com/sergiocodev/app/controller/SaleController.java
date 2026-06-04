@@ -116,8 +116,8 @@ public class SaleController {
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancelar una venta")
     @RequiresPermission(PermissionConstants.VENTAS_POS)
-    public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id) {
-        service.cancel(id);
+    public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        service.cancel(id, principal.getId());
         return ResponseEntity.ok(ResponseApi.success(null, "Venta cancelada exitosamente"));
     }
 

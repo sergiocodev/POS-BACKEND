@@ -36,7 +36,7 @@ public interface SaleService {
 
         SaleResponse getById(Long id);
 
-        void cancel(Long id);
+        void cancel(Long id, Long userId);
 
         byte[] getPdf(Long id);
 

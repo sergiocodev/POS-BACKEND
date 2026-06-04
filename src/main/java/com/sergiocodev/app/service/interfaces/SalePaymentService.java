@@ -9,4 +9,5 @@ public interface SalePaymentService {
     void createAccountReceivableIfCredit(Sale savedSale, SaleRequest request);
     void processRefund(Sale original, Sale note, Long userId, CashSession session);
     void processVoidRefund(Sale sale, Long userId, CashSession session);
+    void cancelAccountReceivableIfExists(Long saleId);
 }

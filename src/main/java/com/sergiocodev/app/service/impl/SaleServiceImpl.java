@@ -308,12 +308,28 @@ public class SaleServiceImpl implements SaleService {
 
         @Override
         @Transactional
-        public void cancel(Long id) {
+        public void cancel(Long id, Long userId) {
                 Sale sale = repository.findById(id)
                                 .orElseThrow(
                                                 () -> new ResourceNotFoundException("Sale not found: " + id));
+
+                if (sale.getStatus() == Sale.SaleStatus.CANCELED || sale.isVoided()) {
+                        throw new IllegalStateException("Sale is already canceled or voided");
+                }
+
                 sale.setStatus(Sale.SaleStatus.CANCELED);
                 repository.save(sale);
+
+                for (SaleItem item : sale.getItems()) {
+                        saleInventoryService.reverseInventory(sale, item, "Cancel", userId);
+                }
+
+                CashSession currentSession = cashSessionRepository
+                                .findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                                .orElse(null);
+
+                salePaymentService.processVoidRefund(sale, userId, currentSession);
+                salePaymentService.cancelAccountReceivableIfExists(id);
         }
 
         @Override

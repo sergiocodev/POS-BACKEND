@@ -136,4 +136,13 @@ public class SalePaymentServiceImpl implements SalePaymentService {
             }
         }
     }
+
+    @Override
+    public void cancelAccountReceivableIfExists(Long saleId) {
+        accountReceivableRepository.findBySaleId(saleId).ifPresent(receivable -> {
+            receivable.setStatus(AccountReceivable.ReceivableStatus.CANCELED);
+            accountReceivableRepository.save(receivable);
+            log.info("Account receivable canceled for sale {}", saleId);
+        });
+    }
 }

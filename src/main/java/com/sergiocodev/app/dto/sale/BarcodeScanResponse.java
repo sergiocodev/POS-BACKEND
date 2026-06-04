@@ -5,6 +5,9 @@ import java.time.LocalDate;
 
 public record BarcodeScanResponse(
                 Long productId,
+                Long productUnitId,
+                String unitName,
+                Integer factor,
                 String tradeName,
                 String barcode,
                 BigDecimal salesPrice,

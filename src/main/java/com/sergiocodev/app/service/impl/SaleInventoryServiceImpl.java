@@ -240,7 +240,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
         ProductUnit pu = productUnitRepository.findByBarcode(barcode).orElse(null);
         if (pu == null) {
             return new BarcodeScanResponse(
-                    null,
+                    null, null, null, null,
                     "Producto no encontrado",
                     barcode,
                     BigDecimal.ZERO,
@@ -255,12 +255,13 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                 || !inv.getLot().getExpiryDate()
                                         .isBefore(java.time.LocalDate.now()))
                         && inv.getQuantity().compareTo(BigDecimal.ZERO) > 0)
+                .sorted(java.util.Comparator.comparing(inv -> inv.getLot().getExpiryDate()))
                 .findFirst().orElse(null);
 
         if (inventory == null) {
             return new BarcodeScanResponse(
-                    null,
-                    "Producto no encontrado",
+                    product.getId(), pu.getId(), pu.getUnitName(), pu.getFactor(),
+                    "Producto sin stock disponible",
                     barcode,
                     BigDecimal.ZERO,
                     null, null, null, BigDecimal.ZERO, "No stock available", null, BigDecimal.ZERO);
@@ -270,6 +271,9 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
 
         return new BarcodeScanResponse(
                 product.getId(),
+                pu.getId(),
+                pu.getUnitName(),
+                pu.getFactor(),
                 product.getTradeName(),
                 barcode,
                 price,
