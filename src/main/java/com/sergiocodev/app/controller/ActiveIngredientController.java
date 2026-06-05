@@ -29,7 +29,7 @@ public class ActiveIngredientController {
     private final ActiveIngredientService service;
 
     @PostMapping
-    @Operation(summary = "Crear ingredientes activo")
+    @Operation(summary = "Crear ingrediente activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
             @Valid @RequestBody ActiveIngredientRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
