@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/active-ingredients")
 @RequiredArgsConstructor
-@Tag(name = "Active Ingredients", description = "Endpointss para la gestión de ingredientes activos")
+@Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")
 @SecurityRequirement(name = "bearerAuth")
 @RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
 public class ActiveIngredientController {
@@ -29,7 +29,7 @@ public class ActiveIngredientController {
     private final ActiveIngredientService service;
 
     @PostMapping
-    @Operation(summary = "Crear ingrediente activo")
+    @Operation(summary = "Crear ingredientes activo")
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
             @Valid @RequestBody ActiveIngredientRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
