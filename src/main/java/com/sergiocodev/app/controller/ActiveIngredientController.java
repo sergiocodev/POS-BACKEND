@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/active-ingredients")
 @RequiredArgsConstructor
-@Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")
+@Tag(name = "Active Ingredients", description = "Endpointss para la gestión de ingredientes activos")
 @SecurityRequirement(name = "bearerAuth")
 @RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
 public class ActiveIngredientController {
