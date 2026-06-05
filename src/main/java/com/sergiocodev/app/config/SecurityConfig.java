@@ -46,6 +46,9 @@ public class SecurityConfig {
                                                 auth.requestMatchers("/api/auth/**").permitAll();
                                                 auth.requestMatchers("/uploads/**").permitAll();
 
+                                                // Railway health check - must be public (no auth)
+                                                auth.requestMatchers("/actuator/health").permitAll();
+
                                                 // Swagger endpoints - configurable via app.swagger.secured
                                                 // In production (true = default): requires ADMIN role
                                                 // In development (false): open access for testing
