@@ -38,9 +38,9 @@ build/
 .env.*.local
 
 ### Application Properties ###
-application.properties
-application-*.properties
-!application.properties.example
+# Ya no ignoramos application.properties porque usa variables de entorno (${VAR})
+# application.properties
+# application-*.properties
 
 ### Logs ###
 *.log
