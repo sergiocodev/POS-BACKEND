@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE / Editor
+.vscode
+.idea
+*.iml
+
+# Maven build output (se regenera en el contenedor)
+target/
+
+# Docker files (no necesarios dentro de la imagen)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Variables de entorno locales (nunca incluir en la imagen)
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# README
+README.md
