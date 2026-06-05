@@ -9,6 +9,9 @@ WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
+# Dar permisos de ejecución al wrapper (necesario en Linux/Railway)
+RUN chmod +x mvnw
+
 # Descargar dependencias (se cachea si pom.xml no cambia)
 RUN ./mvnw dependency:go-offline -B
 
