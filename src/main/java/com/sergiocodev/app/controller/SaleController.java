@@ -75,12 +75,13 @@ public class SaleController {
             @RequestParam(required = false) String total,
             @RequestParam(required = false) String paymentMethod,
             @RequestParam(required = false) String columnDate,
+            @RequestParam(required = false) Long establishmentId,
             @PageableDefault(size = 50, sort = "date", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
 
         return ResponseEntity
                 .ok(ResponseApi.success(service.getAllPaged(startDate, endDate, documentType, series, number,
                         customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod,
-                        columnDate, pageable)));
+                        columnDate, establishmentId, pageable)));
     }
 
     @GetMapping("/summary")
@@ -99,11 +100,13 @@ public class SaleController {
             @RequestParam(required = false) String sunatStatus,
             @RequestParam(required = false) String total,
             @RequestParam(required = false) String paymentMethod,
-            @RequestParam(required = false) String columnDate) {
+            @RequestParam(required = false) String columnDate,
+            @RequestParam(required = false) Long establishmentId) {
 
         return ResponseEntity.ok(ResponseApi.success(service.getSummary(startDate, endDate, documentType, series,
                 number,
-                customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate)));
+                customerName, customerDocument, vendedorName, status, sunatStatus, total, paymentMethod, columnDate,
+                establishmentId)));
     }
 
     @GetMapping("/{id}")

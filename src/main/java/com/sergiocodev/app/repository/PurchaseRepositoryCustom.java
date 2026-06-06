@@ -18,5 +18,6 @@ public interface PurchaseRepositoryCustom {
             String status,
             String total,
             String paymentMethod,
-            String columnDate);
+            String columnDate,
+            Long establishmentId);
 }

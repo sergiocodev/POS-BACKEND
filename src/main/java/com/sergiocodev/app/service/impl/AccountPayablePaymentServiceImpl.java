@@ -55,9 +55,12 @@ public class AccountPayablePaymentServiceImpl implements AccountPayablePaymentSe
             throw new BadRequestException("Payment amount exceeds pending balance");
         }
 
-        // Register cash movement for all payment methods
         CashSession session = cashSessionRepository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                 .orElseThrow(() -> new BadRequestException("Debe tener una sesión de caja abierta para realizar pagos"));
+
+        if (!session.getCashRegister().getEstablishment().getId().equals(payable.getPurchase().getEstablishment().getId())) {
+                throw new BadRequestException("La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
+        }
 
         AccountPayablePayment payment = new AccountPayablePayment();
         payment.setAccountPayable(payable);

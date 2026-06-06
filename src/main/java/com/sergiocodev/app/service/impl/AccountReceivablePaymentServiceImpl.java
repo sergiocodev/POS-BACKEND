@@ -58,6 +58,10 @@ public class AccountReceivablePaymentServiceImpl implements AccountReceivablePay
             throw new BadRequestException("Payment amount exceeds pending balance");
         }
 
+        if (!cashSession.getCashRegister().getEstablishment().getId().equals(receivable.getSale().getEstablishment().getId())) {
+            throw new BadRequestException("La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
+        }
+
         AccountReceivablePayment payment = new AccountReceivablePayment();
         payment.setAccountReceivable(receivable);
         payment.setCashSession(cashSession);

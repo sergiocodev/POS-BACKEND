@@ -37,8 +37,9 @@ public class CashMovementController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String reference,
             @RequestParam(required = false) String username,
+            @RequestParam(required = true) Long establishmentId,
             Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.findAll(createdAt, conceptName, description, type, reference, username, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.findAll(createdAt, conceptName, description, type, reference, username, establishmentId, pageable)));
     }
 
     @GetMapping("/session/{sessionId}")

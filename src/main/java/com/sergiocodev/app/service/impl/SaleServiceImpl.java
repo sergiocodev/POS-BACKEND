@@ -118,6 +118,11 @@ public class SaleServiceImpl implements SaleService {
                                 .findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                                 .orElseThrow(() -> new BadRequestException(
                                                 "No specific active cash session found for user. Please open a cash session before making a sale."));
+
+                if (!session.getCashRegister().getEstablishment().getId().equals(request.establishmentId())) {
+                        throw new BadRequestException("La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
+                }
+
                 entity.setCashSession(session);
 
                 for (var ir : request.items()) {
@@ -284,13 +289,14 @@ public class SaleServiceImpl implements SaleService {
                         String total,
                         String paymentMethod,
                         String columnDate,
+                        Long establishmentId,
                         Pageable pageable) {
 
                 org.springframework.data.jpa.domain.Specification<Sale> spec = com.sergiocodev.app.specification.SaleSpecification
                                 .filterSales(
                                                 startDate, endDate, documentType, series, number, customerName,
                                                 customerDocument, vendedorName, status, sunatStatus,
-                                                total, paymentMethod, columnDate);
+                                                total, paymentMethod, columnDate, establishmentId);
 
                 Page<Sale> sales = repository.findAll(spec, pageable);
                 return sales.map(mapper::toResponse).map(this::addCompanyInfo);
@@ -628,11 +634,12 @@ public class SaleServiceImpl implements SaleService {
                         String sunatStatus,
                         String total,
                         String paymentMethod,
-                        String columnDate) {
+                        String columnDate,
+                        Long establishmentId) {
 
                 return repository.getSaleSummary(
                         startDate, endDate, documentType, series, number,
                         customerName, customerDocument, vendedorName, status, sunatStatus,
-                        total, paymentMethod, columnDate);
+                        total, paymentMethod, columnDate, establishmentId);
         }
 }

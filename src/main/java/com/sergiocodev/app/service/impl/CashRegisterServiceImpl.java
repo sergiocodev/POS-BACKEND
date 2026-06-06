@@ -31,8 +31,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CashRegisterResponse> getAll() {
-        return repository.findAll().stream()
+    public List<CashRegisterResponse> getAll(Long establishmentId) {
+        List<CashRegister> registers = (establishmentId != null) 
+            ? repository.findByEstablishmentId(establishmentId)
+            : repository.findAll();
+            
+        return registers.stream()
                 .map(CashRegisterResponse::new)
                 .collect(Collectors.toList());
     }

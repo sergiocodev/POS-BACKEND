@@ -32,7 +32,8 @@ public class PurchaseRepositoryCustomImpl implements PurchaseRepositoryCustom {
             String status,
             String total,
             String paymentMethod,
-            String columnDate) {
+            String columnDate,
+            Long establishmentId) {
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
@@ -42,7 +43,7 @@ public class PurchaseRepositoryCustomImpl implements PurchaseRepositoryCustom {
         Predicate predicate = PurchaseSpecification.buildPredicate(
                 root, cb, startDate, endDate, documentType, series, number,
                 supplierName, supplierDocument, userName, status,
-                total, paymentMethod, columnDate);
+                total, paymentMethod, columnDate, establishmentId);
 
         query.where(predicate);
         query.multiselect(root.get("documentType"), cb.sum(root.get("total")));

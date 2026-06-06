@@ -36,7 +36,7 @@ public class CashMovementServiceImpl implements CashMovementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type, String reference, String username, Pageable pageable) {
+    public Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type, String reference, String username, Long establishmentId, Pageable pageable) {
         Specification<CashMovement> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
 
@@ -62,6 +62,10 @@ public class CashMovementServiceImpl implements CashMovementService {
             }
             if (username != null && !username.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.join("user").get("username")), "%" + username.toLowerCase() + "%"));
+            }
+
+            if (establishmentId != null) {
+                predicates.add(cb.equal(root.join("cashSession").join("cashRegister").join("establishment").get("id"), establishmentId));
             }
 
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));

@@ -46,14 +46,15 @@ public class AccountPayableController {
             @RequestParam(required = false) String createdAt,
             @RequestParam(required = false) String dueDate,
             @RequestParam(required = false) String status,
+            @RequestParam(required = true) Long establishmentId,
             @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        Page<AccountPayableResponse> paged = service.getAllPaged(supplierName, purchaseIdentifier, createdAt, dueDate, status, pageable);
+        Page<AccountPayableResponse> paged = service.getAllPaged(supplierName, purchaseIdentifier, createdAt, dueDate, status, establishmentId, pageable);
         return ResponseEntity.ok(ResponseApi.success(paged));
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<ResponseApi<List<AccountPayableDashboardResponse>>> getDashboard() {
-        return ResponseEntity.ok(ResponseApi.success(service.getDashboard()));
+    public ResponseEntity<ResponseApi<List<AccountPayableDashboardResponse>>> getDashboard(@RequestParam(required = true) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getDashboard(establishmentId)));
     }
 
     @GetMapping("/supplier/{supplierId}")

@@ -40,8 +40,8 @@ public class CashController {
     @GetMapping("/GetCurrentSessionStatus")
     @Operation(summary = "Arqueo de caja rápido", description = "Devuelve el Saldo Teórico vs Saldo Inicial.")
     public ResponseEntity<ResponseApi<SessionStatusResponse>> getCurrentSessionStatus(
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(ResponseApi.success(service.getCurrentSessionStatus(userId)));
+            @RequestParam Long userId, @RequestParam(required = false) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getCurrentSessionStatus(userId, establishmentId)));
     }
 
     @PostMapping("/RegisterCashOutflow")

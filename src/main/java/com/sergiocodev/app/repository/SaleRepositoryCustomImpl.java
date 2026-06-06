@@ -33,7 +33,8 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
             String sunatStatus,
             String total,
             String paymentMethod,
-            String columnDate) {
+            String columnDate,
+            Long establishmentId) {
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
@@ -43,7 +44,7 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
         Predicate predicate = SaleSpecification.buildPredicate(
                 root, cb, startDate, endDate, documentType, series, number,
                 customerName, customerDocument, vendedorName, status, sunatStatus,
-                total, paymentMethod, columnDate);
+                total, paymentMethod, columnDate, establishmentId);
 
         query.where(predicate);
         query.multiselect(root.get("documentType"), cb.sum(root.get("total")));

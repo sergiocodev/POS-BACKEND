@@ -12,12 +12,12 @@ import java.time.LocalDate;
 public interface AccountReceivableService {
     AccountReceivableResponse create(AccountReceivableRequest request);
     List<AccountReceivableResponse> getAll();
-    Page<AccountReceivableResponse> getAllPaged(String customerName, String saleIdentifier, String createdAt, String dueDate, String status, Pageable pageable);
+    Page<AccountReceivableResponse> getAllPaged(String customerName, String saleIdentifier, String createdAt, String dueDate, String status, Long establishmentId, Pageable pageable);
     List<AccountReceivableResponse> getByCustomerId(Long customerId);
 
     AccountReceivableResponse getById(Long id);
 
     void cancel(Long id);
 
-    List<AccountReceivableDashboardResponse> getDashboard();
+    List<AccountReceivableDashboardResponse> getDashboard(Long establishmentId);
 }

@@ -26,6 +26,7 @@ public interface PurchaseService {
             String total,
             String paymentMethod,
             String columnDate,
+            Long establishmentId,
             Pageable pageable);
 
     PurchaseSummaryResponse getSummary(
@@ -40,7 +41,8 @@ public interface PurchaseService {
             String status,
             String total,
             String paymentMethod,
-            String columnDate);
+            String columnDate,
+            Long establishmentId);
 
     PurchaseResponse getById(Long id);
 

@@ -24,15 +24,15 @@ public interface CashSessionService {
 
         CashSessionResponse getById(Long id);
 
-        CashSessionResponse getActiveSession(Long userId);
+        CashSessionResponse getActiveSession(Long userId, Long establishmentId);
 
-        CashSessionResponse getStatus(Long userId);
+        CashSessionResponse getStatus(Long userId, Long establishmentId);
 
-        CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance);
+        CashSessionResponse closeActiveSession(Long userId, Long establishmentId, BigDecimal closingBalance);
 
         List<CashSessionResponse> getHistory(Long userId);
 
-        SessionStatusResponse getCurrentSessionStatus(Long userId);
+        SessionStatusResponse getCurrentSessionStatus(Long userId, Long establishmentId);
 
         CashSessionResponse openDailySession(OpenDailySessionRequest request);
 

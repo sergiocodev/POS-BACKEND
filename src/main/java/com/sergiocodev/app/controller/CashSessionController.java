@@ -64,22 +64,23 @@ public class CashSessionController {
 
     @GetMapping("/active")
     @Operation(summary = "Obtener sesión de efectivo activa para el usuario")
-    public ResponseEntity<ResponseApi<CashSessionResponse>> getActiveSession(@RequestParam Long userId) {
-        return ResponseEntity.ok(ResponseApi.success(service.getActiveSession(userId)));
+    public ResponseEntity<ResponseApi<CashSessionResponse>> getActiveSession(@RequestParam Long userId, @RequestParam(required = false) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getActiveSession(userId, establishmentId)));
     }
 
     @GetMapping("/status")
     @Operation(summary = "Ver montos actuales del turno", description = "Muestra el estado de la caja y montos acumulados")
-    public ResponseEntity<ResponseApi<CashSessionResponse>> getStatus(@RequestParam Long userId) {
-        return ResponseEntity.ok(ResponseApi.success(service.getStatus(userId)));
+    public ResponseEntity<ResponseApi<CashSessionResponse>> getStatus(@RequestParam Long userId, @RequestParam(required = false) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getStatus(userId, establishmentId)));
     }
 
     @PostMapping("/close")
     @Operation(summary = "Arqueo y cierre de caja", description = "Cierra la sesión activa del usuario")
     public ResponseEntity<ResponseApi<CashSessionResponse>> closeActiveSession(@RequestParam Long userId,
+            @RequestParam(required = false) Long establishmentId,
             @RequestParam BigDecimal closingBalance) {
         return ResponseEntity.ok(
-                ResponseApi.success(service.closeActiveSession(userId, closingBalance), "Caja cerrada exitosamente"));
+                ResponseApi.success(service.closeActiveSession(userId, establishmentId, closingBalance), "Caja cerrada exitosamente"));
     }
 
     @GetMapping("/history")

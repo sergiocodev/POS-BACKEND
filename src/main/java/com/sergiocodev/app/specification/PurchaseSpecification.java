@@ -24,11 +24,12 @@ public class PurchaseSpecification {
             String status,
             String total,
             String paymentMethod,
-            String columnDate) {
+            String columnDate,
+            Long establishmentId) {
 
         return (root, query, cb) -> buildPredicate(root, cb, startDate, endDate, documentType, series, number,
                 supplierName, supplierDocument, userName, status,
-                total, paymentMethod, columnDate);
+                total, paymentMethod, columnDate, establishmentId);
     }
 
     public static Predicate buildPredicate(
@@ -45,10 +46,14 @@ public class PurchaseSpecification {
             String status,
             String total,
             String paymentMethod,
-            String columnDate) {
+            String columnDate,
+            Long establishmentId) {
 
         List<Predicate> predicates = new ArrayList<>();
 
+        if (establishmentId != null) {
+            predicates.add(cb.equal(root.get("establishment").get("id"), establishmentId));
+        }
         if (startDate != null) {
             predicates.add(cb.greaterThanOrEqualTo(root.get("issueDate"), startDate.toLocalDate()));
         }

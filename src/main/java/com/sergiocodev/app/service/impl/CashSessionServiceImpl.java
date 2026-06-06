@@ -162,24 +162,42 @@ public class CashSessionServiceImpl implements CashSessionService {
 
         @Override
         @Transactional(readOnly = true)
-        public CashSessionResponse getActiveSession(Long userId) {
-                return repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                                .map(CashSessionResponse::new)
+        public CashSessionResponse getActiveSession(Long userId, Long establishmentId) {
+                CashSession globalSession = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                                 .orElse(null);
+
+                if (globalSession == null) {
+                        return null;
+                }
+
+                if (establishmentId != null && !globalSession.getCashRegister().getEstablishment().getId().equals(establishmentId)) {
+                        throw new BadRequestException("El usuario tiene una caja abierta en la sucursal '" 
+                                        + globalSession.getCashRegister().getEstablishment().getName() 
+                                        + "'. Debe cerrarla antes de operar en esta sucursal.");
+                }
+
+                return new CashSessionResponse(globalSession);
         }
 
         @Override
         @Transactional(readOnly = true)
-        public CashSessionResponse getStatus(Long userId) {
-                return getActiveSession(userId);
+        public CashSessionResponse getStatus(Long userId, Long establishmentId) {
+                return getActiveSession(userId, establishmentId);
         }
 
         @Override
         @Transactional
-        public CashSessionResponse closeActiveSession(Long userId, BigDecimal closingBalance) {
-                CashSession entity = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "No active session found for user: " + userId));
+        public CashSessionResponse closeActiveSession(Long userId, Long establishmentId, BigDecimal closingBalance) {
+                CashSession entity;
+                if (establishmentId != null) {
+                        entity = repository.findByUserIdAndCashRegisterEstablishmentIdAndStatus(userId, establishmentId, CashSession.SessionStatus.OPEN)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "No active session found for user: " + userId + " in establishment: " + establishmentId));
+                } else {
+                        entity = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "No active session found for user: " + userId));
+                }
 
                 entity.setClosingBalance(closingBalance);
                 entity.setClosedAt(LocalDateTime.now());
@@ -287,10 +305,16 @@ public class CashSessionServiceImpl implements CashSessionService {
 
         @Override
         @Transactional(readOnly = true)
-        public SessionStatusResponse getCurrentSessionStatus(Long userId) {
+        public SessionStatusResponse getCurrentSessionStatus(Long userId, Long establishmentId) {
                 CashSession session = repository.findByUserIdAndStatus(userId, CashSession.SessionStatus.OPEN)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "No active session found for user: " + userId));
+
+                if (establishmentId != null && !session.getCashRegister().getEstablishment().getId().equals(establishmentId)) {
+                        throw new BadRequestException("El usuario tiene una caja abierta en la sucursal '" 
+                                        + session.getCashRegister().getEstablishment().getName() 
+                                        + "'. Debe cerrarla antes de operar en esta sucursal.");
+                }
 
                 Long sessionId = session.getId();
 
@@ -396,7 +420,7 @@ public class CashSessionServiceImpl implements CashSessionService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "No active session found for user: " + request.userId()));
 
-                SessionStatusResponse status = getCurrentSessionStatus(request.userId());
+                SessionStatusResponse status = getCurrentSessionStatus(request.userId(), null);
                 session.setCalculatedBalance(status.calculatedBalance());
 
                 session.setClosingBalance(request.closingBalance());

@@ -35,8 +35,9 @@ public class CashRegisterController {
 
     @GetMapping
     @Operation(summary = "Listar todas las cajas registradoras")
-    public ResponseEntity<ResponseApi<List<CashRegisterResponse>>> getAll() {
-        return ResponseEntity.ok(ResponseApi.success(service.getAll()));
+    public ResponseEntity<ResponseApi<List<CashRegisterResponse>>> getAll(
+            @RequestParam(required = false) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll(establishmentId)));
     }
 
     @GetMapping("/{id}")

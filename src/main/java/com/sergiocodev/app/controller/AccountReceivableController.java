@@ -50,8 +50,9 @@ public class AccountReceivableController {
             @RequestParam(required = false) String createdAt,
             @RequestParam(required = false) String dueDate,
             @RequestParam(required = false) String status,
+            @RequestParam(required = true) Long establishmentId,
             @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        Page<AccountReceivableResponse> paged = service.getAllPaged(customerName, saleIdentifier, createdAt, dueDate, status, pageable);
+        Page<AccountReceivableResponse> paged = service.getAllPaged(customerName, saleIdentifier, createdAt, dueDate, status, establishmentId, pageable);
         return ResponseEntity.ok(ResponseApi.success(paged));
     }
 
@@ -66,8 +67,8 @@ public class AccountReceivableController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<List<AccountReceivableDashboardResponse>> getDashboard() {
-        return ResponseEntity.ok(service.getDashboard());
+    public ResponseEntity<List<AccountReceivableDashboardResponse>> getDashboard(@RequestParam(required = true) Long establishmentId) {
+        return ResponseEntity.ok(service.getDashboard(establishmentId));
     }
 
     @GetMapping("/customer/{customerId}")

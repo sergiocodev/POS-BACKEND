@@ -32,6 +32,7 @@ public interface SaleService {
                         String total,
                         String paymentMethod,
                         String columnDate,
+                        Long establishmentId,
                         Pageable pageable);
 
         SaleResponse getById(Long id);
@@ -77,5 +78,6 @@ public interface SaleService {
                         String sunatStatus,
                         String total,
                         String paymentMethod,
-                        String columnDate);
+                        String columnDate,
+                        Long establishmentId);
 }

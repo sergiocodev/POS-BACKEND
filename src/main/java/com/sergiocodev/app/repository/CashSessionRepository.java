@@ -24,6 +24,11 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
         Optional<CashSession> findByUserIdAndStatus(Long userId, CashSession.SessionStatus status);
 
         /**
+         * Encuentra la sesión activa de un usuario restringida por establecimiento.
+         */
+        Optional<CashSession> findByUserIdAndCashRegisterEstablishmentIdAndStatus(Long userId, Long establishmentId, CashSession.SessionStatus status);
+
+        /**
          * Lista sesiones de un usuario por su estado, ordenadas por apertura descendente.
          */
         java.util.List<CashSession> findByUserIdAndStatusOrderByOpenedAtDesc(Long userId,

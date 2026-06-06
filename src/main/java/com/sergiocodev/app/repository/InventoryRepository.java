@@ -56,12 +56,15 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long>, Jpa
         @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId")
         List<Inventory> findAllByEstablishmentId(@Param("establishmentId") Long establishmentId);
 
-        @EntityGraph(attributePaths = { "lot", "lot.product" })
-        @Query("SELECT i FROM Inventory i WHERE i.establishment.id = :establishmentId " +
+        @EntityGraph(attributePaths = { "lot", "lot.product", "lot.product.units" })
+        @Query("SELECT DISTINCT i FROM Inventory i " +
+                        "JOIN i.lot.product.units pu " +
+                        "WHERE i.establishment.id = :establishmentId " +
                         "AND i.quantity > 0 " +
                         "AND (LOWER(i.lot.product.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
                         "OR LOWER(i.lot.product.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-                        "OR LOWER(i.lot.product.genericName) LIKE LOWER(CONCAT('%', :query, '%')))")
+                        "OR LOWER(i.lot.product.genericName) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR pu.barcode = :query)")
         java.util.List<Inventory> searchProductsForPOS(
                         @Param("query") String query,
                         @Param("establishmentId") Long establishmentId);

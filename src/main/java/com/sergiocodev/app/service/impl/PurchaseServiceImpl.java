@@ -123,6 +123,10 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .orElseThrow(() -> new RuntimeException(
                             "Debe tener una sesión de caja abierta para realizar compras al contado o abonar pagos iniciales."));
 
+            if (!session.getCashRegister().getEstablishment().getId().equals(request.establishmentId())) {
+                    throw new RuntimeException("La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
+            }
+
             AccountPayablePayment payment = new AccountPayablePayment();
             payment.setAccountPayable(savedPayable);
             payment.setUser(savedEntity.getUser());
@@ -233,13 +237,14 @@ public class PurchaseServiceImpl implements PurchaseService {
             String total,
             String paymentMethod,
             String columnDate,
+            Long establishmentId,
             Pageable pageable) {
 
         org.springframework.data.jpa.domain.Specification<Purchase> spec = com.sergiocodev.app.specification.PurchaseSpecification
                 .filterPurchases(
                         startDate, endDate, documentType, series, number, supplierName,
                         supplierDocument, userName, status,
-                        total, paymentMethod, columnDate);
+                        total, paymentMethod, columnDate, establishmentId);
 
         Page<Purchase> purchases = repository.findAll(spec, pageable);
         return purchases.map(purchaseMapper::toResponse);
@@ -259,12 +264,13 @@ public class PurchaseServiceImpl implements PurchaseService {
             String status,
             String total,
             String paymentMethod,
-            String columnDate) {
+            String columnDate,
+            Long establishmentId) {
 
         return repository.getPurchaseSummary(
                 startDate, endDate, documentType, series, number,
                 supplierName, supplierDocument, userName, status,
-                total, paymentMethod, columnDate);
+                total, paymentMethod, columnDate, establishmentId);
     }
 
     @Override

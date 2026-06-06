@@ -7,7 +7,7 @@ import java.util.List;
 public interface CashRegisterService {
     CashRegisterResponse create(CashRegisterRequest request);
 
-    List<CashRegisterResponse> getAll();
+    List<CashRegisterResponse> getAll(Long establishmentId);
 
     CashRegisterResponse getById(Long id);
 

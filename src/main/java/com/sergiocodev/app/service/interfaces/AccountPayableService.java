@@ -13,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 public interface AccountPayableService {
     List<AccountPayableResponse> getAll();
     
-    Page<AccountPayableResponse> getAllPaged(String supplierName, String purchaseIdentifier, String createdAt, String dueDate, String status, Pageable pageable);
+    Page<AccountPayableResponse> getAllPaged(String supplierName, String purchaseIdentifier, String createdAt, String dueDate, String status, Long establishmentId, Pageable pageable);
 
     List<AccountPayableResponse> getBySupplierId(Long supplierId);
 
@@ -21,5 +21,5 @@ public interface AccountPayableService {
 
     AccountPayableResponse pay(Long accountPayableId, AccountPayablePaymentRequest request, Long userId);
     
-    List<AccountPayableDashboardResponse> getDashboard();
+    List<AccountPayableDashboardResponse> getDashboard(Long establishmentId);
 }

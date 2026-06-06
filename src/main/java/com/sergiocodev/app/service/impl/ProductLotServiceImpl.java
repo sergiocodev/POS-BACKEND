@@ -17,6 +17,9 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.Root;
+import com.sergiocodev.app.model.Inventory;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +51,7 @@ public class ProductLotServiceImpl implements ProductLotService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductLotResponse> getAllPaged(String productName, String lotCode, Pageable pageable) {
+    public Page<ProductLotResponse> getAllPaged(String productName, String lotCode, Long establishmentId, Pageable pageable) {
         Specification<ProductLot> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -57,6 +60,17 @@ public class ProductLotServiceImpl implements ProductLotService {
             }
             if (lotCode != null && !lotCode.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("lotCode")), "%" + lotCode.toLowerCase() + "%"));
+            }
+
+            if (establishmentId != null) {
+                Subquery<Long> subquery = query.subquery(Long.class);
+                Root<Inventory> inventoryRoot = subquery.from(Inventory.class);
+                subquery.select(inventoryRoot.get("id"));
+                subquery.where(
+                    cb.equal(inventoryRoot.get("lot").get("id"), root.get("id")),
+                    cb.equal(inventoryRoot.get("establishment").get("id"), establishmentId)
+                );
+                predicates.add(cb.exists(subquery));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

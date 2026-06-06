@@ -141,7 +141,7 @@ public class AccountPayableServiceImpl implements AccountPayableService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AccountPayableResponse> getAllPaged(String supplierName, String purchaseIdentifier, String createdAt, String dueDate, String status, Pageable pageable) {
+    public Page<AccountPayableResponse> getAllPaged(String supplierName, String purchaseIdentifier, String createdAt, String dueDate, String status, Long establishmentId, Pageable pageable) {
         Specification<AccountPayable> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -195,6 +195,10 @@ public class AccountPayableServiceImpl implements AccountPayableService {
                 }
             }
 
+            if (establishmentId != null) {
+                predicates.add(cb.equal(root.get("purchase").get("establishment").get("id"), establishmentId));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -235,18 +239,18 @@ public class AccountPayableServiceImpl implements AccountPayableService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccountPayableDashboardResponse> getDashboard() {
+    public List<AccountPayableDashboardResponse> getDashboard(Long establishmentId) {
         List<AccountPayable.PayableStatus> excludedStatuses = List.of(
             AccountPayable.PayableStatus.PAID,
             AccountPayable.PayableStatus.CANCELED
         );
         AccountPayable.PayableStatus canceledStatus = AccountPayable.PayableStatus.CANCELED;
 
-        BigDecimal totalPendiente = repository.getTotalPendingBalance(excludedStatuses);
-        BigDecimal montoVencido = repository.getOverdueBalance(excludedStatuses);
-        Long porVencer = repository.getCountUpcomingDue(excludedStatuses);
-        BigDecimal totalExpected = repository.getTotalExpectedAmount(canceledStatus);
-        BigDecimal totalCollected = repository.getTotalCollectedAmount(canceledStatus);
+        BigDecimal totalPendiente = repository.getTotalPendingBalance(excludedStatuses, establishmentId);
+        BigDecimal montoVencido = repository.getOverdueBalance(excludedStatuses, establishmentId);
+        Long porVencer = repository.getCountUpcomingDue(excludedStatuses, establishmentId);
+        BigDecimal totalExpected = repository.getTotalExpectedAmount(canceledStatus, establishmentId);
+        BigDecimal totalCollected = repository.getTotalCollectedAmount(canceledStatus, establishmentId);
         BigDecimal tasaEfectiva = totalExpected.compareTo(BigDecimal.ZERO) > 0 
             ? totalCollected.divide(totalExpected, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")) 
             : BigDecimal.ZERO;
@@ -257,21 +261,21 @@ public class AccountPayableServiceImpl implements AccountPayableService {
         LocalDateTime startLastMonth = today.minusMonths(1).withDayOfMonth(1).atStartOfDay();
         LocalDateTime endLastMonth = today.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
 
-        BigDecimal pendingThis = repository.getPendingBalanceCreatedBetween(startThisMonth, endThisMonth, excludedStatuses);
-        BigDecimal pendingLast = repository.getPendingBalanceCreatedBetween(startLastMonth, endLastMonth, excludedStatuses);
+        BigDecimal pendingThis = repository.getPendingBalanceCreatedBetween(startThisMonth, endThisMonth, excludedStatuses, establishmentId);
+        BigDecimal pendingLast = repository.getPendingBalanceCreatedBetween(startLastMonth, endLastMonth, excludedStatuses, establishmentId);
         
-        BigDecimal overdueThis = repository.getOverdueBalanceDueBetween(startThisMonth.toLocalDate(), endThisMonth.toLocalDate(), excludedStatuses);
-        BigDecimal overdueLast = repository.getOverdueBalanceDueBetween(startLastMonth.toLocalDate(), endLastMonth.toLocalDate(), excludedStatuses);
+        BigDecimal overdueThis = repository.getOverdueBalanceDueBetween(startThisMonth.toLocalDate(), endThisMonth.toLocalDate(), excludedStatuses, establishmentId);
+        BigDecimal overdueLast = repository.getOverdueBalanceDueBetween(startLastMonth.toLocalDate(), endLastMonth.toLocalDate(), excludedStatuses, establishmentId);
 
-        Long countThis = repository.getCountDueBetween(today, today.plusMonths(1), excludedStatuses);
-        Long countLast = repository.getCountDueBetween(today.minusMonths(1), today, excludedStatuses);
+        Long countThis = repository.getCountDueBetween(today, today.plusMonths(1), excludedStatuses, establishmentId);
+        Long countLast = repository.getCountDueBetween(today.minusMonths(1), today, excludedStatuses, establishmentId);
 
-        BigDecimal expThis = repository.getExpectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus);
-        BigDecimal collThis = repository.getCollectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus);
+        BigDecimal expThis = repository.getExpectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus, establishmentId);
+        BigDecimal collThis = repository.getCollectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus, establishmentId);
         BigDecimal rateThis = expThis.compareTo(BigDecimal.ZERO) > 0 ? collThis.divide(expThis, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")) : BigDecimal.ZERO;
 
-        BigDecimal expLast = repository.getExpectedAmountCreatedBetween(startLastMonth, endLastMonth, canceledStatus);
-        BigDecimal collLast = repository.getCollectedAmountCreatedBetween(startLastMonth, endLastMonth, canceledStatus);
+        BigDecimal expLast = repository.getExpectedAmountCreatedBetween(startLastMonth, endLastMonth, canceledStatus, establishmentId);
+        BigDecimal collLast = repository.getCollectedAmountCreatedBetween(startLastMonth, endLastMonth, canceledStatus, establishmentId);
         BigDecimal rateLast = expLast.compareTo(BigDecimal.ZERO) > 0 ? collLast.divide(expLast, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")) : BigDecimal.ZERO;
 
         return List.of(

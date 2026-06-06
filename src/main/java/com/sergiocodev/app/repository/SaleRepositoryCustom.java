@@ -19,5 +19,6 @@ public interface SaleRepositoryCustom {
             String sunatStatus,
             String total,
             String paymentMethod,
-            String columnDate);
+            String columnDate,
+            Long establishmentId);
 }

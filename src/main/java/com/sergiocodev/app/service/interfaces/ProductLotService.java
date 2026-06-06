@@ -11,7 +11,7 @@ public interface ProductLotService {
 
     List<ProductLotResponse> getAll();
 
-    Page<ProductLotResponse> getAllPaged(String productName, String lotCode, Pageable pageable);
+    Page<ProductLotResponse> getAllPaged(String productName, String lotCode, Long establishmentId, Pageable pageable);
 
     List<ProductLotResponse> getByProductId(Long productId);
 
