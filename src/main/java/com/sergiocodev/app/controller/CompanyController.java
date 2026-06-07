@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequiredArgsConstructor
 @Tag(name = "Company", description = "Endpoints para la gestión de la empresa")
 @SecurityRequirement(name = "bearerAuth")
+@RequiresPermission(PermissionConstants.CONFIGURACION_EMPRESA)
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -27,7 +28,6 @@ public class CompanyController {
     }
 
     @PutMapping
-    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
     public ResponseEntity<CompanyResponse> updateCompany(@Valid @RequestBody CompanyRequest request) {
         return ResponseEntity.ok(companyService.updateCompany(request));
     }

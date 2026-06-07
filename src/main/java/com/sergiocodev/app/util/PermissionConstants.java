@@ -67,4 +67,5 @@ public final class PermissionConstants {
     public static final String CONFIGURACION_ESTABLECIMIENTOS = "CONFIGURACION_ESTABLECIMIENTOS";
     public static final String CONFIGURACION_PERSONAL = "CONFIGURACION_PERSONAL";
     public static final String CONFIGURACION_IMPUESTOS = "CONFIGURACION_IMPUESTOS";
+    public static final String CONFIGURACION_EMPRESA = "CONFIGURACION_EMPRESA";
 }
