@@ -1,65 +1,52 @@
 package com.sergiocodev.app.service.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.sergiocodev.app.service.interfaces.FileStorageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
+import java.util.Map;
 
+/**
+ * Implementación de FileStorageService usando Cloudinary.
+ * Los archivos se suben a la nube y persisten entre redeploys en Railway.
+ * La URL retornada es una URL pública permanente de Cloudinary (https://res.cloudinary.com/...).
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class FileStorageServiceImpl implements FileStorageService {
 
-    private final Path rootLocation = Paths.get("uploads");
-
-    public FileStorageServiceImpl() {
-        try {
-            Files.createDirectories(rootLocation);
-            Files.createDirectories(rootLocation.resolve("usuarios"));
-            Files.createDirectories(rootLocation.resolve("productos"));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not initialize storage", e);
-        }
-    }
+    private final Cloudinary cloudinary;
 
     @Override
+    @SuppressWarnings("unchecked")
     public String store(MultipartFile file, String folder) {
-        try {
-            if (file.isEmpty()) {
-                throw new RuntimeException("Failed to store empty file.");
-            }
-
-            String extension = getFileExtension(file.getOriginalFilename());
-            String filename = UUID.randomUUID().toString() + extension;
-
-            Path targetFolder = this.rootLocation.resolve(folder);
-            if (!Files.exists(targetFolder)) {
-                Files.createDirectories(targetFolder);
-            }
-
-            Path destinationFile = targetFolder.resolve(Paths.get(filename))
-                    .normalize().toAbsolutePath();
-
-            if (!destinationFile.getParent().equals(targetFolder.toAbsolutePath())) {
-                throw new RuntimeException("Cannot store file outside current directory.");
-            }
-
-            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
-
-            return "/uploads/" + folder + "/" + filename;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file.", e);
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("No se puede almacenar un archivo vacío.");
         }
-    }
 
-    private String getFileExtension(String filename) {
-        if (filename == null)
-            return "";
-        int dotIndex = filename.lastIndexOf('.');
-        return (dotIndex == -1) ? "" : filename.substring(dotIndex);
+        try {
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "pos/" + folder,
+                            "resource_type", "image",
+                            "overwrite", true
+                    )
+            );
+
+            String secureUrl = (String) uploadResult.get("secure_url");
+            log.info("Archivo subido a Cloudinary: {}", secureUrl);
+            return secureUrl;
+
+        } catch (IOException e) {
+            log.error("Error al subir archivo a Cloudinary", e);
+            throw new RuntimeException("Error al subir el archivo a Cloudinary: " + e.getMessage(), e);
+        }
     }
 }
