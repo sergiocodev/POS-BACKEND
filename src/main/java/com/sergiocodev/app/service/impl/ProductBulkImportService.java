@@ -40,12 +40,16 @@ public class ProductBulkImportService {
     private final PresentationRepository presentationRepository;
     private final PharmaceuticalFormRepository pharmaceuticalFormRepository;
     private final TaxTypeRepository taxTypeRepository;
+    private final TherapeuticActionRepository therapeuticActionRepository;
+    private final ActiveIngredientRepository activeIngredientRepository;
 
 
     private static final String[] HEADER_LABELS = {
             "Código *", "Código DIGEMID", "Nombre Comercial *", "Nombre Genérico", "Descripción",
             "Marca *", "Categoría *", "Laboratorio *", "Presentación *",
-            "Forma Farmacéutica *", "Requiere Receta (true/false)", "Es Genérico (true/false)"
+            "Forma Farmacéutica *", "Requiere Receta (true/false)", "Es Genérico (true/false)",
+            "Acciones Terapéuticas (separadas por |)", "Principios Activos (nombre:concentracion separados por |)",
+            "Unidad Base (nombre) *", "Unidad Base Precio *", "Unidad Base Código de Barras"
     };
 
     /**
@@ -82,7 +86,8 @@ public class ProductBulkImportService {
             String[] exampleValues = {
                     "PRD-001", "DG12345", "Paracetamol 500mg", "Paracetamol",
                     "Analgésico y antipirético", "Genéricos Lab", "Analgésicos",
-                    "Lab Peru", "Caja x 100", "Tableta", "false", "true"
+                    "Lab Peru", "Caja x 100", "Tableta", "false", "true",
+                    "Analgésico|Antipirético", "Paracetamol:500mg", "UNI", "2.50", "7701234567890"
             };
             for (int i = 0; i < exampleValues.length; i++) {
                 exampleRow.createCell(i).setCellValue(exampleValues[i]);
@@ -106,13 +111,15 @@ public class ProductBulkImportService {
             String[] instructions = {
                     "1. Complete los datos en la hoja 'Productos'.",
                     "2. Los campos marcados con * son obligatorios.",
-                    "3. Las marcas, categorías, laboratorios, presentaciones y formas farmacéuticas se crean automáticamente si no existen.",
+                    "3. Las marcas, categorías, laboratorios, presentaciones, formas farmacéuticas, acciones terapéuticas y principios activos se crean automáticamente si no existen.",
                     "4. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
                     "5. Si un producto con el mismo código ya existe, será actualizado.",
                     "6. Los campos 'Requiere Receta' y 'Es Genérico' aceptan: true, false, si, no, 1, 0.",
-                    "7. No modifique los encabezados de las columnas.",
-                    "8. Puede agregar tantas filas como necesite.",
-                    "9. Guarde el archivo como .xlsx antes de importar."
+                    "7. Para múltiples acciones terapéuticas o principios activos use el separador |. Ej: Acción1|Acción2",
+                    "8. Para principios activos especifique la concentración así: Nombre:Concentración. Ej: Paracetamol:500mg|Cafeína:65mg",
+                    "9. No modifique los encabezados de las columnas.",
+                    "10. Puede agregar tantas filas como necesite.",
+                    "11. Guarde el archivo como .xlsx antes de importar."
             };
             for (String instruction : instructions) {
                 instructionsSheet.createRow(row++).createCell(0).setCellValue(instruction);
@@ -177,6 +184,11 @@ public class ProductBulkImportService {
                     String pharmaFormName = getCellString(row, 9);
                     boolean requiresPrescription = getCellBoolean(row, 10);
                     boolean isGeneric = getCellBoolean(row, 11);
+                    String therapeuticActionsStr = getCellString(row, 12);
+                    String activeIngredientsStr = getCellString(row, 13);
+                    String baseUnitName = getCellString(row, 14);
+                    String baseUnitPriceStr = getCellString(row, 15);
+                    String baseUnitBarcode = getCellString(row, 16);
 
                     // Validaciones de campos obligatorios
                     List<String> missingFields = new ArrayList<>();
@@ -194,10 +206,23 @@ public class ProductBulkImportService {
                         missingFields.add("Presentación");
                     if (pharmaFormName == null || pharmaFormName.isBlank())
                         missingFields.add("Forma Farmacéutica");
+                    if (baseUnitName == null || baseUnitName.isBlank())
+                        missingFields.add("Unidad Base (nombre)");
+                    if (baseUnitPriceStr == null || baseUnitPriceStr.isBlank())
+                        missingFields.add("Unidad Base Precio");
 
                     if (!missingFields.isEmpty()) {
                         errors.add(new BulkImportRowError(rowNum, code, tradeName,
                                 "Campos obligatorios vacíos: " + String.join(", ", missingFields)));
+                        continue;
+                    }
+
+                    java.math.BigDecimal baseUnitPrice;
+                    try {
+                        baseUnitPrice = new java.math.BigDecimal(baseUnitPriceStr.replace(",", "."));
+                    } catch (NumberFormatException e) {
+                        errors.add(new BulkImportRowError(rowNum, code, tradeName,
+                                "Precio de unidad base inválido: " + baseUnitPriceStr));
                         continue;
                     }
 
@@ -216,42 +241,65 @@ public class ProductBulkImportService {
                                     "Tipo de impuesto por defecto no configurado (id=1)"));
 
                     // Verificar si el producto ya existe (por código)
-                    Product existingProduct = productRepository.findByCode(code.trim()).orElse(null);
+                    Product product = productRepository.findByCode(code.trim()).orElse(null);
+                    boolean isNew = false;
+                    if (product == null) {
+                        product = new Product();
+                        isNew = true;
+                    }
 
-                    if (existingProduct != null) {
-                        // ACTUALIZAR
-                        existingProduct.setDigemidCode(digemidCode);
-                        existingProduct.setTradeName(tradeName.trim());
-                        existingProduct.setGenericName(genericName);
-                        existingProduct.setDescription(description);
-                        existingProduct.setBrand(brand);
-                        existingProduct.setCategory(category);
-                        existingProduct.setLaboratory(laboratory);
-                        existingProduct.setPresentation(presentation);
-                        existingProduct.setPharmaceuticalForm(pharmaForm);
-                        existingProduct.setTaxType(taxType);
-                        existingProduct.setRequiresPrescription(requiresPrescription);
-                        existingProduct.setGeneric(isGeneric);
-                        productRepository.save(existingProduct);
-                        updated++;
-                    } else {
-                        // CREAR
-                        Product newProduct = new Product();
-                        newProduct.setCode(code.trim());
-                        newProduct.setDigemidCode(digemidCode);
-                        newProduct.setTradeName(tradeName.trim());
-                        newProduct.setGenericName(genericName);
-                        newProduct.setDescription(description);
-                        newProduct.setBrand(brand);
-                        newProduct.setCategory(category);
-                        newProduct.setLaboratory(laboratory);
-                        newProduct.setPresentation(presentation);
-                        newProduct.setPharmaceuticalForm(pharmaForm);
-                        newProduct.setTaxType(taxType);
-                        newProduct.setRequiresPrescription(requiresPrescription);
-                        newProduct.setGeneric(isGeneric);
-                        productRepository.save(newProduct);
+                    product.setCode(code.trim());
+                    product.setDigemidCode(digemidCode);
+                    product.setTradeName(tradeName.trim());
+                    product.setGenericName(genericName);
+                    product.setDescription(description);
+                    product.setBrand(brand);
+                    product.setCategory(category);
+                    product.setLaboratory(laboratory);
+                    product.setPresentation(presentation);
+                    product.setPharmaceuticalForm(pharmaForm);
+                    product.setTaxType(taxType);
+                    product.setRequiresPrescription(requiresPrescription);
+                    product.setGeneric(isGeneric);
+
+                    // Resolver relaciones complejas
+                    product.setTherapeuticActions(resolveTherapeuticActions(therapeuticActionsStr));
+                    
+                    // Ingredientes activos
+                    product.getIngredients().clear();
+                    List<ProductIngredient> ingredients = resolveActiveIngredients(product, activeIngredientsStr);
+                    if (ingredients != null) {
+                        product.getIngredients().addAll(ingredients);
+                    }
+
+                    // Unidad Base
+                    boolean hasBaseUnit = false;
+                    for (ProductUnit pu : product.getUnits()) {
+                        if (pu.isBaseUnit()) {
+                            pu.setUnitName(baseUnitName.trim().toUpperCase());
+                            pu.setPrice(baseUnitPrice);
+                            pu.setBarcode(baseUnitBarcode != null && !baseUnitBarcode.isBlank() ? baseUnitBarcode.trim() : null);
+                            hasBaseUnit = true;
+                            break;
+                        }
+                    }
+                    if (!hasBaseUnit) {
+                        ProductUnit baseUnit = new ProductUnit();
+                        baseUnit.setProduct(product);
+                        baseUnit.setUnitName(baseUnitName.trim().toUpperCase());
+                        baseUnit.setFactor(1);
+                        baseUnit.setPrice(baseUnitPrice);
+                        baseUnit.setBarcode(baseUnitBarcode != null && !baseUnitBarcode.isBlank() ? baseUnitBarcode.trim() : null);
+                        baseUnit.setBaseUnit(true);
+                        product.getUnits().add(baseUnit);
+                    }
+
+                    productRepository.save(product);
+
+                    if (isNew) {
                         created++;
+                    } else {
+                        updated++;
                     }
 
                 } catch (Exception e) {
@@ -318,6 +366,66 @@ public class ProductBulkImportService {
                     pf.setName(name.trim());
                     return pharmaceuticalFormRepository.save(pf);
                 });
+    }
+
+    private java.util.Set<TherapeuticAction> resolveTherapeuticActions(String actionsStr) {
+        java.util.Set<TherapeuticAction> actions = new java.util.HashSet<>();
+        if (actionsStr == null || actionsStr.isBlank())
+            return actions;
+
+        String[] parts = actionsStr.split("\\|");
+        for (String part : parts) {
+            String name = part.trim();
+            if (name.isEmpty())
+                continue;
+
+            TherapeuticAction action = therapeuticActionRepository.findByName(name)
+                    .orElseGet(() -> {
+                        TherapeuticAction ta = new TherapeuticAction();
+                        ta.setName(name);
+                        return therapeuticActionRepository.save(ta);
+                    });
+            actions.add(action);
+        }
+        return actions;
+    }
+
+    private List<ProductIngredient> resolveActiveIngredients(Product product, String ingredientsStr) {
+        List<ProductIngredient> ingredients = new ArrayList<>();
+        if (ingredientsStr == null || ingredientsStr.isBlank())
+            return ingredients;
+
+        String[] parts = ingredientsStr.split("\\|");
+        for (String part : parts) {
+            String[] split = part.split(":");
+            String name = split[0].trim();
+            if (name.isEmpty())
+                continue;
+
+            String concentration = split.length > 1 ? split[1].trim() : null;
+
+            ActiveIngredient ai = activeIngredientRepository.findByName(name)
+                    .orElseGet(() -> {
+                        ActiveIngredient a = new ActiveIngredient();
+                        a.setName(name);
+                        return activeIngredientRepository.save(a);
+                    });
+
+            ProductIngredient pi = new ProductIngredient();
+            pi.setProduct(product);
+            pi.setActiveIngredient(ai);
+            pi.setConcentration(concentration);
+
+            ProductIngredientId pid = new ProductIngredientId();
+            if (product.getId() != null) {
+                pid.setProductId(product.getId());
+            }
+            pid.setIngredientId(ai.getId());
+            pi.setId(pid);
+
+            ingredients.add(pi);
+        }
+        return ingredients;
     }
 
     private String getCellString(Row row, int colIndex) {
