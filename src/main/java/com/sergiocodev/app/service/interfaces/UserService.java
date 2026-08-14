@@ -9,6 +9,8 @@ public interface UserService {
 
     Page<UserResponse> getAll(Pageable pageable);
 
+    Page<UserResponse> getAllPaged(String username, String email, String fullName, Pageable pageable);
+
     UserResponse getById(Long id);
 
     UserResponse getByUsername(String username);

@@ -10,6 +10,7 @@ import com.sergiocodev.app.dto.purchase.PurchaseResponse;
 import com.sergiocodev.app.mapper.PurchaseMapper;
 import com.sergiocodev.app.model.*;
 import com.sergiocodev.app.repository.*;
+import com.sergiocodev.app.dto.company.CompanyMinimalResponse;
 import lombok.RequiredArgsConstructor;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final CashMovementService cashMovementService;
     private final CashConceptService cashConceptService;
     private final StockMovementService stockMovementService;
+    private final CompanyRepository companyRepository;
 
     @Override
     @Transactional
@@ -148,7 +150,42 @@ public class PurchaseServiceImpl implements PurchaseService {
                     "COMPRA-" + savedEntity.getId(), description);
         }
 
-        return purchaseMapper.toResponse(savedEntity);
+        return addCompanyInfo(purchaseMapper.toResponse(savedEntity));
+    }
+
+    private PurchaseResponse addCompanyInfo(PurchaseResponse response) {
+        Company company = companyRepository.findMainCompany().orElse(null);
+        if (company != null) {
+            CompanyMinimalResponse companyInfo = new CompanyMinimalResponse(
+                    company.getRuc(),
+                    company.getName(),
+                    company.getAddress(),
+                    company.getUbigeo(),
+                    company.getUrbanization(),
+                    company.getPhone(),
+                    company.getEmail(),
+                    company.getLogoUrl());
+            return new PurchaseResponse(
+                    response.id(),
+                    response.supplierName(),
+                    response.establishmentName(),
+                    response.username(),
+                    response.documentType(),
+                    response.series(),
+                    response.number(),
+                    response.issueDate(),
+                    response.arrivalDate(),
+                    response.subTotal(),
+                    response.tax(),
+                    response.total(),
+                    response.status(),
+                    response.paymentCondition(),
+                    response.notes(),
+                    response.createdAt(),
+                    response.items(),
+                    companyInfo);
+        }
+        return response;
     }
 
     private ProductLot findOrCreateLot(Product product, String lotCode, java.time.LocalDate expiryDate) {
@@ -219,6 +256,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     public List<PurchaseResponse> getAll() {
         return repository.findAll().stream()
                 .map(purchaseMapper::toResponse)
+                .map(this::addCompanyInfo)
                 .collect(Collectors.toList());
     }
 
@@ -247,7 +285,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                         total, paymentMethod, columnDate, establishmentId);
 
         Page<Purchase> purchases = repository.findAll(spec, pageable);
-        return purchases.map(purchaseMapper::toResponse);
+        return purchases.map(purchaseMapper::toResponse).map(this::addCompanyInfo);
     }
 
     @Override
@@ -278,6 +316,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     public PurchaseResponse getById(Long id) {
         return repository.findById(id)
                 .map(purchaseMapper::toResponse)
+                .map(this::addCompanyInfo)
                 .orElseThrow(() -> new ResourceNotFoundException("Purchase not found: " + id));
     }
 

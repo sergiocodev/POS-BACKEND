@@ -23,13 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Laboratories", description = "Endpoints para la gestión del laboratorio")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_LABORATORIOS)
 public class LaboratoryController {
 
     private final LaboratoryService service;
 
     @PostMapping
     @Operation(summary = "Crear laboratorio")
+    @RequiresPermission(PermissionConstants.FARMACIA_LABORATORIOS)
     public ResponseEntity<ResponseApi<LaboratoryResponse>> createNewLaboratory(
             @Valid @RequestBody LaboratoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -58,6 +58,7 @@ public class LaboratoryController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar laboratorio")
+    @RequiresPermission(PermissionConstants.FARMACIA_LABORATORIOS)
     public ResponseEntity<ResponseApi<LaboratoryResponse>> updateLaboratoryById(@PathVariable Long id,
             @Valid @RequestBody LaboratoryRequest request) {
         return ResponseEntity
@@ -67,6 +68,7 @@ public class LaboratoryController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar laboratorio")
+    @RequiresPermission(PermissionConstants.FARMACIA_LABORATORIOS)
     public ResponseEntity<ResponseApi<Void>> deleteLaboratoryById(@PathVariable Long id) {
         service.deleteLaboratoryById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Laboratorio eliminado exitosamente"));

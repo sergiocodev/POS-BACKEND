@@ -25,6 +25,7 @@ import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import com.sergiocodev.app.config.ApiVersion;
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -43,6 +44,19 @@ public class UserController {
     @RequiresPermission(PermissionConstants.CONFIGURACION_USUARIOS)
     public ResponseEntity<ResponseApi<List<UserResponse>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ResponseApi.success(userService.getAll(pageable).getContent()));
+    }
+
+    @Operation(summary = "Lista de usuarios con paginación", description = "Obtiene la lista de usuarios paginada y filtrada")
+    @ApiResponse(responseCode = "200", description = "Paged list of users obtained successfully")
+    @GetMapping("/paged")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_USUARIOS)
+    public ResponseEntity<ResponseApi<Page<UserResponse>>> getAllPaged(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String fullName,
+            @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<UserResponse> users = userService.getAllPaged(username, email, fullName, pageable);
+        return ResponseEntity.ok(ResponseApi.success(users));
     }
 
     @Operation(summary = "Obtener perfil", description = "Obtiene el perfil del usuario autenticado")

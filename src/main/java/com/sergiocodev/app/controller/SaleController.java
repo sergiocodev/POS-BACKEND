@@ -118,7 +118,7 @@ public class SaleController {
 
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancelar una venta")
-    @RequiresPermission(PermissionConstants.VENTAS_POS)
+    @RequiresPermission(PermissionConstants.ROL_ADMINISTRADOR)
     public ResponseEntity<ResponseApi<Void>> cancel(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         service.cancel(id, principal.getId());
         return ResponseEntity.ok(ResponseApi.success(null, "Venta cancelada exitosamente"));
@@ -176,7 +176,7 @@ public class SaleController {
 
     @PostMapping("/{id}/invalidate")
     @Operation(summary = "Invalidar/Baja de documento")
-    @RequiresPermission(PermissionConstants.VENTAS_POS)
+    @RequiresPermission(PermissionConstants.ROL_ADMINISTRADOR)
     public ResponseEntity<ResponseApi<Void>> invalidate(
             @PathVariable Long id,
             @RequestParam String reason,

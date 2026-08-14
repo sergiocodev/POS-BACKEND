@@ -23,13 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Therapeutic Actions", description = "Endpoints para la gestión de acciones terapéuticas")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_ACCIONES)
 public class TherapeuticActionController {
 
     private final TherapeuticActionService service;
 
     @PostMapping
     @Operation(summary = "Crear acción terapéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_ACCIONES)
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> create(
             @Valid @RequestBody TherapeuticActionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -58,6 +58,7 @@ public class TherapeuticActionController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar acción terapéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_ACCIONES)
     public ResponseEntity<ResponseApi<TherapeuticActionResponse>> update(@PathVariable Long id,
             @Valid @RequestBody TherapeuticActionRequest request) {
         return ResponseEntity
@@ -66,6 +67,7 @@ public class TherapeuticActionController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar acción terapéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_ACCIONES)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Acción terapéutica eliminada exitosamente"));

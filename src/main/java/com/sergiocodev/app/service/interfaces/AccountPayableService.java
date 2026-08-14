@@ -21,5 +21,5 @@ public interface AccountPayableService {
 
     AccountPayableResponse pay(Long accountPayableId, AccountPayablePaymentRequest request, Long userId);
     
-    List<AccountPayableDashboardResponse> getDashboard(Long establishmentId);
+    List<AccountPayableDashboardResponse> getSummary(Long establishmentId);
 }

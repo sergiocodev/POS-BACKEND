@@ -239,7 +239,7 @@ public class AccountPayableServiceImpl implements AccountPayableService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccountPayableDashboardResponse> getDashboard(Long establishmentId) {
+    public List<AccountPayableDashboardResponse> getSummary(Long establishmentId) {
         List<AccountPayable.PayableStatus> excludedStatuses = List.of(
             AccountPayable.PayableStatus.PAID,
             AccountPayable.PayableStatus.CANCELED
@@ -248,7 +248,7 @@ public class AccountPayableServiceImpl implements AccountPayableService {
 
         BigDecimal totalPendiente = repository.getTotalPendingBalance(excludedStatuses, establishmentId);
         BigDecimal montoVencido = repository.getOverdueBalance(excludedStatuses, establishmentId);
-        Long porVencer = repository.getCountUpcomingDue(excludedStatuses, establishmentId);
+        BigDecimal porVencer = repository.getAmountUpcomingDue(excludedStatuses, establishmentId);
         BigDecimal totalExpected = repository.getTotalExpectedAmount(canceledStatus, establishmentId);
         BigDecimal totalCollected = repository.getTotalCollectedAmount(canceledStatus, establishmentId);
         BigDecimal tasaEfectiva = totalExpected.compareTo(BigDecimal.ZERO) > 0 
@@ -259,7 +259,7 @@ public class AccountPayableServiceImpl implements AccountPayableService {
         LocalDateTime startThisMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime endThisMonth = today.atTime(23, 59, 59);
         LocalDateTime startLastMonth = today.minusMonths(1).withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endLastMonth = today.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
+        LocalDateTime endLastMonth = today.minusMonths(1).atTime(23, 59, 59);
 
         BigDecimal pendingThis = repository.getPendingBalanceCreatedBetween(startThisMonth, endThisMonth, excludedStatuses, establishmentId);
         BigDecimal pendingLast = repository.getPendingBalanceCreatedBetween(startLastMonth, endLastMonth, excludedStatuses, establishmentId);
@@ -267,8 +267,8 @@ public class AccountPayableServiceImpl implements AccountPayableService {
         BigDecimal overdueThis = repository.getOverdueBalanceDueBetween(startThisMonth.toLocalDate(), endThisMonth.toLocalDate(), excludedStatuses, establishmentId);
         BigDecimal overdueLast = repository.getOverdueBalanceDueBetween(startLastMonth.toLocalDate(), endLastMonth.toLocalDate(), excludedStatuses, establishmentId);
 
-        Long countThis = repository.getCountDueBetween(today, today.plusMonths(1), excludedStatuses, establishmentId);
-        Long countLast = repository.getCountDueBetween(today.minusMonths(1), today, excludedStatuses, establishmentId);
+        BigDecimal amountThis = repository.getAmountDueBetween(today, today.plusMonths(1), excludedStatuses, establishmentId);
+        BigDecimal amountLast = repository.getAmountDueBetween(today.minusMonths(1), today, excludedStatuses, establishmentId);
 
         BigDecimal expThis = repository.getExpectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus, establishmentId);
         BigDecimal collThis = repository.getCollectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus, establishmentId);
@@ -297,10 +297,10 @@ public class AccountPayableServiceImpl implements AccountPayableService {
             ),
             new AccountPayableDashboardResponse(
                 "POR VENCER",
-                String.valueOf(porVencer),
-                null, null,
-                calculateTrend(new BigDecimal(countThis), new BigDecimal(countLast)),
-                calculateDirection(new BigDecimal(countThis), new BigDecimal(countLast), false),
+                porVencer.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                "S/ ", null,
+                calculateTrend(amountThis, amountLast),
+                calculateDirection(amountThis, amountLast, false),
                 "vs. mes ant."
             ),
             new AccountPayableDashboardResponse(

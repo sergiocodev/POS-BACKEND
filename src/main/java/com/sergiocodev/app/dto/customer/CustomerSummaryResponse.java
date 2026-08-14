@@ -1,6 +1,8 @@
-package com.sergiocodev.app.dto.supplier;
+package com.sergiocodev.app.dto.customer;
 
-public record SupplierSummaryResponse(
+import java.math.BigDecimal;
+
+public record CustomerSummaryResponse(
     String label,
     String value,
     String prefix,

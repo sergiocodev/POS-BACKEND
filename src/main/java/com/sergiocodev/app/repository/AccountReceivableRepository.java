@@ -45,8 +45,8 @@ public interface AccountReceivableRepository extends JpaRepository<AccountReceiv
     @Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate < CURRENT_DATE AND a.sale.establishment.id = :establishmentId")
     BigDecimal getOverdueBalance(@Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
 
-    @Query("SELECT COUNT(a) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= CURRENT_DATE AND a.sale.establishment.id = :establishmentId")
-    Long getCountUpcomingDue(@Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
+    @Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= CURRENT_DATE AND a.sale.establishment.id = :establishmentId")
+    BigDecimal getAmountUpcomingDue(@Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
 
     @Query("SELECT COALESCE(SUM(a.totalAmount), 0) FROM AccountReceivable a WHERE a.status != :canceledStatus AND a.sale.establishment.id = :establishmentId")
     BigDecimal getTotalExpectedAmount(@Param("canceledStatus") AccountReceivable.ReceivableStatus canceledStatus, @Param("establishmentId") Long establishmentId);
@@ -61,8 +61,8 @@ public interface AccountReceivableRepository extends JpaRepository<AccountReceiv
     @Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= :start AND a.dueDate <= :end AND a.sale.establishment.id = :establishmentId")
     BigDecimal getOverdueBalanceDueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
 
-    @Query("SELECT COUNT(a) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= :start AND a.dueDate <= :end AND a.sale.establishment.id = :establishmentId")
-    Long getCountDueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
+    @Query("SELECT COALESCE(SUM(a.pendingBalance), 0) FROM AccountReceivable a WHERE a.status NOT IN :excludedStatuses AND a.dueDate >= :start AND a.dueDate <= :end AND a.sale.establishment.id = :establishmentId")
+    BigDecimal getAmountDueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("excludedStatuses") List<AccountReceivable.ReceivableStatus> excludedStatuses, @Param("establishmentId") Long establishmentId);
 
     @Query("SELECT COALESCE(SUM(a.totalAmount), 0) FROM AccountReceivable a WHERE a.status != :canceledStatus AND a.createdAt >= :start AND a.createdAt <= :end AND a.sale.establishment.id = :establishmentId")
     BigDecimal getExpectedAmountCreatedBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("canceledStatus") AccountReceivable.ReceivableStatus canceledStatus, @Param("establishmentId") Long establishmentId);

@@ -48,6 +48,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<UserResponse> getAllPaged(String username, String email, String fullName, Pageable pageable) {
+        return userRepository.findAllActiveFiltered(username, email, fullName, pageable)
+                .map(mapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public UserResponse getById(Long id) {
         return userRepository.findById(id)
                 .map(mapper::toResponse)

@@ -16,7 +16,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @Repository
-public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale>, SaleRepositoryCustom {
+public interface SaleRepository
+                extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale>, SaleRepositoryCustom {
 
         /**
          * Cuenta rápidamente de forma algorítmica las ventas exitosamente completadas
@@ -210,7 +211,10 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificat
                         @Param("documentType") Sale.SaleDocumentType documentType,
                         @Param("series") String series);
 
-        /** Lightweight query: product ID → name mapping (evita cargar ventas completas solo para nombres) */
+        /**
+         * Lightweight query: product ID → name mapping (evita cargar ventas completas
+         * solo para nombres)
+         */
         @Query("SELECT si.product.id, si.product.tradeName FROM SaleItem si JOIN si.sale s " +
                         "WHERE (:establishmentId IS NULL OR s.establishment.id = :establishmentId) " +
                         "AND s.isVoided = false AND s.date >= :startDate AND s.date <= :endDate " +

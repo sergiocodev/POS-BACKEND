@@ -9,6 +9,8 @@ public interface EstablishmentService {
 
     List<EstablishmentResponse> getAll();
 
+    org.springframework.data.domain.Page<EstablishmentResponse> getAllPaged(String name, String codeSunat, org.springframework.data.domain.Pageable pageable);
+
     EstablishmentResponse getById(Long id);
 
     EstablishmentResponse update(Long id, EstablishmentRequest request);

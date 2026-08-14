@@ -44,6 +44,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<EmployeeResponse> getAllPaged(String fullName, String documentNumber, String username, org.springframework.data.domain.Pageable pageable) {
+        return repository.findAllFiltered(fullName, documentNumber, username, pageable)
+                .map(EmployeeResponse::new);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public EmployeeResponse getById(Long id) {
         return repository.findById(id)
                 .map(EmployeeResponse::new)

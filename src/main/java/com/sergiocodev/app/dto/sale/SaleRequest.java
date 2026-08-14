@@ -25,7 +25,7 @@ public record SaleRequest(
 
                 @NotEmpty(message = "At least one item is required") @Valid List<SaleItemRequest> items,
 
-                @NotEmpty(message = "At least one payment is required") @Valid List<SalePaymentRequest> payments,
+                @NotNull(message = "Payments list cannot be null") @Valid List<SalePaymentRequest> payments,
 
                 Sale.PaymentCondition paymentCondition,
 

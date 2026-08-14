@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.sergiocodev.app.dto.customer.CustomerSummaryResponse;
 import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import org.springframework.data.domain.Page;
@@ -104,11 +105,11 @@ public class CustomerController {
         return ResponseEntity.ok(ResponseApi.success(null, "Cliente eliminado exitosamente"));
     }
 
-    @Operation(summary = "Dashboard de clientes", description = "Retorna estadísticas y KPIs del módulo de clientes")
-    @ApiResponse(responseCode = "200", description = "Dashboard data obtained successfully")
-    @GetMapping("/dashboard")
-    public ResponseEntity<ResponseApi<CustomerDashboardResponse>> getDashboard() {
-        return ResponseEntity.ok(ResponseApi.success(customerService.getDashboard()));
+    @Operation(summary = "Resumen de clientes", description = "Retorna estadísticas de clientes por establecimiento")
+    @ApiResponse(responseCode = "200", description = "Summary data obtained successfully")
+    @GetMapping("/summary")
+    public ResponseEntity<ResponseApi<List<CustomerSummaryResponse>>> getSummary(@RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(customerService.getSummary(establishmentId)));
     }
 
     @Operation(summary = "Buscar cliente por documento", description = "Busca un cliente por su número de documento de identidad")

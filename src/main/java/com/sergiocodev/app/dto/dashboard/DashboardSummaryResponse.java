@@ -11,7 +11,9 @@ public record DashboardSummaryResponse(
             ValueTrendLong transactions,
             @JsonProperty("sunat_pending_docs") long sunatPendingDocs,
             @JsonProperty("stock_alerts") StockAlertsData stockAlerts,
-            @JsonProperty("total_products") long totalProducts) {
+            @JsonProperty("total_products") long totalProducts,
+            @JsonProperty("cash_balance") BigDecimal cashBalance,
+            @JsonProperty("accounts_receivable") BigDecimal accountsReceivable) {
     }
 
     public record ValueTrend(

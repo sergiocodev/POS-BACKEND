@@ -12,6 +12,8 @@ import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.service.interfaces.RoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,13 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.findAll().stream()
                 .map(roleMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RoleResponse> getAllPaged(String searchTerm, Pageable pageable) {
+        return roleRepository.findAllActiveFiltered(searchTerm, pageable)
+                .map(roleMapper::toResponse);
     }
 
     @Override

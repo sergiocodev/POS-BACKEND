@@ -40,29 +40,18 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
         Pageable pageable
     );
 
-    @Query("""
-        SELECT COUNT(s) FROM Supplier s WHERE s.status = 'ACTIVO'
-    """)
-    long countActiveSuppliers();
+    @Query("SELECT COUNT(DISTINCT p.supplier.id) FROM Purchase p WHERE p.establishment.id = :establishmentId AND p.supplier.status = 'ACTIVO' AND p.arrivalDate >= :start AND p.arrivalDate <= :end")
+    long countActiveSuppliersByEstablishment(@org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 
-    @Query("""
-        SELECT COUNT(s) FROM Supplier s WHERE s.status = 'EN_EVALUACION'
-    """)
-    long countEvaluatingSuppliers();
+    @Query("SELECT COUNT(DISTINCT p.supplier.id) FROM Purchase p WHERE p.establishment.id = :establishmentId AND p.supplier.status = 'EN_EVALUACION' AND p.arrivalDate >= :start AND p.arrivalDate <= :end")
+    long countEvaluatingSuppliersByEstablishment(@org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 
-    @Query("""
-        SELECT COUNT(s) FROM Supplier s WHERE s.status = 'VENCIDO'
-    """)
-    long countExpiredSuppliers();
+    @Query("SELECT COUNT(DISTINCT p.supplier.id) FROM Purchase p WHERE p.establishment.id = :establishmentId AND p.supplier.status = 'VENCIDO' AND p.arrivalDate >= :start AND p.arrivalDate <= :end")
+    long countExpiredSuppliersByEstablishment(@org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 
-    @Query("""
-        SELECT COALESCE(SUM(p.total), 0) FROM Purchase p 
-        WHERE p.status = 'RECEIVED' AND YEAR(p.arrivalDate) = YEAR(CURRENT_DATE)
-    """)
-    java.math.BigDecimal calculateTotalSpendCurrentYear();
+    @Query("SELECT COALESCE(SUM(p.total), 0) FROM Purchase p WHERE p.establishment.id = :establishmentId AND p.status = 'RECEIVED' AND p.arrivalDate >= :start AND p.arrivalDate <= :end")
+    java.math.BigDecimal sumTotalSpendByEstablishment(@org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 
-    @Query("""
-        SELECT COALESCE(AVG(s.rating), 0) FROM Supplier s
-    """)
-    java.math.BigDecimal calculateAverageRating();
+    @Query("SELECT COALESCE(AVG(s.rating), 0) FROM Supplier s WHERE EXISTS (SELECT 1 FROM Purchase p WHERE p.supplier = s AND p.establishment.id = :establishmentId AND p.arrivalDate >= :start AND p.arrivalDate <= :end)")
+    java.math.BigDecimal calculateAverageRatingByEstablishment(@org.springframework.data.repository.query.Param("establishmentId") Long establishmentId, @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 }

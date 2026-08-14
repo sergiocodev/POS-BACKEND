@@ -38,6 +38,13 @@ public class EstablishmentServiceImpl implements EstablishmentService {
 
     @Override
     @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<EstablishmentResponse> getAllPaged(String name, String codeSunat, org.springframework.data.domain.Pageable pageable) {
+        return repository.findAllActiveFiltered(name, codeSunat, pageable)
+                .map(EstablishmentResponse::new);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public EstablishmentResponse getById(Long id) {
         return repository.findById(id)
                 .map(EstablishmentResponse::new)

@@ -1,4 +1,5 @@
 package com.sergiocodev.app.service.impl;
+
 import com.sergiocodev.app.service.interfaces.CashMovementService;
 
 import com.sergiocodev.app.dto.cashmovement.CashMovementRequest;
@@ -19,6 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,9 +39,28 @@ public class CashMovementServiceImpl implements CashMovementService {
     private final CashConceptRepository conceptRepository;
     private final UserRepository userRepository;
 
+    private boolean isCurrentUserAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equalsIgnoreCase("ROLE_Administrador") ||
+                               a.equalsIgnoreCase("Administrador") ||
+                               a.equalsIgnoreCase("ROLE_ADMIN") ||
+                               a.equalsIgnoreCase("ADMIN"));
+    }
+
+    private User getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        String username = auth.getName();
+        return userRepository.findByUsername(username).orElse(null);
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type, String reference, String username, Long establishmentId, Pageable pageable) {
+    public Page<CashMovementResponse> findAll(String createdAt, String conceptName, String description, String type,
+            String reference, String username, Long establishmentId, Pageable pageable) {
         Specification<CashMovement> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
 
@@ -44,15 +68,16 @@ public class CashMovementServiceImpl implements CashMovementService {
                 predicates.add(cb.like(root.get("createdAt").as(String.class), "%" + createdAt + "%"));
             }
             if (conceptName != null && !conceptName.isBlank()) {
-                predicates.add(cb.like(cb.lower(root.join("cashConcept").get("name")), "%" + conceptName.toLowerCase() + "%"));
+                predicates.add(
+                        cb.like(cb.lower(root.join("cashConcept").get("name")), "%" + conceptName.toLowerCase() + "%"));
             }
             if (description != null && !description.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("description")), "%" + description.toLowerCase() + "%"));
             }
             if (type != null && !type.isBlank()) {
                 String typeUpper = type.toUpperCase();
-                CashConcept.ConceptType conceptType = typeUpper.contains("IN") ? CashConcept.ConceptType.IN : 
-                                                    (typeUpper.contains("EG") || typeUpper.contains("OUT") ? CashConcept.ConceptType.OUT : null);
+                CashConcept.ConceptType conceptType = typeUpper.contains("IN") ? CashConcept.ConceptType.IN
+                        : (typeUpper.contains("EG") || typeUpper.contains("OUT") ? CashConcept.ConceptType.OUT : null);
                 if (conceptType != null) {
                     predicates.add(cb.equal(root.join("cashConcept").get("type"), conceptType));
                 }
@@ -60,12 +85,21 @@ public class CashMovementServiceImpl implements CashMovementService {
             if (reference != null && !reference.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("reference")), "%" + reference.toLowerCase() + "%"));
             }
-            if (username != null && !username.isBlank()) {
-                predicates.add(cb.like(cb.lower(root.join("user").get("username")), "%" + username.toLowerCase() + "%"));
+            
+            if (isCurrentUserAdmin()) {
+                if (username != null && !username.isBlank()) {
+                    predicates.add(cb.like(cb.lower(root.join("user").get("username")), "%" + username.toLowerCase() + "%"));
+                }
+            } else {
+                User currentUser = getAuthenticatedUser();
+                if (currentUser != null) {
+                    predicates.add(cb.equal(root.join("user").get("id"), currentUser.getId()));
+                }
             }
 
             if (establishmentId != null) {
-                predicates.add(cb.equal(root.join("cashSession").join("cashRegister").join("establishment").get("id"), establishmentId));
+                predicates.add(cb.equal(root.join("cashSession").join("cashRegister").join("establishment").get("id"),
+                        establishmentId));
             }
 
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
@@ -94,16 +128,19 @@ public class CashMovementServiceImpl implements CashMovementService {
         CashConcept concept = conceptRepository.findById(request.conceptId())
                 .orElseThrow(() -> new ResourceNotFoundException("Concepto de caja no encontrado"));
 
-        return registerMovementInternal(session, user, concept, request.amount(), request.reference(), request.description());
+        return registerMovementInternal(session, user, concept, request.amount(), request.reference(),
+                request.description());
     }
 
     @Override
     @Transactional
-    public CashMovementResponse registerInternalMovement(CashSession session, User user, CashConcept concept, BigDecimal amount, String reference, String description) {
+    public CashMovementResponse registerInternalMovement(CashSession session, User user, CashConcept concept,
+            BigDecimal amount, String reference, String description) {
         return registerMovementInternal(session, user, concept, amount, reference, description);
     }
 
-    private CashMovementResponse registerMovementInternal(CashSession session, User user, CashConcept concept, BigDecimal amount, String reference, String description) {
+    private CashMovementResponse registerMovementInternal(CashSession session, User user, CashConcept concept,
+            BigDecimal amount, String reference, String description) {
         CashMovement movement = new CashMovement();
         movement.setCashSession(session);
         movement.setUser(user);
@@ -122,7 +159,8 @@ public class CashMovementServiceImpl implements CashMovementService {
     }
 
     private void updateSessionBalance(CashSession session, CashConcept.ConceptType type, BigDecimal amount) {
-        BigDecimal currentBalance = session.getCalculatedBalance() != null ? session.getCalculatedBalance() : BigDecimal.ZERO;
+        BigDecimal currentBalance = session.getCalculatedBalance() != null ? session.getCalculatedBalance()
+                : BigDecimal.ZERO;
         if (type == CashConcept.ConceptType.IN) {
             session.setCalculatedBalance(currentBalance.add(amount));
         } else {
@@ -142,13 +180,18 @@ public class CashMovementServiceImpl implements CashMovementService {
     @Override
     @Transactional
     public void delete(Long id) {
+        if (!isCurrentUserAdmin()) {
+            throw new AccessDeniedException("Solo los administradores tienen permiso para eliminar o anular movimientos de caja.");
+        }
+
         CashMovement movement = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movimiento no encontrado"));
 
         // Revert session balance (Inverse of the original movement)
         CashConcept.ConceptType originalType = movement.getCashConcept().getType();
-        CashConcept.ConceptType revertType = (originalType == CashConcept.ConceptType.IN) ? CashConcept.ConceptType.OUT : CashConcept.ConceptType.IN;
-        
+        CashConcept.ConceptType revertType = (originalType == CashConcept.ConceptType.IN) ? CashConcept.ConceptType.OUT
+                : CashConcept.ConceptType.IN;
+
         updateSessionBalance(movement.getCashSession(), revertType, movement.getAmount());
 
         movement.setDeletedAt(LocalDateTime.now());

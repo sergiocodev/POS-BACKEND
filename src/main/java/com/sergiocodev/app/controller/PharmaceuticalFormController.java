@@ -23,13 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Pharmaceutical Forms", description = "Endpoints para la gestión de formas farmacéuticas")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_FORMAS)
 public class PharmaceuticalFormController {
 
     private final PharmaceuticalFormService service;
 
     @PostMapping
     @Operation(summary = "Crear forma farmacéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_FORMAS)
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> create(
             @Valid @RequestBody PharmaceuticalFormRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -58,6 +58,7 @@ public class PharmaceuticalFormController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar forma farmacéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_FORMAS)
     public ResponseEntity<ResponseApi<PharmaceuticalFormResponse>> update(@PathVariable Long id,
             @Valid @RequestBody PharmaceuticalFormRequest request) {
         return ResponseEntity
@@ -66,6 +67,7 @@ public class PharmaceuticalFormController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar forma farmacéutica")
+    @RequiresPermission(PermissionConstants.FARMACIA_FORMAS)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Forma farmacéutica eliminada exitosamente"));

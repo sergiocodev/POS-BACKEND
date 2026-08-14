@@ -9,6 +9,8 @@ public interface EmployeeService {
 
     List<EmployeeResponse> getAll();
 
+    org.springframework.data.domain.Page<EmployeeResponse> getAllPaged(String fullName, String documentNumber, String username, org.springframework.data.domain.Pageable pageable);
+
     EmployeeResponse getById(Long id);
 
     EmployeeResponse update(Long id, EmployeeRequest request);

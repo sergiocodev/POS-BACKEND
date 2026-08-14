@@ -26,7 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Categories", description = "Endpoints para la gestión de categorías")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_CATEGORIAS)
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -38,6 +37,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
     @PostMapping
+    @RequiresPermission(PermissionConstants.FARMACIA_CATEGORIAS)
     public ResponseEntity<ResponseApi<CategoryResponse>> createNewCategory(
             @Valid @RequestBody CategoryRequest request) {
         CategoryResponse response = categoryService.createNewCategory(request);
@@ -80,6 +80,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "409", description = "Duplicate category name")
     })
     @PutMapping("/{id}")
+    @RequiresPermission(PermissionConstants.FARMACIA_CATEGORIAS)
     public ResponseEntity<ResponseApi<CategoryResponse>> updateCategoryById(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request) {
@@ -93,6 +94,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
     @DeleteMapping("/{id}")
+    @RequiresPermission(PermissionConstants.FARMACIA_CATEGORIAS)
     public ResponseEntity<ResponseApi<Void>> deleteCategoryById(@PathVariable Long id) {
         categoryService.deleteCategoryById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Categoría eliminada exitosamente"));

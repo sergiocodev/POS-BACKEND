@@ -19,6 +19,13 @@ import com.sergiocodev.app.service.interfaces.StockMovementService;
 import com.sergiocodev.app.repository.SaleRepository;
 import com.sergiocodev.app.model.Sale;
 import com.sergiocodev.app.model.SaleItem;
+import com.sergiocodev.app.model.Product;
+import com.sergiocodev.app.model.ProductUnit;
+import com.sergiocodev.app.repository.ProductUnitRepository;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +35,7 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,9 +47,21 @@ public class InventoryServiceImpl implements InventoryService {
     private final EstablishmentRepository establishmentRepository;
     private final ProductLotRepository lotRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final ProductUnitRepository productUnitRepository;
     private final SaleRepository saleRepository;
     private final InventoryMapper mapper;
     private final StockMovementService stockMovementService;
+
+    private boolean isCurrentUserAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equalsIgnoreCase("ROLE_Administrador") ||
+                               a.equalsIgnoreCase("Administrador") ||
+                               a.equalsIgnoreCase("ROLE_ADMIN") ||
+                               a.equalsIgnoreCase("ADMIN"));
+    }
 
     @Override
     @Transactional
@@ -52,25 +72,63 @@ public class InventoryServiceImpl implements InventoryService {
                     newInv.setEstablishment(
                             establishmentRepository.findById(request.establishmentId()).orElse(null));
                     newInv.setLot(lotRepository.findById(request.lotId()).orElse(null));
-                    newInv.setQuantity(java.math.BigDecimal.ZERO);
+                    newInv.setQuantity(BigDecimal.ZERO);
                     return newInv;
                 });
 
-        java.math.BigDecimal oldQuantity = entity.getQuantity();
-        java.math.BigDecimal newQuantity = request.quantity();
+        boolean isAdmin = isCurrentUserAdmin();
+        BigDecimal oldQuantity = entity.getQuantity() != null ? entity.getQuantity() : BigDecimal.ZERO;
+        BigDecimal newQuantity = request.quantity() != null ? request.quantity() : oldQuantity;
 
-        entity.setQuantity(newQuantity);
-        if (request.costPrice() != null)
-            entity.setCostPrice(request.costPrice());
+        if (!isAdmin) {
+            boolean quantityChanged = oldQuantity.compareTo(newQuantity) != 0;
+            boolean costPriceChanged = request.costPrice() != null &&
+                    (entity.getCostPrice() == null || entity.getCostPrice().compareTo(request.costPrice()) != 0);
+
+            BigDecimal currentSalesPrice = null;
+            if (entity.getLot() != null && entity.getLot().getProduct() != null && entity.getLot().getProduct().getUnits() != null) {
+                currentSalesPrice = entity.getLot().getProduct().getUnits().stream()
+                        .filter(ProductUnit::isBaseUnit)
+                        .map(ProductUnit::getPrice)
+                        .findFirst()
+                        .orElse(null);
+            }
+            boolean salesPriceChanged = request.salesPrice() != null &&
+                    (currentSalesPrice == null || currentSalesPrice.compareTo(request.salesPrice()) != 0);
+
+            if (quantityChanged || costPriceChanged || salesPriceChanged) {
+                throw new AccessDeniedException("Solo los administradores tienen permiso para modificar la cantidad, el precio de costo o el precio de venta.");
+            }
+        }
+
+        if (isAdmin) {
+            entity.setQuantity(newQuantity);
+            if (request.costPrice() != null) {
+                entity.setCostPrice(request.costPrice());
+            }
+            if (request.salesPrice() != null && entity.getLot() != null && entity.getLot().getProduct() != null) {
+                Product product = entity.getLot().getProduct();
+                if (product.getUnits() != null) {
+                    product.getUnits().stream()
+                            .filter(ProductUnit::isBaseUnit)
+                            .findFirst()
+                            .ifPresent(u -> {
+                                u.setPrice(request.salesPrice());
+                                productUnitRepository.save(u);
+                            });
+                }
+            }
+        }
+
         if (request.locationShelf() != null)
             entity.setLocationShelf(request.locationShelf());
         entity.setLastMovement(LocalDateTime.now());
 
         Inventory saved = repository.save(entity);
 
-        java.math.BigDecimal diff = newQuantity.subtract(oldQuantity);
-        if (diff.compareTo(java.math.BigDecimal.ZERO) != 0) {
-            StockMovement.MovementType type = diff.compareTo(java.math.BigDecimal.ZERO) > 0
+        BigDecimal diff = newQuantity.subtract(oldQuantity);
+        if (diff.compareTo(BigDecimal.ZERO) != 0) {
+            StockMovement.MovementType type = diff.compareTo(BigDecimal.ZERO) > 0
                     ? StockMovement.MovementType.ADJUSTMENT_IN
                     : StockMovement.MovementType.ADJUSTMENT_OUT;
 
@@ -84,7 +142,7 @@ public class InventoryServiceImpl implements InventoryService {
             stockMovementService.recordAdjustmentMovement(
                     entity.getEstablishment(), entity.getLot(),
                     diff, newQuantity,
-                    "Stock adjustment", null);
+                    request.notes() != null && !request.notes().isBlank() ? request.notes() : "Stock adjustment", null);
         }
 
         return mapper.toResponse(saved);
@@ -188,6 +246,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public InventoryResponse registerStockAdjustment(StockAdjustmentRequest request) {
+        if (!isCurrentUserAdmin()) {
+            throw new AccessDeniedException("Solo los administradores tienen permiso para realizar ajustes de stock.");
+        }
+
         Inventory entity = repository.findByEstablishmentIdAndLotId(request.establishmentId(), request.lotId())
                 .orElseGet(() -> {
                     Inventory newInv = new Inventory();

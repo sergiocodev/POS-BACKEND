@@ -37,10 +37,14 @@ public class RequiresPermissionAspect {
 
         boolean hasPermission = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .anyMatch(authority -> authority.equals(requiredPermission));
+                .anyMatch(authority -> 
+                        authority.equalsIgnoreCase(requiredPermission) ||
+                        authority.equalsIgnoreCase("ROLE_" + requiredPermission) ||
+                        (requiredPermission.startsWith("ROLE_") && authority.equalsIgnoreCase(requiredPermission.substring(5)))
+                );
 
         if (!hasPermission) {
-            log.warn("Access denied: user {} lacks permission {}",
+            log.warn("Access denied: user {} lacks permission or role {}",
                     authentication.getName(), requiredPermission);
             throw new AccessDeniedException("No tienes permiso para acceder a este recurso");
         }

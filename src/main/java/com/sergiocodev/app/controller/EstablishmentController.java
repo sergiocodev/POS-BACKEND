@@ -21,13 +21,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Establishments", description = "Endpoints para la gestión de establecimientos")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
 public class EstablishmentController {
 
     private final EstablishmentService service;
 
     @PostMapping
     @Operation(summary = "Crear establecimiento")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
     public ResponseEntity<ResponseApi<EstablishmentResponse>> create(@Valid @RequestBody EstablishmentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Establecimiento creado exitosamente"));
@@ -39,6 +39,16 @@ public class EstablishmentController {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
+    @GetMapping("/paged")
+    @Operation(summary = "Lista de establecimientos con paginación")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
+    public ResponseEntity<ResponseApi<org.springframework.data.domain.Page<EstablishmentResponse>>> getAllPaged(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String codeSunat,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAllPaged(name, codeSunat, pageable)));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener establecimiento por ID")
     public ResponseEntity<ResponseApi<EstablishmentResponse>> getById(@PathVariable Long id) {
@@ -47,6 +57,7 @@ public class EstablishmentController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar establecimiento")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
     public ResponseEntity<ResponseApi<EstablishmentResponse>> update(@PathVariable Long id,
             @Valid @RequestBody EstablishmentRequest request) {
         return ResponseEntity
@@ -55,6 +66,7 @@ public class EstablishmentController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar establecimiento")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ESTABLECIMIENTOS)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Establecimiento eliminado exitosamente"));

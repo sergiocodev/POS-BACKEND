@@ -22,6 +22,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
     Page<User> findAllActive(Pageable pageable);
 
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL AND (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND (:fullName IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :fullName, '%')))")
+    Page<User> findAllActiveFiltered(
+            @Param("username") String username,
+            @Param("email") String email,
+            @Param("fullName") String fullName,
+            Pageable pageable);
+
     /**
      * Busca un usuario específico por su nombre de usuario, siempre y cuando
      * no haya sido eliminado lógicamente. Útil para la autenticación estándar.

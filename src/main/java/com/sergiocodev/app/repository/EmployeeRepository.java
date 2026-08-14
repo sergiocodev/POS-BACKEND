@@ -20,4 +20,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
      * Localiza el perfil de empleado vinculado a un usuario del sistema.
      */
     Optional<Employee> findByUserId(Long userId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Employee e LEFT JOIN e.user u WHERE " +
+            "(:fullName IS NULL OR LOWER(CONCAT(e.firstName, ' ', COALESCE(e.lastName, ''))) LIKE LOWER(CONCAT('%', :fullName, '%'))) AND " +
+            "(:documentNumber IS NULL OR e.documentNumber LIKE CONCAT('%', :documentNumber, '%')) AND " +
+            "(:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')))")
+    org.springframework.data.domain.Page<Employee> findAllFiltered(
+            @org.springframework.data.repository.query.Param("fullName") String fullName,
+            @org.springframework.data.repository.query.Param("documentNumber") String documentNumber,
+            @org.springframework.data.repository.query.Param("username") String username,
+            org.springframework.data.domain.Pageable pageable);
 }

@@ -55,8 +55,8 @@ public class SupplierController {
 
     @GetMapping("/summary")
     @Operation(summary = "Obtener resumen de proveedores")
-    public ResponseEntity<ResponseApi<SupplierSummaryResponse>> getSummary() {
-        return ResponseEntity.ok(ResponseApi.success(service.getSummary()));
+    public ResponseEntity<ResponseApi<List<SupplierSummaryResponse>>> getSummary(@RequestParam Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(establishmentId)));
     }
 
     @GetMapping("/{id}")

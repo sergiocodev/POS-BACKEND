@@ -26,7 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Brands", description = "Endpoints para la gestión de marcas")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_MARCAS)
 public class BrandController {
 
     private final BrandService brandService;
@@ -38,6 +37,7 @@ public class BrandController {
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
     @PostMapping
+    @RequiresPermission(PermissionConstants.FARMACIA_MARCAS)
     public ResponseEntity<ResponseApi<BrandResponse>> createNewBrand(@Valid @RequestBody BrandRequest request) {
         BrandResponse response = brandService.createNewBrand(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -79,6 +79,7 @@ public class BrandController {
             @ApiResponse(responseCode = "409", description = "Duplicate brand name")
     })
     @PutMapping("/{id}")
+    @RequiresPermission(PermissionConstants.FARMACIA_MARCAS)
     public ResponseEntity<ResponseApi<BrandResponse>> updateBrandById(
             @PathVariable Long id,
             @Valid @RequestBody BrandRequest request) {
@@ -92,6 +93,7 @@ public class BrandController {
             @ApiResponse(responseCode = "404", description = "Brand not found")
     })
     @DeleteMapping("/{id}")
+    @RequiresPermission(PermissionConstants.FARMACIA_MARCAS)
     public ResponseEntity<ResponseApi<Void>> deleteBrandById(@PathVariable Long id) {
         brandService.deleteBrandById(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Marca eliminada exitosamente"));

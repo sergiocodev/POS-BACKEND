@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.sergiocodev.app.annotation.RequiresPermission;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +34,17 @@ public class RoleController {
     @RequiresPermission(PermissionConstants.CONFIGURACION_ROLES)
     public ResponseEntity<ResponseApi<List<RoleResponse>>> getAll() {
         return ResponseEntity.ok(ResponseApi.success(roleService.getAll()));
+    }
+    
+    @Operation(summary = "Obtener roles paginados", description = "Obtiene la lista paginada y filtrada de roles")
+    @GetMapping("/paged")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_ROLES)
+    public ResponseEntity<ResponseApi<Page<RoleResponse>>> getAllPaged(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ResponseApi.success(roleService.getAllPaged(search, pageable)));
     }
 
     @Operation(summary = "Obtener rol por ID", description = "Obtiene los detalles de un rol específico con sus permisos")

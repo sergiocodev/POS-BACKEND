@@ -39,6 +39,17 @@ public class EmployeeController {
         return ResponseEntity.ok(ResponseApi.success(service.getAll()));
     }
 
+    @Operation(summary = "Lista de empleados con paginación", description = "Obtiene la lista de empleados paginada y filtrada")
+    @GetMapping("/paged")
+    public ResponseEntity<ResponseApi<org.springframework.data.domain.Page<EmployeeResponse>>> getAllPaged(
+            @RequestParam(required = false) String fullName,
+            @RequestParam(required = false) String documentNumber,
+            @RequestParam(required = false) String username,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<EmployeeResponse> employees = service.getAllPaged(fullName, documentNumber, username, pageable);
+        return ResponseEntity.ok(ResponseApi.success(employees));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener empleado por ID")
     public ResponseEntity<ResponseApi<EmployeeResponse>> getById(@PathVariable Long id) {

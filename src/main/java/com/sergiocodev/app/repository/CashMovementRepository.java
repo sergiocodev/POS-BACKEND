@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDateTime;
 
 /**
  * Repositorio para registrar movimientos manuales o automáticos de efectivo en caja.
@@ -34,4 +37,11 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
      * Utilizado para evitar duplicidades en operaciones automatizadas.
      */
     java.util.Optional<CashMovement> findByCashSessionIdAndAmountAndReference(Long cashSessionId, java.math.BigDecimal amount, String reference);
+
+    @Query("SELECT c FROM CashMovement c WHERE c.cashSession.cashRegister.establishment.id = :establishmentId AND c.createdAt >= :startDate AND c.createdAt <= :endDate AND c.cashConcept.type = 'OUT'")
+    List<CashMovement> findExpensesByEstablishmentAndDateRange(
+        @Param("establishmentId") Long establishmentId,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+    );
 }

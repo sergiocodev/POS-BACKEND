@@ -12,6 +12,8 @@ public record InventoryRequest(
 
                 BigDecimal costPrice,
 
+                BigDecimal salesPrice,
+
                 // For adjustments
                 String locationShelf,
                 String movementType,

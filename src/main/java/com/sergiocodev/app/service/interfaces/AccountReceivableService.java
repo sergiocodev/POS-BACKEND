@@ -19,5 +19,5 @@ public interface AccountReceivableService {
 
     void cancel(Long id);
 
-    List<AccountReceivableDashboardResponse> getDashboard(Long establishmentId);
+    List<AccountReceivableDashboardResponse> getSummary(Long establishmentId);
 }

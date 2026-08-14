@@ -66,9 +66,9 @@ public class AccountReceivableController {
         return ResponseEntity.ok(ResponseApi.success(paymentService.getByAccountReceivableId(id)));
     }
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<List<AccountReceivableDashboardResponse>> getDashboard(@RequestParam(required = true) Long establishmentId) {
-        return ResponseEntity.ok(service.getDashboard(establishmentId));
+    @GetMapping("/summary")
+    public ResponseEntity<List<AccountReceivableDashboardResponse>> getSummary(@RequestParam(required = true) Long establishmentId) {
+        return ResponseEntity.ok(service.getSummary(establishmentId));
     }
 
     @GetMapping("/customer/{customerId}")

@@ -46,6 +46,14 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
                 org.springframework.data.domain.Pageable pageable);
 
         @org.springframework.data.jpa.repository.Query(
+                "SELECT COALESCE(SUM(c.calculatedBalance), 0) FROM CashSession c WHERE " +
+                "c.status = :status AND " +
+                "(:establishmentId IS NULL OR c.cashRegister.establishment.id = :establishmentId)")
+        java.math.BigDecimal sumCalculatedBalanceOfOpenSessions(
+                @org.springframework.data.repository.query.Param("status") com.sergiocodev.app.model.CashSession.SessionStatus status,
+                @org.springframework.data.repository.query.Param("establishmentId") Long establishmentId);
+
+        @org.springframework.data.jpa.repository.Query(
                 "SELECT c FROM CashSession c WHERE " +
                 "(:establishmentId IS NULL OR c.cashRegister.establishment.id = :establishmentId) AND " +
                 "c.openedAt >= :start AND c.openedAt <= :end " +

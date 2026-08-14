@@ -23,13 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Presentations", description = "Endpoints para la gestión de presentaciones")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_PRESENTACIONES)
 public class PresentationController {
 
     private final PresentationService service;
 
     @PostMapping
     @Operation(summary = "Crear presentación")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRESENTACIONES)
     public ResponseEntity<ResponseApi<PresentationResponse>> create(@Valid @RequestBody PresentationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Presentación creada exitosamente"));
@@ -57,6 +57,7 @@ public class PresentationController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar presentación")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRESENTACIONES)
     public ResponseEntity<ResponseApi<PresentationResponse>> update(@PathVariable Long id,
             @Valid @RequestBody PresentationRequest request) {
         return ResponseEntity
@@ -65,6 +66,7 @@ public class PresentationController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar presentación")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRESENTACIONES)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Presentación eliminada exitosamente"));

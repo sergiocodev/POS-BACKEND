@@ -52,9 +52,9 @@ public class AccountPayableController {
         return ResponseEntity.ok(ResponseApi.success(paged));
     }
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<ResponseApi<List<AccountPayableDashboardResponse>>> getDashboard(@RequestParam(required = true) Long establishmentId) {
-        return ResponseEntity.ok(ResponseApi.success(service.getDashboard(establishmentId)));
+    @GetMapping("/summary")
+    public ResponseEntity<ResponseApi<List<AccountPayableDashboardResponse>>> getSummary(@RequestParam(required = true) Long establishmentId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getSummary(establishmentId)));
     }
 
     @GetMapping("/supplier/{supplierId}")

@@ -21,13 +21,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Tax Types", description = "Endpoints para la gestión del tipo de impuesto")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.CONFIGURACION_IMPUESTOS)
 public class TaxTypeController {
 
     private final TaxTypeService service;
 
     @PostMapping
     @Operation(summary = "Crear tipo de impuesto")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_IMPUESTOS)
     public ResponseEntity<ResponseApi<TaxTypeResponse>> create(@Valid @RequestBody TaxTypeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Tipo de impuesto creado exitosamente"));
@@ -47,6 +47,7 @@ public class TaxTypeController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar tipo de impuesto")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_IMPUESTOS)
     public ResponseEntity<ResponseApi<TaxTypeResponse>> update(@PathVariable Long id,
             @Valid @RequestBody TaxTypeRequest request) {
         return ResponseEntity
@@ -55,6 +56,7 @@ public class TaxTypeController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar tipo de impuesto")
+    @RequiresPermission(PermissionConstants.CONFIGURACION_IMPUESTOS)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Tipo de impuesto eliminado exitosamente"));

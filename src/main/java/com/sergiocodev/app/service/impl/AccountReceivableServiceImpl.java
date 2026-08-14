@@ -201,7 +201,7 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccountReceivableDashboardResponse> getDashboard(Long establishmentId) {
+    public List<AccountReceivableDashboardResponse> getSummary(Long establishmentId) {
         List<AccountReceivable.ReceivableStatus> excludedStatuses = List.of(
             AccountReceivable.ReceivableStatus.PAID,
             AccountReceivable.ReceivableStatus.CANCELED
@@ -211,19 +211,19 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
         // Current overall totals
         BigDecimal totalPendiente = repository.getTotalPendingBalance(excludedStatuses, establishmentId);
         BigDecimal montoVencido = repository.getOverdueBalance(excludedStatuses, establishmentId);
-        Long porVencer = repository.getCountUpcomingDue(excludedStatuses, establishmentId);
+        BigDecimal porVencer = repository.getAmountUpcomingDue(excludedStatuses, establishmentId);
         BigDecimal totalExpected = repository.getTotalExpectedAmount(canceledStatus, establishmentId);
         BigDecimal totalCollected = repository.getTotalCollectedAmount(canceledStatus, establishmentId);
         BigDecimal tasaEfectiva = totalExpected.compareTo(BigDecimal.ZERO) > 0 
             ? totalCollected.divide(totalExpected, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")) 
             : BigDecimal.ZERO;
 
-        // --- TREND CALCULATIONS (Current Month vs Last Month) ---
+        // --- TREND CALCULATIONS (Current Month vs Last Month MTD) ---
         LocalDate today = LocalDate.now();
         LocalDateTime startThisMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime endThisMonth = today.atTime(23, 59, 59);
         LocalDateTime startLastMonth = today.minusMonths(1).withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endLastMonth = today.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
+        LocalDateTime endLastMonth = today.minusMonths(1).atTime(23, 59, 59); // MTD of last month
 
         // Trend for Total Pending
         BigDecimal pendingThis = repository.getPendingBalanceCreatedBetween(startThisMonth, endThisMonth, excludedStatuses, establishmentId);
@@ -233,9 +233,9 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
         BigDecimal overdueThis = repository.getOverdueBalanceDueBetween(startThisMonth.toLocalDate(), endThisMonth.toLocalDate(), excludedStatuses, establishmentId);
         BigDecimal overdueLast = repository.getOverdueBalanceDueBetween(startLastMonth.toLocalDate(), endLastMonth.toLocalDate(), excludedStatuses, establishmentId);
 
-        // Trend for Count (Por Vencer)
-        Long countThis = repository.getCountDueBetween(today, today.plusMonths(1), excludedStatuses, establishmentId);
-        Long countLast = repository.getCountDueBetween(today.minusMonths(1), today, excludedStatuses, establishmentId);
+        // Trend for Count/Amount (Por Vencer)
+        BigDecimal amountThis = repository.getAmountDueBetween(today, today.plusMonths(1), excludedStatuses, establishmentId);
+        BigDecimal amountLast = repository.getAmountDueBetween(today.minusMonths(1), today, excludedStatuses, establishmentId);
 
         // Trend for Effective Rate
         BigDecimal expThis = repository.getExpectedAmountCreatedBetween(startThisMonth, endThisMonth, canceledStatus, establishmentId);
@@ -265,10 +265,10 @@ public class AccountReceivableServiceImpl implements AccountReceivableService {
             ),
             new AccountReceivableDashboardResponse(
                 "POR VENCER",
-                String.valueOf(porVencer),
-                null, null,
-                calculateTrend(new BigDecimal(countThis), new BigDecimal(countLast)),
-                calculateDirection(new BigDecimal(countThis), new BigDecimal(countLast), false),
+                porVencer.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                "S/ ", null,
+                calculateTrend(amountThis, amountLast),
+                calculateDirection(amountThis, amountLast, false),
                 "vs. mes ant."
             ),
             new AccountReceivableDashboardResponse(

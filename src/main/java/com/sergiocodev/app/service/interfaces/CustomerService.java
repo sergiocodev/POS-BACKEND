@@ -4,6 +4,8 @@ import com.sergiocodev.app.dto.customer.CustomerDashboardResponse;
 import com.sergiocodev.app.dto.customer.CustomerRequest;
 import com.sergiocodev.app.dto.customer.CustomerResponse;
 
+import com.sergiocodev.app.dto.customer.CustomerSummaryResponse;
+
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,5 +26,5 @@ public interface CustomerService {
 
     CustomerResponse findByDocumentNumber(String documentNumber);
 
-    CustomerDashboardResponse getDashboard();
+    List<CustomerSummaryResponse> getSummary(Long establishmentId);
 }

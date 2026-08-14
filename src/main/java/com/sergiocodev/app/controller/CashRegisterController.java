@@ -21,13 +21,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Cash Registers", description = "Endpoints para la gestión de la caja registradora")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.CAJA_REGISTRADORAS)
 public class CashRegisterController {
 
     private final CashRegisterService service;
 
     @PostMapping
     @Operation(summary = "Crear caja registradora")
+    @RequiresPermission(PermissionConstants.CAJA_REGISTRADORAS)
     public ResponseEntity<ResponseApi<CashRegisterResponse>> create(@Valid @RequestBody CashRegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseApi.success(service.create(request), "Caja registradora creada exitosamente"));
@@ -48,6 +48,7 @@ public class CashRegisterController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar caja registradora")
+    @RequiresPermission(PermissionConstants.CAJA_REGISTRADORAS)
     public ResponseEntity<ResponseApi<CashRegisterResponse>> update(@PathVariable Long id,
             @Valid @RequestBody CashRegisterRequest request) {
         return ResponseEntity
@@ -56,6 +57,7 @@ public class CashRegisterController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar caja registradora")
+    @RequiresPermission(PermissionConstants.CAJA_REGISTRADORAS)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Caja registradora eliminada exitosamente"));

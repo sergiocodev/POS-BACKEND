@@ -23,13 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Active Ingredients", description = "Endpoints para la gestión de ingredientes activos")
 @SecurityRequirement(name = "bearerAuth")
-@RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
 public class ActiveIngredientController {
 
     private final ActiveIngredientService service;
 
     @PostMapping
     @Operation(summary = "Crear ingrediente activo")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> create(
             @Valid @RequestBody ActiveIngredientRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -65,6 +65,7 @@ public class ActiveIngredientController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar ingrediente activo")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
     public ResponseEntity<ResponseApi<ActiveIngredientResponse>> update(@PathVariable Long id,
             @Valid @RequestBody ActiveIngredientRequest request) {
         return ResponseEntity
@@ -73,6 +74,7 @@ public class ActiveIngredientController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar ingrediente activo")
+    @RequiresPermission(PermissionConstants.FARMACIA_PRINCIPIOS_ACTIVOS)
     public ResponseEntity<ResponseApi<Void>> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Ingrediente activo eliminado exitosamente"));
