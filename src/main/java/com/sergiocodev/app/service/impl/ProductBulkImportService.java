@@ -111,6 +111,7 @@ public class ProductBulkImportService {
             String[] instructions = {
                     "1. Complete los datos en la hoja 'Productos'.",
                     "2. Los campos marcados con * son obligatorios.",
+<<<<<<< HEAD
                     "3. Las marcas, categorías, laboratorios, presentaciones y formas farmacéuticas se crean automáticamente si no existen.",
                     "4. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
                     "5. Si un producto con el mismo código ya existe, será actualizado.",
@@ -118,6 +119,16 @@ public class ProductBulkImportService {
                     "7. No modifique los encabezados de las columnas.",
                     "8. Puede agregar tantas filas como necesite.",
                     "9. Guarde el archivo como .xlsx antes de importar."
+=======
+                    "3. Las marcas, categorías, laboratorios y presentaciones se crean automáticamente si no existen.",
+                    "4. Las formas farmacéuticas DEBEN existir previamente en el sistema.",
+                    "5. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
+                    "6. Si un producto con el mismo código ya existe, será actualizado.",
+                    "7. Los campos 'Requiere Receta' y 'Es Genérico' aceptan: true, false, si, no, 1, 0.",
+                    "8. No modifique los encabezados de las columnas.",
+                    "9. Puede agregar tantas filas como necesite.",
+                    "10. Guarde el archivo como .xlsx antes de importar."
+>>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
             };
             for (String instruction : instructions) {
                 instructionsSheet.createRow(row++).createCell(0).setCellValue(instruction);
@@ -204,8 +215,19 @@ public class ProductBulkImportService {
                     Laboratory laboratory = resolveOrCreateLaboratory(laboratoryName);
                     Presentation presentation = resolveOrCreatePresentation(presentationDesc);
 
+<<<<<<< HEAD
                     // Forma farmacéutica: buscar o crear automáticamente
                     PharmaceuticalForm pharmaForm = resolveOrCreatePharmaceuticalForm(pharmaFormName);
+=======
+                    // Forma farmacéutica DEBE existir previamente
+                    PharmaceuticalForm pharmaForm = pharmaceuticalFormRepository.findByName(pharmaFormName.trim())
+                            .orElse(null);
+                    if (pharmaForm == null) {
+                        errors.add(new BulkImportRowError(rowNum, code, tradeName,
+                                "Forma farmacéutica no encontrada: '" + pharmaFormName + "'. Debe existir previamente."));
+                        continue;
+                    }
+>>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
 
                     // Tipo de impuesto por defecto (IGV, id=1)
                     TaxType taxType = taxTypeRepository.findById(1L)
@@ -307,6 +329,7 @@ public class ProductBulkImportService {
                 });
     }
 
+<<<<<<< HEAD
     private PharmaceuticalForm resolveOrCreatePharmaceuticalForm(String name) {
         return pharmaceuticalFormRepository.findByName(name.trim())
                 .orElseGet(() -> {
@@ -316,6 +339,8 @@ public class ProductBulkImportService {
                 });
     }
 
+=======
+>>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
     private String getCellString(Row row, int colIndex) {
         Cell cell = row.getCell(colIndex);
         if (cell == null) return null;
