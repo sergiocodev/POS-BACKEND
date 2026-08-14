@@ -22,8 +22,9 @@ import java.util.List;
 /**
  * Servicio de importación masiva de productos desde archivos Excel (.xlsx).
  * - Busca las entidades de catálogo (marca, categoría, etc.) por nombre.
- * - Si no existen, las crea automáticamente (excepto tax_types y pharmaceutical_forms
- *   que tienen campos adicionales obligatorios).
+ * - Si no existen, las crea automáticamente (excepto tax_types y
+ * pharmaceutical_forms
+ * que tienen campos adicionales obligatorios).
  * - Si el código del producto ya existe, actualiza; si no, crea uno nuevo.
  */
 @Service
@@ -40,12 +41,6 @@ public class ProductBulkImportService {
     private final PharmaceuticalFormRepository pharmaceuticalFormRepository;
     private final TaxTypeRepository taxTypeRepository;
 
-    // --- Columnas del template ---
-    private static final String[] HEADERS = {
-            "code", "digemidCode", "tradeName", "genericName", "description",
-            "brandName", "categoryName", "laboratoryName", "presentationDescription",
-            "pharmaceuticalFormName", "requiresPrescription", "isGeneric"
-    };
 
     private static final String[] HEADER_LABELS = {
             "Código *", "Código DIGEMID", "Nombre Comercial *", "Nombre Genérico", "Descripción",
@@ -111,7 +106,6 @@ public class ProductBulkImportService {
             String[] instructions = {
                     "1. Complete los datos en la hoja 'Productos'.",
                     "2. Los campos marcados con * son obligatorios.",
-<<<<<<< HEAD
                     "3. Las marcas, categorías, laboratorios, presentaciones y formas farmacéuticas se crean automáticamente si no existen.",
                     "4. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
                     "5. Si un producto con el mismo código ya existe, será actualizado.",
@@ -119,16 +113,6 @@ public class ProductBulkImportService {
                     "7. No modifique los encabezados de las columnas.",
                     "8. Puede agregar tantas filas como necesite.",
                     "9. Guarde el archivo como .xlsx antes de importar."
-=======
-                    "3. Las marcas, categorías, laboratorios y presentaciones se crean automáticamente si no existen.",
-                    "4. Las formas farmacéuticas DEBEN existir previamente en el sistema.",
-                    "5. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
-                    "6. Si un producto con el mismo código ya existe, será actualizado.",
-                    "7. Los campos 'Requiere Receta' y 'Es Genérico' aceptan: true, false, si, no, 1, 0.",
-                    "8. No modifique los encabezados de las columnas.",
-                    "9. Puede agregar tantas filas como necesite.",
-                    "10. Guarde el archivo como .xlsx antes de importar."
->>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
             };
             for (String instruction : instructions) {
                 instructionsSheet.createRow(row++).createCell(0).setCellValue(instruction);
@@ -174,7 +158,8 @@ public class ProductBulkImportService {
             // Iterar desde la fila 1 (saltando cabecera)
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null || isRowEmpty(row)) continue;
+                if (row == null || isRowEmpty(row))
+                    continue;
 
                 totalRows++;
                 int rowNum = i + 1; // Número de fila visible en Excel (1-based)
@@ -195,13 +180,20 @@ public class ProductBulkImportService {
 
                     // Validaciones de campos obligatorios
                     List<String> missingFields = new ArrayList<>();
-                    if (code == null || code.isBlank()) missingFields.add("Código");
-                    if (tradeName == null || tradeName.isBlank()) missingFields.add("Nombre Comercial");
-                    if (brandName == null || brandName.isBlank()) missingFields.add("Marca");
-                    if (categoryName == null || categoryName.isBlank()) missingFields.add("Categoría");
-                    if (laboratoryName == null || laboratoryName.isBlank()) missingFields.add("Laboratorio");
-                    if (presentationDesc == null || presentationDesc.isBlank()) missingFields.add("Presentación");
-                    if (pharmaFormName == null || pharmaFormName.isBlank()) missingFields.add("Forma Farmacéutica");
+                    if (code == null || code.isBlank())
+                        missingFields.add("Código");
+                    if (tradeName == null || tradeName.isBlank())
+                        missingFields.add("Nombre Comercial");
+                    if (brandName == null || brandName.isBlank())
+                        missingFields.add("Marca");
+                    if (categoryName == null || categoryName.isBlank())
+                        missingFields.add("Categoría");
+                    if (laboratoryName == null || laboratoryName.isBlank())
+                        missingFields.add("Laboratorio");
+                    if (presentationDesc == null || presentationDesc.isBlank())
+                        missingFields.add("Presentación");
+                    if (pharmaFormName == null || pharmaFormName.isBlank())
+                        missingFields.add("Forma Farmacéutica");
 
                     if (!missingFields.isEmpty()) {
                         errors.add(new BulkImportRowError(rowNum, code, tradeName,
@@ -215,23 +207,13 @@ public class ProductBulkImportService {
                     Laboratory laboratory = resolveOrCreateLaboratory(laboratoryName);
                     Presentation presentation = resolveOrCreatePresentation(presentationDesc);
 
-<<<<<<< HEAD
                     // Forma farmacéutica: buscar o crear automáticamente
                     PharmaceuticalForm pharmaForm = resolveOrCreatePharmaceuticalForm(pharmaFormName);
-=======
-                    // Forma farmacéutica DEBE existir previamente
-                    PharmaceuticalForm pharmaForm = pharmaceuticalFormRepository.findByName(pharmaFormName.trim())
-                            .orElse(null);
-                    if (pharmaForm == null) {
-                        errors.add(new BulkImportRowError(rowNum, code, tradeName,
-                                "Forma farmacéutica no encontrada: '" + pharmaFormName + "'. Debe existir previamente."));
-                        continue;
-                    }
->>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
 
                     // Tipo de impuesto por defecto (IGV, id=1)
                     TaxType taxType = taxTypeRepository.findById(1L)
-                            .orElseThrow(() -> new BadRequestException("Tipo de impuesto por defecto no configurado (id=1)"));
+                            .orElseThrow(() -> new BadRequestException(
+                                    "Tipo de impuesto por defecto no configurado (id=1)"));
 
                     // Verificar si el producto ya existe (por código)
                     Product existingProduct = productRepository.findByCode(code.trim()).orElse(null);
@@ -329,7 +311,6 @@ public class ProductBulkImportService {
                 });
     }
 
-<<<<<<< HEAD
     private PharmaceuticalForm resolveOrCreatePharmaceuticalForm(String name) {
         return pharmaceuticalFormRepository.findByName(name.trim())
                 .orElseGet(() -> {
@@ -339,11 +320,10 @@ public class ProductBulkImportService {
                 });
     }
 
-=======
->>>>>>> 81059d7c69d23bbe711aab52406e3b6c469b8ee5
     private String getCellString(Row row, int colIndex) {
         Cell cell = row.getCell(colIndex);
-        if (cell == null) return null;
+        if (cell == null)
+            return null;
 
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue().trim();
@@ -368,13 +348,15 @@ public class ProductBulkImportService {
 
     private boolean getCellBoolean(Row row, int colIndex) {
         Cell cell = row.getCell(colIndex);
-        if (cell == null) return false;
+        if (cell == null)
+            return false;
 
         return switch (cell.getCellType()) {
             case BOOLEAN -> cell.getBooleanCellValue();
             case STRING -> {
                 String val = cell.getStringCellValue().trim().toLowerCase();
-                yield val.equals("true") || val.equals("si") || val.equals("sí") || val.equals("1") || val.equals("yes");
+                yield val.equals("true") || val.equals("si") || val.equals("sí") || val.equals("1")
+                        || val.equals("yes");
             }
             case NUMERIC -> cell.getNumericCellValue() == 1.0;
             default -> false;
@@ -386,7 +368,8 @@ public class ProductBulkImportService {
             Cell cell = row.getCell(c);
             if (cell != null && cell.getCellType() != CellType.BLANK) {
                 String val = getCellString(row, c);
-                if (val != null && !val.isBlank()) return false;
+                if (val != null && !val.isBlank())
+                    return false;
             }
         }
         return true;
