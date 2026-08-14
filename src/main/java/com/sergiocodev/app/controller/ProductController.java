@@ -1,17 +1,22 @@
 package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
+import com.sergiocodev.app.dto.product.BulkImportResult;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.service.interfaces.ProductService;
+import com.sergiocodev.app.service.impl.ProductBulkImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import com.sergiocodev.app.annotation.RequiresPermission;
 import com.sergiocodev.app.util.PermissionConstants;
 import org.springframework.data.domain.Page;
@@ -31,6 +36,7 @@ import com.sergiocodev.app.dto.productlot.ProductLotResponse;
 public class ProductController {
 
     private final ProductService service;
+    private final ProductBulkImportService bulkImportService;
 
     @PostMapping
     @Operation(summary = "Crear producto")
@@ -105,4 +111,26 @@ public class ProductController {
         service.delete(id);
         return ResponseEntity.ok(ResponseApi.success(null, "Producto eliminado exitosamente"));
     }
+
+    // ======== IMPORTACIÓN MASIVA ========
+
+    @GetMapping("/bulk-import/template")
+    @Operation(summary = "Descargar plantilla Excel", description = "Descarga un archivo .xlsx con la plantilla para importación masiva de productos")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] template = bulkImportService.generateTemplate();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=plantilla_productos.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(template);
+    }
+
+    @PostMapping(value = "/bulk-import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar productos desde Excel", description = "Sube un archivo .xlsx con productos para importar masivamente")
+    public ResponseEntity<ResponseApi<BulkImportResult>> bulkImport(@RequestParam("file") MultipartFile file) {
+        BulkImportResult result = bulkImportService.importFromExcel(file);
+        String message = String.format("Importación completada: %d creados, %d actualizados, %d errores",
+                result.createdCount(), result.updatedCount(), result.errorCount());
+        return ResponseEntity.ok(ResponseApi.success(result, message));
+    }
 }
+
