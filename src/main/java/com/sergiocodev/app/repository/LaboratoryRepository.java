@@ -9,12 +9,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para los laboratorios fabricantes de productos farmacéuticos.
  */
 @Repository
 public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
+    /**
+     * Busca un laboratorio por su nombre exacto.
+     */
+    Optional<Laboratory> findByName(String name);
+
     /**
      * Búsqueda por nombre ignorando mayúsculas/minúsculas.
      */
