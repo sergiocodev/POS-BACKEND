@@ -357,7 +357,7 @@ class SaleServiceImplTest {
                     LocalDateTime.now(), new BigDecimal("1000.00"), new BigDecimal("180.00"),
                     new BigDecimal("1180.00"), Sale.SaleStatus.COMPLETED, Sale.PaymentCondition.CONTADO,
                     null, null, null, null, null,
-                    null, null, null,
+                    null, null, null, null,
                     false, null, null,
                     List.of(), List.of(), null,
                     "DNI", "12345678", null, "Test User");
@@ -602,7 +602,7 @@ class SaleServiceImplTest {
                     LocalDateTime.now(), new BigDecimal("-1000.00"), new BigDecimal("-180.00"),
                     new BigDecimal("-1180.00"), Sale.SaleStatus.COMPLETED, Sale.PaymentCondition.CONTADO,
                     null, null, null, null, null,
-                    null, null, null,
+                    null, null, null, null,
                     false, null, null,
                     List.of(), List.of(), null,
                     null, null, null, null);
@@ -845,6 +845,7 @@ class SaleServiceImplTest {
                 sale.getCdrUrl(),
                 sale.getSunatResponseJson(),
                 sale.getSunatErrorCode(),
+                sale.getHashCpe(),
                 sale.getRelatedSale() != null ? sale.getRelatedSale().getId() : null,
                 sale.getNoteCode(),
                 sale.getNoteReason(),
