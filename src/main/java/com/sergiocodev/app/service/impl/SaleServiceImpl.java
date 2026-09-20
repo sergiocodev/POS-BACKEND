@@ -217,6 +217,7 @@ public class SaleServiceImpl implements SaleService {
                                         response.cdrUrl(),
                                         response.sunatResponseJson(),
                                         response.sunatErrorCode(),
+                                        response.hashCpe(),
                                         response.relatedSaleId(),
                                         response.noteCode(),
                                         response.noteReason(),

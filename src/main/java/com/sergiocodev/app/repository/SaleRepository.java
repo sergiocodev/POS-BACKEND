@@ -68,8 +68,8 @@ public interface SaleRepository
         @EntityGraph(attributePaths = { "customer", "establishment", "user" })
         List<Sale> findByDateBetweenOrderByDateDesc(java.time.LocalDateTime start, java.time.LocalDateTime end);
 
-        @EntityGraph(attributePaths = { "items", "items.productLot",
-                        "items.productLot.product", "establishment", "customer" })
+        @EntityGraph(attributePaths = { "items", "items.lot",
+                        "items.lot.product", "establishment", "customer" })
         java.util.Optional<Sale> findWithItemsById(Long id);
 
         // ──────────────────────────────────────────────────────────────

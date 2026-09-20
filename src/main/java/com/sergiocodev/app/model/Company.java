@@ -36,6 +36,15 @@ public class Company {
     @Column(length = 100)
     private String urbanization;
 
+    @Column(length = 100)
+    private String department;
+
+    @Column(length = 100)
+    private String city; // Provincia
+
+    @Column(length = 100)
+    private String district;
+
     @Column(length = 30)
     private String phone;
 

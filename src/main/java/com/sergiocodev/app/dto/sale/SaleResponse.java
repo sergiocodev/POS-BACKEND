@@ -24,6 +24,7 @@ public record SaleResponse(
                 String cdrUrl,
                 String sunatResponseJson,
                 String sunatErrorCode,
+                String hashCpe,
 
                 // Campos de NC/ND
                 Long relatedSaleId,

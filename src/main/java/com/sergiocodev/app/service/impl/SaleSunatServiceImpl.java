@@ -40,7 +40,8 @@ public class SaleSunatServiceImpl implements SaleSunatService {
 
             // 1. Generate XML
             String xml = xmlUblGenerator.generateInvoiceXml(sale, company);
-            String fileName = sale.getSeries() + "-" + sale.getNumber() + ".xml";
+            String docTypeCode = sale.getDocumentType() == Sale.SaleDocumentType.FACTURA ? "01" : "03";
+            String fileName = company.getRuc() + "-" + docTypeCode + "-" + sale.getSeries() + "-" + sale.getNumber() + ".xml";
 
             // 2. Sign XML
             String signedXml = digitalSignatureService.signXml(xml);
@@ -54,11 +55,45 @@ public class SaleSunatServiceImpl implements SaleSunatService {
             } else {
                 sale.setSunatStatus(SunatStatus.REJECTED);
             }
+            
+            // 5. Guardar XML y CDR en disco local (temporalmente)
+            String basePath = "C:/sunat_files/";
+            java.io.File directory = new java.io.File(basePath);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            
+            String xmlFullPath = basePath + fileName;
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(xmlFullPath)) {
+                fos.write(signedXml.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                // Log and ignore
+            }
+            
+            String cdrFullPath = basePath + "R-" + fileName;
+            if (oseResponse.getCdrXml() != null) {
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(cdrFullPath)) {
+                    fos.write(oseResponse.getCdrXml().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                } catch (Exception e) {}
+            }
 
             sale.setSunatMessage(oseResponse.getStatusMessage());
-            sale.setXmlUrl("mock/path/" + fileName);
-            sale.setCdrUrl("mock/path/R-" + fileName);
-            sale.setHashCpe("MOCK_HASH");
+            sale.setXmlUrl("file:///" + xmlFullPath);
+            sale.setCdrUrl("file:///" + cdrFullPath);
+
+            String hashCpe = "MOCK_HASH";
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("<(?:[a-zA-Z0-9]+:)?DigestValue>([^<]+)</(?:[a-zA-Z0-9]+:)?DigestValue>").matcher(signedXml);
+            if (matcher.find()) {
+                hashCpe = matcher.group(1);
+            } else {
+                try {
+                    hashCpe = java.util.Base64.getEncoder().encodeToString(
+                        java.security.MessageDigest.getInstance("SHA-1").digest(signedXml.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                    );
+                } catch (Exception e) {}
+            }
+            sale.setHashCpe(hashCpe);
+            
             sale.setSunatResponseJson("{\"ticket\": \"" + oseResponse.getTicket() + "\"}");
 
             repository.save(sale);
