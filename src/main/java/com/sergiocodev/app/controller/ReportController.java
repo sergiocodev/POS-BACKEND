@@ -295,12 +295,11 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
             @RequestParam Long establishmentId,
             @RequestParam(required = false) List<Long> productIds,
-            @RequestParam(required = false) List<Long> brandIds,
             @RequestParam(required = false) List<Long> therapeuticActionIds,
             @RequestParam(required = false) Long sellerId) throws Exception {
 
         List<SalesByProductReport> reports = service.getSalesByProductFilters(start, end, establishmentId,
-                productIds, brandIds, therapeuticActionIds, sellerId);
+                productIds, therapeuticActionIds, sellerId);
         byte[] pdfBytes = ReportPdfGenerator.generateProductsReport(
                 reports,
                 companyService.getCompany(),

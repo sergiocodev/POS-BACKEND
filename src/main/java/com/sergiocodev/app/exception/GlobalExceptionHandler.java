@@ -76,25 +76,6 @@ public class GlobalExceptionHandler {
                                 .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
         }
 
-        /**
-         * Handles BrandNotFoundException
-         */
-        @ExceptionHandler(BrandNotFoundException.class)
-        public ResponseEntity<ResponseApi<Object>> handleBrandNotFound(
-                        BrandNotFoundException ex, WebRequest request) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(ResponseApi.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
-        }
-
-        /**
-         * Handles DuplicateBrandException
-         */
-        @ExceptionHandler(DuplicateBrandException.class)
-        public ResponseEntity<ResponseApi<Object>> handleBrandNameDuplicated(
-                        DuplicateBrandException ex, WebRequest request) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                                .body(ResponseApi.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
-        }
 
         /**
          * Handles CategoryNotFoundException

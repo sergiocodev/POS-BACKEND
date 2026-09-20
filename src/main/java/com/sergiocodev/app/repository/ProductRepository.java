@@ -21,7 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
          * @return Lista de productos que coinciden con el criterio (sin paginación, asume listado del POS).
          */
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
-                        "category", "brand", "laboratory", "presentation", "taxType", "ingredients",
+                        "category", "laboratory", "presentation", "taxType", "ingredients",
                         "ingredients.activeIngredient"
         })
         @Query("SELECT DISTINCT p FROM Product p " +
@@ -37,16 +37,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
          * forzando fetch de entidades relacionadas para pintar eficientemente los catálogos en el frontend.
          *
          * @param categoryId ID de la clasificación categorica (opcional).
-         * @param brandId    ID de la procedencia/marca (opcional).
          * @return Fichas completas de productos filtrados y pre-hidratados.
          */
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
-                        "category", "brand", "laboratory", "presentation", "taxType"
+                        "category", "laboratory", "presentation", "taxType"
         })
         @Query("SELECT p FROM Product p WHERE " +
-                        "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
-                        "(:brandId IS NULL OR p.brand.id = :brandId)")
+                        "(:categoryId IS NULL OR p.category.id = :categoryId)")
         java.util.List<Product> findAllWithFilters(
-                        @org.springframework.data.repository.query.Param("categoryId") Long categoryId,
-                        @org.springframework.data.repository.query.Param("brandId") Long brandId);
+                        @org.springframework.data.repository.query.Param("categoryId") Long categoryId);
 }

@@ -55,9 +55,8 @@ public class ProductController {
     @GetMapping
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
     public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long brandId) {
-        return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId, brandId)));
+            @RequestParam(required = false) Long categoryId) {
+        return ResponseEntity.ok(ResponseApi.success(service.getAll(categoryId)));
     }
 
     @GetMapping("/paged")
@@ -67,10 +66,9 @@ public class ProductController {
             @RequestParam(required = false) String tradeName,
             @RequestParam(required = false) String therapeuticActionNames,
             @RequestParam(required = false) String categoryName,
-            @RequestParam(required = false) String brandName,
             @RequestParam(required = false) String laboratoryName,
             Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, tradeName, therapeuticActionNames, categoryName, brandName, laboratoryName, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, tradeName, therapeuticActionNames, categoryName, laboratoryName, pageable)));
     }
 
     @GetMapping("/search")

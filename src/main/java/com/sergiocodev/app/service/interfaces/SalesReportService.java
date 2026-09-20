@@ -48,7 +48,7 @@ public interface SalesReportService {
             List<Long> categoryIds, Long sellerId);
 
     List<SalesByProductReport> getSalesByProductFilters(LocalDateTime start, LocalDateTime end, Long establishmentId,
-            List<Long> productIds, List<Long> brandIds, List<Long> therapeuticActionIds, Long sellerId);
+            List<Long> productIds, List<Long> therapeuticActionIds, Long sellerId);
 
     List<SalesBySeriesReport> getSalesBySeriesFiltered(LocalDateTime start, LocalDateTime end, Long establishmentId,
             List<String> seriesList);

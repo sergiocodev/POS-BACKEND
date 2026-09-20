@@ -10,7 +10,6 @@ public record ProductResponse(
         String genericName,
         String description,
         String imageUrl,
-        String brandName,
         String categoryName,
         String laboratoryName,
         String presentationDescription,

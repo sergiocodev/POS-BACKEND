@@ -78,9 +78,8 @@ public interface ReportService {
     List<SalesByCategoryDetailReport> getSalesByCategories(LocalDateTime start, LocalDateTime end, Long establishmentId,
             List<Long> categoryIds, Long sellerId);
 
-    /** Reporte PDF: ventas filtradas por producto, marca y acción terapéutica */
     List<SalesByProductReport> getSalesByProductFilters(LocalDateTime start, LocalDateTime end, Long establishmentId,
-            List<Long> productIds, List<Long> brandIds, List<Long> therapeuticActionIds, Long sellerId);
+            List<Long> productIds, List<Long> therapeuticActionIds, Long sellerId);
 
     /** Reporte PDF: ventas agrupadas por serie con filtros */
     List<SalesBySeriesReport> getSalesBySeriesFiltered(LocalDateTime start, LocalDateTime end, Long establishmentId,

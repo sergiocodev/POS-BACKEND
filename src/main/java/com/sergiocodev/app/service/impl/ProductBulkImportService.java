@@ -34,7 +34,7 @@ public class ProductBulkImportService {
     private static final Logger log = LoggerFactory.getLogger(ProductBulkImportService.class);
 
     private final ProductRepository productRepository;
-    private final BrandRepository brandRepository;
+
     private final CategoryRepository categoryRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final PresentationRepository presentationRepository;
@@ -43,10 +43,9 @@ public class ProductBulkImportService {
     private final TherapeuticActionRepository therapeuticActionRepository;
     private final ActiveIngredientRepository activeIngredientRepository;
 
-
     private static final String[] HEADER_LABELS = {
             "Código *", "Código DIGEMID", "Nombre Comercial *", "Nombre Genérico", "Descripción",
-            "Marca *", "Categoría *", "Laboratorio *", "Presentación *",
+            "Categoría *", "Laboratorio *", "Presentación *",
             "Forma Farmacéutica *", "Requiere Receta (true/false)", "Es Genérico (true/false)",
             "Acciones Terapéuticas (separadas por |)", "Principios Activos (nombre:concentracion separados por |)",
             "Unidad Base (nombre) *", "Unidad Base Precio *", "Unidad Base Código de Barras"
@@ -85,7 +84,7 @@ public class ProductBulkImportService {
             Row exampleRow = sheet.createRow(1);
             String[] exampleValues = {
                     "PRD-001", "DG12345", "Paracetamol 500mg", "Paracetamol",
-                    "Analgésico y antipirético", "Genéricos Lab", "Analgésicos",
+                    "Analgésico y antipirético", "Analgésicos",
                     "Lab Peru", "Caja x 100", "Tableta", "false", "true",
                     "Analgésico|Antipirético", "Paracetamol:500mg", "UNI", "2.50", "7701234567890"
             };
@@ -111,7 +110,7 @@ public class ProductBulkImportService {
             String[] instructions = {
                     "1. Complete los datos en la hoja 'Productos'.",
                     "2. Los campos marcados con * son obligatorios.",
-                    "3. Las marcas, categorías, laboratorios, presentaciones, formas farmacéuticas, acciones terapéuticas y principios activos se crean automáticamente si no existen.",
+                    "3. Las categorías, laboratorios, presentaciones, formas farmacéuticas, acciones terapéuticas y principios activos se crean automáticamente si no existen.",
                     "4. El tipo de impuesto se asigna automáticamente (IGV por defecto).",
                     "5. Si un producto con el mismo código ya existe, será actualizado.",
                     "6. Los campos 'Requiere Receta' y 'Es Genérico' aceptan: true, false, si, no, 1, 0.",
@@ -177,18 +176,17 @@ public class ProductBulkImportService {
                     String tradeName = getCellString(row, 2);
                     String genericName = getCellString(row, 3);
                     String description = getCellString(row, 4);
-                    String brandName = getCellString(row, 5);
-                    String categoryName = getCellString(row, 6);
-                    String laboratoryName = getCellString(row, 7);
-                    String presentationDesc = getCellString(row, 8);
-                    String pharmaFormName = getCellString(row, 9);
-                    boolean requiresPrescription = getCellBoolean(row, 10);
-                    boolean isGeneric = getCellBoolean(row, 11);
-                    String therapeuticActionsStr = getCellString(row, 12);
-                    String activeIngredientsStr = getCellString(row, 13);
-                    String baseUnitName = getCellString(row, 14);
-                    String baseUnitPriceStr = getCellString(row, 15);
-                    String baseUnitBarcode = getCellString(row, 16);
+                    String categoryName = getCellString(row, 5);
+                    String laboratoryName = getCellString(row, 6);
+                    String presentationDesc = getCellString(row, 7);
+                    String pharmaFormName = getCellString(row, 8);
+                    boolean requiresPrescription = getCellBoolean(row, 9);
+                    boolean isGeneric = getCellBoolean(row, 10);
+                    String therapeuticActionsStr = getCellString(row, 11);
+                    String activeIngredientsStr = getCellString(row, 12);
+                    String baseUnitName = getCellString(row, 13);
+                    String baseUnitPriceStr = getCellString(row, 14);
+                    String baseUnitBarcode = getCellString(row, 15);
 
                     // Validaciones de campos obligatorios
                     List<String> missingFields = new ArrayList<>();
@@ -196,8 +194,7 @@ public class ProductBulkImportService {
                         missingFields.add("Código");
                     if (tradeName == null || tradeName.isBlank())
                         missingFields.add("Nombre Comercial");
-                    if (brandName == null || brandName.isBlank())
-                        missingFields.add("Marca");
+
                     if (categoryName == null || categoryName.isBlank())
                         missingFields.add("Categoría");
                     if (laboratoryName == null || laboratoryName.isBlank())
@@ -227,7 +224,7 @@ public class ProductBulkImportService {
                     }
 
                     // Resolver entidades de catálogo
-                    Brand brand = resolveOrCreateBrand(brandName);
+
                     Category category = resolveOrCreateCategory(categoryName);
                     Laboratory laboratory = resolveOrCreateLaboratory(laboratoryName);
                     Presentation presentation = resolveOrCreatePresentation(presentationDesc);
@@ -253,7 +250,7 @@ public class ProductBulkImportService {
                     product.setTradeName(tradeName.trim());
                     product.setGenericName(genericName);
                     product.setDescription(description);
-                    product.setBrand(brand);
+
                     product.setCategory(category);
                     product.setLaboratory(laboratory);
                     product.setPresentation(presentation);
@@ -323,14 +320,7 @@ public class ProductBulkImportService {
 
     // ======== Métodos auxiliares ========
 
-    private Brand resolveOrCreateBrand(String name) {
-        return brandRepository.findByName(name.trim())
-                .orElseGet(() -> {
-                    Brand b = new Brand();
-                    b.setName(name.trim());
-                    return brandRepository.save(b);
-                });
-    }
+
 
     private Category resolveOrCreateCategory(String name) {
         return categoryRepository.findByName(name.trim())

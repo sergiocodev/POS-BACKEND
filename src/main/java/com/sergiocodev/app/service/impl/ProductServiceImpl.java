@@ -24,7 +24,6 @@ import java.util.ArrayList;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository repository;
-    private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final PresentationRepository presentationRepository;
@@ -50,15 +49,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAll(Long categoryId, Long brandId) {
-        return repository.findAllWithFilters(categoryId, brandId).stream()
+    public List<ProductResponse> getAll(Long categoryId) {
+        return repository.findAllWithFilters(categoryId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String brandName, String laboratoryName, Pageable pageable) {
+    public Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, Pageable pageable) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -70,9 +69,6 @@ public class ProductServiceImpl implements ProductService {
             }
             if (categoryName != null && !categoryName.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.join("category").get("name")), "%" + categoryName.toLowerCase() + "%"));
-            }
-            if (brandName != null && !brandName.isBlank()) {
-                predicates.add(cb.like(cb.lower(root.join("brand").get("name")), "%" + brandName.toLowerCase() + "%"));
             }
             if (laboratoryName != null && !laboratoryName.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.join("laboratory").get("name")), "%" + laboratoryName.toLowerCase() + "%"));
@@ -144,7 +140,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void mapBasicInfo(ProductRequest request, Product entity) {
-        entity.setBrand(brandRepository.findById(request.brandId()).orElse(null));
         entity.setCategory(categoryRepository.findById(request.categoryId()).orElse(null));
         entity.setLaboratory(laboratoryRepository.findById(request.laboratoryId()).orElse(null));
         entity.setPharmaceuticalForm(

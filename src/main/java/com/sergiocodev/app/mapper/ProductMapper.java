@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
-    @Mapping(target = "brandName", source = "brand.name")
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "laboratoryName", source = "laboratory.name")
     @Mapping(target = "presentationDescription", source = "presentation.description")
@@ -32,7 +31,6 @@ public interface ProductMapper {
     ProductResponse toResponse(Product entity);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "brand", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "laboratory", ignore = true)
     @Mapping(target = "pharmaceuticalForm", ignore = true)
@@ -47,7 +45,6 @@ public interface ProductMapper {
     Product toEntity(ProductRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "brand", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "laboratory", ignore = true)
     @Mapping(target = "pharmaceuticalForm", ignore = true)

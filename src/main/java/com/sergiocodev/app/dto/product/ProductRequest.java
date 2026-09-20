@@ -18,7 +18,6 @@ public record ProductRequest(
 
         @Size(max = 255, message = "Image URL cannot exceed 255 characters") String imageUrl,
 
-        @NotNull(message = "Brand ID is required") Long brandId,
 
         @NotNull(message = "Category ID is required") Long categoryId,
 

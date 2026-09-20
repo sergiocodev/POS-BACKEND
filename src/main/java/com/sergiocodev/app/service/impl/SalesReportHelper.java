@@ -122,7 +122,7 @@ public final class SalesReportHelper {
 
     /**
      * Construye reportes de productos a partir de items agrupados por producto.
-     * Usa el extractor de nombre de laboratorio proporcionado (puede venir de Laboratory o Brand).
+     * Usa el extractor de nombre de laboratorio proporcionado.
      */
     public static List<SalesByProductReport> buildProductReports(
             Map<Product, List<SaleItem>> itemsByProduct,
@@ -151,11 +151,6 @@ public final class SalesReportHelper {
     /** Extractor de nombre de laboratorio desde Laboratory. */
     public static String labFromLaboratory(Product p) {
         return p.getLaboratory() != null ? p.getLaboratory().getName() : "Sin Laboratorio";
-    }
-
-    /** Extractor de nombre de laboratorio desde Brand. */
-    public static String labFromBrand(Product p) {
-        return p.getBrand() != null ? p.getBrand().getName() : "Sin Marca";
     }
 
     // ────────────── Series grouping → SalesBySeriesReport ─────────────

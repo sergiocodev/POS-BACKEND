@@ -1138,7 +1138,7 @@ public class ReportServiceImpl implements ReportService {
         @Override
         @Transactional(readOnly = true)
         public List<SalesByProductReport> getSalesByProductFilters(LocalDateTime start, LocalDateTime end, Long establishmentId,
-                        List<Long> productIds, List<Long> brandIds, List<Long> therapeuticActionIds, Long sellerId) {
+                        List<Long> productIds, List<Long> therapeuticActionIds, Long sellerId) {
                 LocalDateTime startTime = start;
                 LocalDateTime endTime = end;
                 List<Sale> sales = saleRepository.findForCategoryDetailAnalysis(establishmentId, startTime, endTime);
@@ -1151,16 +1151,12 @@ public class ReportServiceImpl implements ReportService {
                                         Product p = item.getProduct();
                                         boolean matchProduct = productIds == null || productIds.isEmpty()
                                                         || productIds.contains(p.getId());
-                                        boolean matchBrand = brandIds == null || brandIds.isEmpty()
-                                                        || (p.getBrand() != null
-                                                                        && brandIds.contains(
-                                                                                        p.getBrand().getId()));
                                         boolean matchTherapeutic = therapeuticActionIds == null
                                                         || therapeuticActionIds.isEmpty()
                                                         || p.getTherapeuticActions().stream()
                                                                         .anyMatch(ta -> therapeuticActionIds
                                                                                         .contains(ta.getId()));
-                                        return matchProduct && matchBrand && matchTherapeutic;
+                                        return matchProduct && matchTherapeutic;
                                 })
                                 .collect(Collectors.groupingBy(SaleItem::getProduct));
                 return itemsByProduct.entrySet().stream()
@@ -1175,9 +1171,9 @@ public class ReportServiceImpl implements ReportService {
                                                         .reduce(0L, Long::sum);
                                         String catName = product.getCategory() != null ? product.getCategory().getName()
                                                         : "Sin Categoría";
-                                        String labName = product.getBrand() != null
-                                                        ? product.getBrand().getName()
-                                                        : "Sin Marca";
+                                        String labName = product.getLaboratory() != null
+                                                        ? product.getLaboratory().getName()
+                                                        : "Sin Laboratorio";
                                         String therapeuticAction = product.getTherapeuticActions().stream()
                                                         .map(TherapeuticAction::getName)
                                                         .collect(Collectors.joining(", "));

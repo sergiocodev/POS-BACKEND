@@ -10,9 +10,9 @@ public interface ProductService {
 
     ProductResponse create(ProductRequest request);
 
-    List<ProductResponse> getAll(Long categoryId, Long brandId);
+    List<ProductResponse> getAll(Long categoryId);
 
-    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String brandName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
 
     ProductResponse getById(Long id);
 
