@@ -5,6 +5,7 @@ import com.sergiocodev.app.dto.user.LoginRequest;
 import com.sergiocodev.app.dto.user.LoginResponse;
 import com.sergiocodev.app.dto.user.RefreshTokenRequest;
 import com.sergiocodev.app.dto.user.RegisterRequest;
+import com.sergiocodev.app.util.UrlHelper;
 import com.sergiocodev.app.exception.UserAlreadyExistsException;
 import com.sergiocodev.app.exception.UserNotFoundException;
 import com.sergiocodev.app.model.User;
@@ -88,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
-                user.getProfilePicture(),
+                UrlHelper.toAbsoluteUrl(user.getProfilePicture()),
                 rolesNames,
                 permissionNames);
     }
@@ -131,7 +132,7 @@ public class AuthServiceImpl implements AuthService {
                 savedUser.getUsername(),
                 savedUser.getEmail(),
                 savedUser.getFullName(),
-                savedUser.getProfilePicture(),
+                UrlHelper.toAbsoluteUrl(savedUser.getProfilePicture()),
                 roles,
                 permissions);
     }
@@ -169,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
-                user.getProfilePicture(),
+                UrlHelper.toAbsoluteUrl(user.getProfilePicture()),
                 rolesNames,
                 permissionNames);
     }

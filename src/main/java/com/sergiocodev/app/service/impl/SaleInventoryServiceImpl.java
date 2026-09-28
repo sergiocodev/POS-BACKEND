@@ -18,6 +18,7 @@ import com.sergiocodev.app.dto.sale.ProductSearchResponse;
 import com.sergiocodev.app.dto.sale.BarcodeScanResponse;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.StockInsufficientException;
+import com.sergiocodev.app.util.UrlHelper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -159,7 +160,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     lot.getExpiryDate(),
                                     lot.getLotCode(),
                                     lot.getId(),
-                                    product.getImageUrl(),
+                                    UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
                                     pu.getUnitName(),
@@ -223,7 +224,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     lot.getExpiryDate(),
                                     lot.getLotCode(),
                                     lot.getId(),
-                                    product.getImageUrl(),
+                                    UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
                                     pu.getUnitName(),
@@ -282,7 +283,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                 inventory.getLot().getExpiryDate(),
                 inventory.getQuantity(),
                 "Stock available",
-                product.getImageUrl(),
+                UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                 product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO);
     }
 }

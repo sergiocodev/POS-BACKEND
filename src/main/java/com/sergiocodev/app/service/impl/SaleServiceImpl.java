@@ -43,6 +43,8 @@ import com.sergiocodev.app.exception.StockInsufficientException;
 import com.sergiocodev.app.util.PdfGenerator;
 import com.sergiocodev.app.dto.sunat.EmitInvoiceResponse;
 import com.sergiocodev.app.model.Sale.SunatStatus;
+import com.sergiocodev.app.model.Sale.SunatStatus;
+import com.sergiocodev.app.util.UrlHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -197,7 +199,7 @@ public class SaleServiceImpl implements SaleService {
                                         company.getUrbanization(),
                                         company.getPhone(),
                                         company.getEmail(),
-                                        company.getLogoUrl());
+                                        UrlHelper.toAbsoluteUrl(company.getLogoUrl()));
                         return new SaleResponse(
                                         response.id(),
                                         response.establishmentName(),

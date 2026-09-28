@@ -13,6 +13,7 @@ import com.sergiocodev.app.repository.*;
 import com.sergiocodev.app.dto.company.CompanyMinimalResponse;
 import lombok.RequiredArgsConstructor;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
+import com.sergiocodev.app.util.UrlHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -164,7 +165,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     company.getUrbanization(),
                     company.getPhone(),
                     company.getEmail(),
-                    company.getLogoUrl());
+                    UrlHelper.toAbsoluteUrl(company.getLogoUrl()));
             return new PurchaseResponse(
                     response.id(),
                     response.supplierName(),

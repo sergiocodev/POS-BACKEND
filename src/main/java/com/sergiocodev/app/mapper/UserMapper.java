@@ -5,10 +5,12 @@ import com.sergiocodev.app.dto.user.UserResponse;
 import com.sergiocodev.app.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import com.sergiocodev.app.util.UrlHelper;
 
-@Mapper(componentModel = "spring", uses = { RoleMapper.class })
+@Mapper(componentModel = "spring", uses = { RoleMapper.class }, imports = { UrlHelper.class })
 public interface UserMapper {
 
+    @Mapping(target = "profilePicture", expression = "java(UrlHelper.toAbsoluteUrl(entity.getProfilePicture()))")
     UserResponse toResponse(User entity);
 
     @Mapping(target = "id", ignore = true)

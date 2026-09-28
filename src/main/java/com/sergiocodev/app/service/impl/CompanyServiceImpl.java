@@ -6,6 +6,7 @@ import com.sergiocodev.app.dto.company.CompanyResponse;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.model.Company;
 import com.sergiocodev.app.repository.CompanyRepository;
+import com.sergiocodev.app.util.UrlHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,7 @@ public class CompanyServiceImpl implements CompanyService {
                 company.getUrbanization(),
                 company.getPhone(),
                 company.getEmail(),
-                company.getLogoUrl(),
+                UrlHelper.toAbsoluteUrl(company.getLogoUrl()),
                 company.getCreatedAt(),
                 company.getUpdatedAt()
         );

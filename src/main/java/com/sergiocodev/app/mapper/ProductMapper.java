@@ -13,8 +13,9 @@ import org.mapstruct.Named;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.sergiocodev.app.util.UrlHelper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {UrlHelper.class})
 public interface ProductMapper {
 
     @Mapping(target = "categoryName", source = "category.name")
@@ -26,6 +27,7 @@ public interface ProductMapper {
     @Mapping(target = "genericName", source = "genericName")
 
     @Mapping(target = "isGeneric", source = "generic")
+    @Mapping(target = "imageUrl", expression = "java(UrlHelper.toAbsoluteUrl(entity.getImageUrl()))")
     @Mapping(target = "therapeuticActionNames", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActions")
     @Mapping(target = "therapeuticActionIds", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActionIds")
     ProductResponse toResponse(Product entity);
