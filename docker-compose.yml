@@ -49,12 +49,22 @@ services:
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       # External APIs
       APISNET_TOKEN: ${APISNET_TOKEN}
+      
+      # SUNAT Configuration
+      SUNAT_OSE_USERNAME: ${SUNAT_OSE_USERNAME:-MODDATOS}
+      SUNAT_OSE_PASSWORD: ${SUNAT_OSE_PASSWORD:-MODDATOS}
+      SUNAT_CERTIFICATE_PATH: /app/cert/certificado.pfx
+      SUNAT_CERTIFICATE_PASSWORD: ${SUNAT_CERTIFICATE_PASSWORD:-yufarma}
+      SUNAT_RUC: ${SUNAT_RUC:-10734470100}
+      SUNAT_RAZON_SOCIAL: "${SUNAT_RAZON_SOCIAL:-EMPRESA DE PRUEBA SAC}"
+
       # CORS
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
     ports:
       - "8080:8080"
     volumes:
       - uploads_data:/app/uploads
+      - ./cert:/app/cert:ro
     networks:
       - pos-network
 
