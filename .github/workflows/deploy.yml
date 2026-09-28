@@ -1,0 +1,29 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ejecutar despliegue via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # 1. Navegar a la carpeta del proyecto en el VPS
+            cd ~/app-back
+            
+            # 2. Traer los últimos cambios de GitHub
+            git pull origin main
+            
+            # 3. Reconstruir la imagen de Docker (solo el backend) y reiniciar el contenedor
+            docker-compose up -d --build backend
+            
+            # 4. Limpiar imágenes de Docker que quedaron "huérfanas" para no llenar el disco
+            docker image prune -f
