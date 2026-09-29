@@ -20,7 +20,7 @@ jobs:
             cd ~/app-back
             
             # 2. Traer los últimos cambios de GitHub
-            git pull origin main
+            git pull origin master
             
             # 3. Reconstruir la imagen de Docker (solo el backend) y reiniciar el contenedor
             docker-compose up -d --build backend
