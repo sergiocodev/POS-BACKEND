@@ -274,7 +274,7 @@ public class StockTransferServiceImpl implements StockTransferService {
                                                                 i.getLot().getId(),
                                                                 i.getLot().getLotCode(),
                                                                 i.getUnit() != null ? i.getUnit().getId() : null,
-                                                                i.getUnit() != null ? i.getUnit().getUnitName() : "U",
+                                                                i.getUnit() != null ? i.getUnit().getUnitOfMeasure().getName() : "U",
                                                                 i.getUnit() != null ? i.getUnit().getFactor() : 1,
                                                                 i.getQuantity()))
                                                 .collect(Collectors.toList()));

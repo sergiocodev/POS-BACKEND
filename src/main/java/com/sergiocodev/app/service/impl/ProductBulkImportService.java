@@ -42,6 +42,7 @@ public class ProductBulkImportService {
     private final TaxTypeRepository taxTypeRepository;
     private final TherapeuticActionRepository therapeuticActionRepository;
     private final ActiveIngredientRepository activeIngredientRepository;
+    private final UnitOfMeasureRepository unitOfMeasureRepository;
 
     private static final String[] HEADER_LABELS = {
             "Código *", "Código DIGEMID", "Nombre Comercial *", "Nombre Genérico", "Descripción",
@@ -232,6 +233,9 @@ public class ProductBulkImportService {
                     // Forma farmacéutica: buscar o crear automáticamente
                     PharmaceuticalForm pharmaForm = resolveOrCreatePharmaceuticalForm(pharmaFormName);
 
+                    // Unidad de medida: buscar o crear
+                    UnitOfMeasure baseUnitOfMeasure = resolveOrCreateUnitOfMeasure(baseUnitName);
+
                     // Tipo de impuesto por defecto (IGV, id=1)
                     TaxType taxType = taxTypeRepository.findById(1L)
                             .orElseThrow(() -> new BadRequestException(
@@ -273,7 +277,7 @@ public class ProductBulkImportService {
                     boolean hasBaseUnit = false;
                     for (ProductUnit pu : product.getUnits()) {
                         if (pu.isBaseUnit()) {
-                            pu.setUnitName(baseUnitName.trim().toUpperCase());
+                            pu.setUnitOfMeasure(baseUnitOfMeasure);
                             pu.setPrice(baseUnitPrice);
                             pu.setBarcode(baseUnitBarcode != null && !baseUnitBarcode.isBlank() ? baseUnitBarcode.trim() : null);
                             hasBaseUnit = true;
@@ -283,7 +287,7 @@ public class ProductBulkImportService {
                     if (!hasBaseUnit) {
                         ProductUnit baseUnit = new ProductUnit();
                         baseUnit.setProduct(product);
-                        baseUnit.setUnitName(baseUnitName.trim().toUpperCase());
+                        baseUnit.setUnitOfMeasure(baseUnitOfMeasure);
                         baseUnit.setFactor(1);
                         baseUnit.setPrice(baseUnitPrice);
                         baseUnit.setBarcode(baseUnitBarcode != null && !baseUnitBarcode.isBlank() ? baseUnitBarcode.trim() : null);
@@ -355,6 +359,15 @@ public class ProductBulkImportService {
                     PharmaceuticalForm pf = new PharmaceuticalForm();
                     pf.setName(name.trim());
                     return pharmaceuticalFormRepository.save(pf);
+                });
+    }
+
+    private UnitOfMeasure resolveOrCreateUnitOfMeasure(String name) {
+        return unitOfMeasureRepository.findByNameIgnoreCase(name.trim().toUpperCase())
+                .orElseGet(() -> {
+                    UnitOfMeasure u = new UnitOfMeasure();
+                    u.setName(name.trim().toUpperCase());
+                    return unitOfMeasureRepository.save(u);
                 });
     }
 

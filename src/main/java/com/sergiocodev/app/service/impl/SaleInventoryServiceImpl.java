@@ -163,7 +163,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
-                                    pu.getUnitName(),
+                                    pu.getUnitOfMeasure().getName(),
                                     pu.getFactor(),
                                     product.getTaxType() != null
                                             ? product.getTaxType().getRate()
@@ -227,7 +227,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
-                                    pu.getUnitName(),
+                                    pu.getUnitOfMeasure().getName(),
                                     pu.getFactor(),
                                     product.getTaxType() != null
                                             ? product.getTaxType().getRate()
@@ -261,7 +261,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
 
         if (inventory == null) {
             return new BarcodeScanResponse(
-                    product.getId(), pu.getId(), pu.getUnitName(), pu.getFactor(),
+                    product.getId(), pu.getId(), pu.getUnitOfMeasure().getName(), pu.getFactor(),
                     "Producto sin stock disponible",
                     barcode,
                     BigDecimal.ZERO,
@@ -273,7 +273,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
         return new BarcodeScanResponse(
                 product.getId(),
                 pu.getId(),
-                pu.getUnitName(),
+                pu.getUnitOfMeasure().getName(),
                 pu.getFactor(),
                 product.getTradeName(),
                 barcode,

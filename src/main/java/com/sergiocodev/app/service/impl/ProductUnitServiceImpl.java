@@ -5,8 +5,10 @@ import com.sergiocodev.app.dto.productunit.ProductUnitRequest;
 import com.sergiocodev.app.dto.productunit.ProductUnitResponse;
 import com.sergiocodev.app.model.Product;
 import com.sergiocodev.app.model.ProductUnit;
+import com.sergiocodev.app.model.UnitOfMeasure;
 import com.sergiocodev.app.repository.ProductRepository;
 import com.sergiocodev.app.repository.ProductUnitRepository;
+import com.sergiocodev.app.repository.UnitOfMeasureRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class ProductUnitServiceImpl implements ProductUnitService {
 
     private final ProductUnitRepository productUnitRepository;
     private final ProductRepository productRepository;
+    private final UnitOfMeasureRepository unitOfMeasureRepository;
 
     @Override
     @Transactional
@@ -35,11 +38,18 @@ public class ProductUnitServiceImpl implements ProductUnitService {
                     });
         }
 
+        UnitOfMeasure unitOfMeasure = unitOfMeasureRepository.findById(request.unitOfMeasureId())
+                .orElseThrow(() -> new RuntimeException("Unit of Measure not found"));
+
         ProductUnit unit = new ProductUnit();
         unit.setProduct(product);
-        unit.setUnitName(request.unitName());
+        unit.setUnitOfMeasure(unitOfMeasure);
         unit.setFactor(request.factor());
-        unit.setBarcode(request.barcode());
+        String barcode = request.barcode();
+        if (barcode != null && barcode.trim().isEmpty()) {
+            barcode = null;
+        }
+        unit.setBarcode(barcode);
         unit.setSunatCode(request.sunatCode());
         unit.setPrice(request.price());
         unit.setBaseUnit(request.isBaseUnit());
@@ -85,9 +95,16 @@ public class ProductUnitServiceImpl implements ProductUnitService {
                     });
         }
 
-        unit.setUnitName(request.unitName());
+        UnitOfMeasure unitOfMeasure = unitOfMeasureRepository.findById(request.unitOfMeasureId())
+                .orElseThrow(() -> new RuntimeException("Unit of Measure not found"));
+
+        unit.setUnitOfMeasure(unitOfMeasure);
         unit.setFactor(request.factor());
-        unit.setBarcode(request.barcode());
+        String barcode = request.barcode();
+        if (barcode != null && barcode.trim().isEmpty()) {
+            barcode = null;
+        }
+        unit.setBarcode(barcode);
         unit.setSunatCode(request.sunatCode());
         unit.setPrice(request.price());
         unit.setBaseUnit(request.isBaseUnit());
@@ -105,7 +122,8 @@ public class ProductUnitServiceImpl implements ProductUnitService {
         return new ProductUnitResponse(
                 unit.getId(),
                 unit.getProduct().getId(),
-                unit.getUnitName(),
+                unit.getUnitOfMeasure().getId(),
+                unit.getUnitOfMeasure().getName(),
                 unit.getFactor(),
                 unit.getBarcode(),
                 unit.getSunatCode(),

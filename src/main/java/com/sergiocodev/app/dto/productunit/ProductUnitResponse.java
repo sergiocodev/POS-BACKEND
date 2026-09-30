@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record ProductUnitResponse(
         Long id,
         Long productId,
+        Long unitOfMeasureId,
         String unitName,
         Integer factor,
         String barcode,

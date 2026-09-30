@@ -20,7 +20,7 @@ public interface PurchaseMapper {
 
     @Mapping(target = "productName", source = "product.tradeName")
     @Mapping(target = "productUnitId", source = "productUnit.id")
-    @Mapping(target = "unitName", source = "productUnit.unitName")
+    @Mapping(target = "unitName", source = "productUnit.unitOfMeasure.name")
     @Mapping(target = "factor", source = "productUnit.factor")
     PurchaseItemResponse toItemResponse(PurchaseItem item);
 

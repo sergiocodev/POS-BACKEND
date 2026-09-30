@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 public record ProductUnitRequest(
         @NotNull(message = "Product ID is required") Long productId,
-        @NotBlank(message = "Unit name is required") String unitName,
+        @NotNull(message = "Unit of Measure is required") Long unitOfMeasureId,
         @NotNull(message = "Factor is required") Integer factor,
         String barcode,
         String sunatCode,

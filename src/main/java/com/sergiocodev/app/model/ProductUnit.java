@@ -29,8 +29,9 @@ public class ProductUnit {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(name = "unit_name", nullable = false, length = 50)
-    private String unitName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_of_measure_id", nullable = false)
+    private UnitOfMeasure unitOfMeasure;
 
     @Column(nullable = false)
     private Integer factor = 1;

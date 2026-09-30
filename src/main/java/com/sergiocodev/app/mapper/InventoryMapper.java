@@ -45,11 +45,11 @@ public interface InventoryMapper {
         if (lot != null && lot.getProduct() != null && lot.getProduct().getUnits() != null) {
             return lot.getProduct().getUnits().stream()
                     .filter(ProductUnit::isBaseUnit)
-                    .map(ProductUnit::getUnitName)
+                    .map(u -> u.getUnitOfMeasure().getName())
                     .findFirst()
                     .orElse(
                         lot.getProduct().getUnits().stream()
-                            .map(ProductUnit::getUnitName)
+                            .map(u -> u.getUnitOfMeasure().getName())
                             .findFirst()
                             .orElse(null)
                     );
@@ -64,7 +64,8 @@ public interface InventoryMapper {
                     .map(u -> new com.sergiocodev.app.dto.productunit.ProductUnitResponse(
                             u.getId(),
                             u.getProduct().getId(),
-                            u.getUnitName(),
+                            u.getUnitOfMeasure().getId(),
+                            u.getUnitOfMeasure().getName(),
                             u.getFactor(),
                             u.getBarcode(),
                             u.getSunatCode(),
