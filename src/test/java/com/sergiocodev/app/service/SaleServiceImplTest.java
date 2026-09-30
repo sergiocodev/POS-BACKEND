@@ -171,9 +171,13 @@ class SaleServiceImplTest {
         productLot.setProduct(product);
 
         // ProductUnit
+        UnitOfMeasure uom = new UnitOfMeasure();
+        uom.setId(1L);
+        uom.setName("Unit");
+
         productUnit = new ProductUnit();
         productUnit.setId(1L);
-        productUnit.setUnitName("Unit");
+        productUnit.setUnitOfMeasure(uom);
         productUnit.setFactor(1);
         productUnit.setPrice(new BigDecimal("10.00"));
         productUnit.setProduct(product);
