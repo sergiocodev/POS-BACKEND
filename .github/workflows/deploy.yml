@@ -29,7 +29,7 @@ jobs:
             docker run --rm -v "$PWD":/app -v "$HOME/.m2":/root/.m2 -w /app eclipse-temurin:21-jdk ./mvnw clean package -DskipTests
             
             # 4. Reconstruir imagen y contenedor
-            docker-compose up -d --build --force-recreate backend
+            docker compose up -d --build --force-recreate backend
             
             # 5. Limpiar imágenes huérfanas
             docker image prune -f
