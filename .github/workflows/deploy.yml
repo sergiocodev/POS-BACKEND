@@ -24,12 +24,12 @@ jobs:
             # 2. Traer cambios
             git pull origin master
             
-            # 3. Compilar el código
+            # 3. Compilar el código usando un contenedor Docker efímero con Java 21
             chmod +x mvnw
-            ./mvnw clean package -DskipTests
+            docker run --rm -v "$PWD":/app -v "$HOME/.m2":/root/.m2 -w /app eclipse-temurin:21-jdk ./mvnw clean package -DskipTests
             
-            # 4. Reconstruir
+            # 4. Reconstruir imagen y contenedor
             docker-compose up -d --build --force-recreate backend
             
-            # 5. Limpiar imágenes
+            # 5. Limpiar imágenes huérfanas
             docker image prune -f
