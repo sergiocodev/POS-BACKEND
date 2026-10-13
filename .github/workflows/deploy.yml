@@ -16,17 +16,20 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            # 1. Navegar a la carpeta del proyecto en el VPS
-            cd ~/POS-BACKEND
-            
-            # 2. Traer los últimos cambios de GitHub
-            git pull origin master
-
-            # 3. Compilar el código (Ajusta según uses Maven o Gradle)
-            ./mvnw clean package -DskipTests
-            
-            # 4. Reconstruir la imagen de Docker (solo el backend) y reiniciar el contenedor
-            docker-compose up -d --build backend --force-recreate backend
-            
-            # 5. Limpiar imágenes de Docker que quedaron "huérfanas" para no llenar el disco
-            docker image prune -f
+          set -e # Detiene la ejecución inmediatamente si un comando falla
+          
+          # 1. Navegar a la carpeta
+          cd ~/POS-BACKEND
+          
+          # 2. Traer cambios
+          git pull origin master
+          
+          # 3. Compilar el código
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+          
+          # 4. Reconstruir
+          docker-compose up -d --build --force-recreate backend
+          
+          # 5. Limpiar imágenes
+          docker image prune -f
