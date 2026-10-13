@@ -2,6 +2,7 @@ package com.sergiocodev.app.controller;
 
 import com.sergiocodev.app.dto.ResponseApi;
 import com.sergiocodev.app.dto.product.BulkImportResult;
+import com.sergiocodev.app.dto.product.ProductLookupResponse;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.service.interfaces.ProductService;
@@ -52,6 +53,12 @@ public class ProductController {
                 .body(ResponseApi.success(service.createNewProduct(request), "Producto creado exitosamente"));
     }
 
+    @GetMapping("/lookup")
+    @Operation(summary = "Listado ligero de productos para selectores y reportes", description = "Retorna una lista ligera de IDs, códigos y nombres para dropdowns")
+    public ResponseEntity<ResponseApi<List<ProductLookupResponse>>> getLookup() {
+        return ResponseEntity.ok(ResponseApi.success(service.getLookup()));
+    }
+
     @GetMapping
     @Operation(summary = "Listar productos con filtros", description = "Obtiene la lista de productos, opcionalmente filtrada por categoría, marca o estado")
     public ResponseEntity<ResponseApi<List<ProductResponse>>> getAll(
@@ -63,12 +70,14 @@ public class ProductController {
     @Operation(summary = "Listar productos paginados", description = "Retorna una lista paginada de todos los productos.")
     public ResponseEntity<ResponseApi<Page<ProductResponse>>> getPaged(
             @RequestParam(required = false) String code,
+            @RequestParam(required = false) String digemidCode,
+            @RequestParam(required = false) String sanitaryRegistration,
             @RequestParam(required = false) String tradeName,
             @RequestParam(required = false) String therapeuticActionNames,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) String laboratoryName,
             Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, tradeName, therapeuticActionNames, categoryName, laboratoryName, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, digemidCode, sanitaryRegistration, tradeName, therapeuticActionNames, categoryName, laboratoryName, pageable)));
     }
 
     @GetMapping("/search")

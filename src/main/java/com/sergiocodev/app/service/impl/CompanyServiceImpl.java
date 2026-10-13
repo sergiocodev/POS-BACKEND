@@ -1,4 +1,5 @@
 package com.sergiocodev.app.service.impl;
+
 import com.sergiocodev.app.service.interfaces.CompanyService;
 
 import com.sergiocodev.app.dto.company.CompanyRequest;
@@ -36,6 +37,9 @@ public class CompanyServiceImpl implements CompanyService {
         company.setAddress(request.address());
         company.setUbigeo(request.ubigeo());
         company.setUrbanization(request.urbanization());
+        company.setDepartment(request.department());
+        company.setCity(request.city());
+        company.setDistrict(request.district());
         company.setPhone(request.phone());
         company.setEmail(request.email());
         company.setLogoUrl(request.logoUrl());
@@ -56,11 +60,13 @@ public class CompanyServiceImpl implements CompanyService {
                 company.getAddress(),
                 company.getUbigeo(),
                 company.getUrbanization(),
+                company.getDepartment(),
+                company.getCity(),
+                company.getDistrict(),
                 company.getPhone(),
                 company.getEmail(),
                 UrlHelper.toAbsoluteUrl(company.getLogoUrl()),
                 company.getCreatedAt(),
-                company.getUpdatedAt()
-        );
+                company.getUpdatedAt());
     }
 }

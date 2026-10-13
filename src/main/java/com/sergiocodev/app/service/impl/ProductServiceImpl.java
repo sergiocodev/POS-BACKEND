@@ -1,6 +1,7 @@
 package com.sergiocodev.app.service.impl;
 import com.sergiocodev.app.service.interfaces.ProductService;
 
+import com.sergiocodev.app.dto.product.ProductLookupResponse;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
@@ -12,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,12 +61,41 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, Pageable pageable) {
+    public List<ProductLookupResponse> getLookup() {
+        List<Object[]> actionRows = repository.findAllProductTherapeuticActionIds();
+        Map<Long, List<Long>> actionMap = new HashMap<>();
+        for (Object[] row : actionRows) {
+            Long productId = ((Number) row[0]).longValue();
+            Long actionId = ((Number) row[1]).longValue();
+            actionMap.computeIfAbsent(productId, k -> new ArrayList<>()).add(actionId);
+        }
+
+        List<Object[]> productRows = repository.findActiveProductBasicInfo();
+        List<ProductLookupResponse> result = new ArrayList<>(productRows.size());
+        for (Object[] row : productRows) {
+            Long id = ((Number) row[0]).longValue();
+            String code = (String) row[1];
+            String tradeName = (String) row[2];
+            List<Long> actions = actionMap.getOrDefault(id, Collections.emptyList());
+            result.add(new ProductLookupResponse(id, code, tradeName, actions));
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findAllPaged(String code, String digemidCode, String sanitaryRegistration, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, Pageable pageable) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (code != null && !code.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("code")), "%" + code.toLowerCase() + "%"));
+            }
+            if (digemidCode != null && !digemidCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("digemidCode")), "%" + digemidCode.toLowerCase() + "%"));
+            }
+            if (sanitaryRegistration != null && !sanitaryRegistration.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("sanitaryRegistration")), "%" + sanitaryRegistration.toLowerCase() + "%"));
             }
             if (tradeName != null && !tradeName.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("tradeName")), "%" + tradeName.toLowerCase() + "%"));
@@ -116,7 +149,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponse> search(String query) {
-        return repository.searchByQuery(query).stream()
+        return repository.searchByQuery(query, org.springframework.data.domain.PageRequest.of(0, 50)).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }

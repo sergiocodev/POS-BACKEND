@@ -67,6 +67,14 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public SupplierResponse findByRuc(String ruc) {
+        Supplier supplier = repository.findByRuc(ruc)
+                .orElseThrow(() -> new RuntimeException("Supplier not found with RUC: " + ruc));
+        return new SupplierResponse(supplier);
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);

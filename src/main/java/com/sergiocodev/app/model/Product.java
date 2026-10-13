@@ -43,6 +43,9 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "sanitary_registration", length = 100)
+    private String sanitaryRegistration;
+
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 

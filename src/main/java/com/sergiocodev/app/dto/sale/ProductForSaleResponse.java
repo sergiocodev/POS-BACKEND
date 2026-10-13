@@ -11,7 +11,6 @@ public record ProductForSaleResponse(
         String genericName,
         String description,
         String presentation,
-        String concentration,
         String category,
         String laboratory,
         BigDecimal salesPrice,
@@ -24,5 +23,7 @@ public record ProductForSaleResponse(
         String locationShelf,
         String unitName,
         Integer factor,
-        BigDecimal taxRate) {
+        BigDecimal taxRate,
+        java.util.List<com.sergiocodev.app.dto.product.ProductIngredientResponse> ingredients,
+        String pharmaceuticalFormName) {
 }

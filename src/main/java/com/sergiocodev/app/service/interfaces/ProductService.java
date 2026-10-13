@@ -1,5 +1,6 @@
 package com.sergiocodev.app.service.interfaces;
 
+import com.sergiocodev.app.dto.product.ProductLookupResponse;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import java.util.List;
@@ -12,7 +13,9 @@ public interface ProductService {
 
     List<ProductResponse> getAll(Long categoryId);
 
-    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
+    List<ProductLookupResponse> getLookup();
+
+    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String digemidCode, String sanitaryRegistration, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
 
     ProductResponse getById(Long id);
 

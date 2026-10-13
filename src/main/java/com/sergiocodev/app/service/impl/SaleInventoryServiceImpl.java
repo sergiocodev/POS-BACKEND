@@ -123,16 +123,14 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                     ProductLot lot = inventory.getLot();
                     Product product = lot.getProduct();
 
-                    String concentration = "";
-                    if (product.getIngredients() != null && !product.getIngredients().isEmpty()) {
-                        concentration = product.getIngredients().stream()
-                                .map(pi -> pi.getActiveIngredient().getName() + " "
-                                        + (pi.getConcentration() != null
-                                                ? pi.getConcentration()
-                                                : ""))
-                                .collect(Collectors.joining(", "));
-                    }
-                    final String finalConcentration = concentration;
+                    List<com.sergiocodev.app.dto.product.ProductIngredientResponse> ingredients = product.getIngredients() != null
+                            ? product.getIngredients().stream()
+                                    .map(pi -> new com.sergiocodev.app.dto.product.ProductIngredientResponse(
+                                            pi.getActiveIngredient().getId(),
+                                            pi.getActiveIngredient().getName(),
+                                            pi.getConcentration()))
+                                    .collect(Collectors.toList())
+                            : new java.util.ArrayList<>();
 
                     return product.getUnits().stream()
                             .map(pu -> new ProductForSaleResponse(
@@ -142,19 +140,9 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     product.getTradeName(),
                                     product.getGenericName(),
                                     product.getDescription(),
-                                    product.getPresentation() != null ? product
-                                            .getPresentation()
-                                            .getDescription()
-                                            : null,
-                                    finalConcentration,
-                                    product.getCategory() != null
-                                            ? product.getCategory()
-                                                    .getName()
-                                            : null,
-                                    product.getLaboratory() != null
-                                            ? product.getLaboratory()
-                                                    .getName()
-                                            : null,
+                                    product.getPresentation() != null ? product.getPresentation().getDescription() : null,
+                                    product.getCategory() != null ? product.getCategory().getName() : null,
+                                    product.getLaboratory() != null ? product.getLaboratory().getName() : null,
                                     pu.getPrice(),
                                     inventory.getQuantity(),
                                     lot.getExpiryDate(),
@@ -165,9 +153,9 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     inventory.getLocationShelf(),
                                     pu.getUnitOfMeasure().getName(),
                                     pu.getFactor(),
-                                    product.getTaxType() != null
-                                            ? product.getTaxType().getRate()
-                                            : BigDecimal.ZERO));
+                                    product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO,
+                                    ingredients,
+                                    product.getPharmaceuticalForm() != null ? product.getPharmaceuticalForm().getName() : null));
                 }).collect(Collectors.toList());
     }
 

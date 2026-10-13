@@ -122,7 +122,8 @@ public class SaleServiceImpl implements SaleService {
                                                 "No specific active cash session found for user. Please open a cash session before making a sale."));
 
                 if (!session.getCashRegister().getEstablishment().getId().equals(request.establishmentId())) {
-                        throw new BadRequestException("La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
+                        throw new BadRequestException(
+                                        "La caja abierta pertenece a otra sucursal. Cierre la caja actual antes de operar en esta sucursal.");
                 }
 
                 entity.setCashSession(session);
@@ -146,7 +147,8 @@ public class SaleServiceImpl implements SaleService {
                         BigDecimal baseQuantity = ir.quantity().multiply(new BigDecimal(factor));
 
                         if (lot != null) {
-                                saleInventoryService.validateStock(request.establishmentId(), lot.getId(), baseQuantity);
+                                saleInventoryService.validateStock(request.establishmentId(), lot.getId(),
+                                                baseQuantity);
                         }
 
                         SaleItem item = mapper.toItemEntity(ir);
@@ -197,6 +199,9 @@ public class SaleServiceImpl implements SaleService {
                                         company.getAddress(),
                                         company.getUbigeo(),
                                         company.getUrbanization(),
+                                        company.getDepartment(),
+                                        company.getCity(),
+                                        company.getDistrict(),
                                         company.getPhone(),
                                         company.getEmail(),
                                         UrlHelper.toAbsoluteUrl(company.getLogoUrl()));
@@ -236,7 +241,6 @@ public class SaleServiceImpl implements SaleService {
                 }
                 return response;
         }
-
 
         private Sale calculateTotals(Sale sale) {
                 BigDecimal total = BigDecimal.ZERO;
@@ -390,7 +394,8 @@ public class SaleServiceImpl implements SaleService {
                 note.setStatus(Sale.SaleStatus.COMPLETED);
 
                 for (SaleItem originalItem : original.getItems()) {
-                        saleInventoryService.reverseInventory(original, originalItem, "Credit note - " + reason, userId);
+                        saleInventoryService.reverseInventory(original, originalItem, "Credit note - " + reason,
+                                        userId);
                 }
 
                 CashSession currentSession = cashSessionRepository
@@ -641,8 +646,8 @@ public class SaleServiceImpl implements SaleService {
                         Long establishmentId) {
 
                 return repository.getSaleSummary(
-                        startDate, endDate, documentType, series, number,
-                        customerName, customerDocument, vendedorName, status, sunatStatus,
-                        total, paymentMethod, columnDate, establishmentId);
+                                startDate, endDate, documentType, series, number,
+                                customerName, customerDocument, vendedorName, status, sunatStatus,
+                                total, paymentMethod, columnDate, establishmentId);
         }
 }

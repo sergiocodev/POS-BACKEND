@@ -65,6 +65,13 @@ public class SupplierController {
         return ResponseEntity.ok(ResponseApi.success(service.getById(id)));
     }
 
+    @Operation(summary = "Buscar proveedor por RUC")
+    @GetMapping("/FindSupplierByIdentityDoc")
+    public ResponseEntity<ResponseApi<SupplierResponse>> getByDocumentNumber(
+            @RequestParam String documentNumber) {
+        return ResponseEntity.ok(ResponseApi.success(service.findByRuc(documentNumber)));
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar proveedor")
     public ResponseEntity<ResponseApi<SupplierResponse>> update(@PathVariable Long id,

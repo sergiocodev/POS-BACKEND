@@ -6,6 +6,8 @@ import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.model.Product;
 import com.sergiocodev.app.model.ProductIngredient;
 import com.sergiocodev.app.model.TherapeuticAction;
+import com.sergiocodev.app.model.ProductUnit;
+import com.sergiocodev.app.dto.productunit.ProductUnitResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -23,6 +25,7 @@ public interface ProductMapper {
     @Mapping(target = "presentationDescription", source = "presentation.description")
     @Mapping(target = "pharmaceuticalFormName", source = "pharmaceuticalForm.name")
     @Mapping(target = "taxTypeName", source = "taxType.name")
+    @Mapping(target = "taxTypeRate", source = "taxType.rate")
     @Mapping(target = "tradeName", source = "tradeName")
     @Mapping(target = "genericName", source = "genericName")
 
@@ -30,6 +33,7 @@ public interface ProductMapper {
     @Mapping(target = "imageUrl", expression = "java(UrlHelper.toAbsoluteUrl(entity.getImageUrl()))")
     @Mapping(target = "therapeuticActionNames", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActions")
     @Mapping(target = "therapeuticActionIds", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActionIds")
+    @Mapping(target = "units", source = "units", qualifiedByName = "mapAvailableUnits")
     ProductResponse toResponse(Product entity);
 
     @Mapping(target = "id", ignore = true)
@@ -81,6 +85,26 @@ public interface ProductMapper {
         }
         return therapeuticActions.stream()
                 .map(TherapeuticAction::getId)
+                .collect(Collectors.toList());
+    }
+
+    @Named("mapAvailableUnits")
+    default List<ProductUnitResponse> mapAvailableUnits(List<ProductUnit> units) {
+        if (units == null) {
+            return null;
+        }
+        return units.stream()
+                .map(u -> new ProductUnitResponse(
+                        u.getId(),
+                        u.getProduct() != null ? u.getProduct().getId() : null,
+                        u.getUnitOfMeasure() != null ? u.getUnitOfMeasure().getId() : null,
+                        u.getUnitOfMeasure() != null ? u.getUnitOfMeasure().getName() : null,
+                        u.getFactor(),
+                        u.getBarcode(),
+                        u.getSunatCode(),
+                        u.getPrice(),
+                        u.isBaseUnit()
+                ))
                 .collect(Collectors.toList());
     }
 }

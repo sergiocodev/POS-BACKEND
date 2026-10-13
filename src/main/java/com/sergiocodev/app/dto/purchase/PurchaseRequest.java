@@ -35,9 +35,8 @@ public record PurchaseRequest(
     @NotNull(message = "Payment condition is required")
     PaymentCondition paymentCondition,
 
-    BigDecimal initialPayment,
-
-    AccountPayablePayment.PaymentMethod paymentMethod,
+    @NotNull(message = "Payments list cannot be null")
+    List<PurchasePaymentRequest> payments,
 
     LocalDate dueDate
 ) {

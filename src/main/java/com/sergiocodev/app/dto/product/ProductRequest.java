@@ -16,6 +16,8 @@ public record ProductRequest(
 
         String description,
 
+        @Size(max = 100, message = "Sanitary registration cannot exceed 100 characters") String sanitaryRegistration,
+
         @Size(max = 255, message = "Image URL cannot exceed 255 characters") String imageUrl,
 
 

@@ -30,7 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                         "WHERE LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
                         "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
                         "OR LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%'))")
-        java.util.List<Product> searchByQuery(@org.springframework.data.repository.query.Param("query") String query);
+        java.util.List<Product> searchByQuery(@org.springframework.data.repository.query.Param("query") String query, org.springframework.data.domain.Pageable pageable);
 
         /**
          * Recupera todos los productos filtrados de forma optativa por categoría o marca,
@@ -46,4 +46,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                         "(:categoryId IS NULL OR p.category.id = :categoryId)")
         java.util.List<Product> findAllWithFilters(
                         @org.springframework.data.repository.query.Param("categoryId") Long categoryId);
+
+        @Query("SELECT p.id, p.code, p.tradeName FROM Product p WHERE p.deletedAt IS NULL ORDER BY p.tradeName ASC")
+        java.util.List<Object[]> findActiveProductBasicInfo();
+
+        @Query(value = "SELECT product_id, therapeutic_action_id FROM product_therapeutic_actions", nativeQuery = true)
+        java.util.List<Object[]> findAllProductTherapeuticActionIds();
 }

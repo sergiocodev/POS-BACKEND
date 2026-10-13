@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public record PurchaseItemResponse(
     Long id,
+    Long productId,
     String productName,
     Long productUnitId,
     String unitName,
