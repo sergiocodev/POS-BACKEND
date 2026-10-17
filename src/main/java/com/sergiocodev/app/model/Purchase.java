@@ -11,8 +11,8 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "purchases", uniqueConstraints = @UniqueConstraint(name = "ux_purchases_doc", columnNames = {
@@ -85,7 +85,7 @@ public class Purchase {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PurchaseItem> items = new HashSet<>();
+    private List<PurchaseItem> items = new ArrayList<>();
 
     public enum PurchaseDocumentType {
         GUIA, FACTURA, BOLETA

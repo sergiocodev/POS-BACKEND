@@ -27,9 +27,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         @Query("SELECT DISTINCT p FROM Product p " +
                         "LEFT JOIN p.ingredients pi " +
                         "LEFT JOIN pi.activeIngredient ai " +
-                        "WHERE LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "WHERE p.isActive = true AND p.units IS NOT EMPTY AND (" +
+                        "LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) " +
                         "OR LOWER(p.tradeName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-                        "OR LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+                        "OR LOWER(p.sanitaryRegistration) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(p.digemidCode) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(ai.name) LIKE LOWER(CONCAT('%', :query, '%')))")
         java.util.List<Product> searchByQuery(@org.springframework.data.repository.query.Param("query") String query, org.springframework.data.domain.Pageable pageable);
 
         /**
@@ -47,7 +50,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         java.util.List<Product> findAllWithFilters(
                         @org.springframework.data.repository.query.Param("categoryId") Long categoryId);
 
-        @Query("SELECT p.id, p.code, p.tradeName FROM Product p WHERE p.deletedAt IS NULL ORDER BY p.tradeName ASC")
+        @Query("SELECT p.id, p.code, p.tradeName FROM Product p WHERE p.deletedAt IS NULL AND p.isActive = true ORDER BY p.tradeName ASC")
         java.util.List<Object[]> findActiveProductBasicInfo();
 
         @Query(value = "SELECT product_id, therapeutic_action_id FROM product_therapeutic_actions", nativeQuery = true)

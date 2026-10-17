@@ -76,6 +76,9 @@ public class Product {
     @Column(name = "is_generic", nullable = false)
     private boolean isGeneric = false;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

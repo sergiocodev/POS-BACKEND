@@ -15,7 +15,17 @@ public interface ProductService {
 
     List<ProductLookupResponse> getLookup();
 
-    org.springframework.data.domain.Page<ProductResponse> findAllPaged(String code, String digemidCode, String sanitaryRegistration, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<ProductResponse> findAllPaged(
+            String code,
+            String digemidCode,
+            String sanitaryRegistration,
+            String tradeName,
+            String therapeuticActionNames,
+            String categoryName,
+            String laboratoryName,
+            Boolean hasUnits,
+            Boolean isActive,
+            org.springframework.data.domain.Pageable pageable);
 
     ProductResponse getById(Long id);
 

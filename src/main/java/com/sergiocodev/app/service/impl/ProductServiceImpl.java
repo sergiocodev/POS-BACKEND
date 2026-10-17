@@ -84,7 +84,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllPaged(String code, String digemidCode, String sanitaryRegistration, String tradeName, String therapeuticActionNames, String categoryName, String laboratoryName, Pageable pageable) {
+    public Page<ProductResponse> findAllPaged(
+            String code,
+            String digemidCode,
+            String sanitaryRegistration,
+            String tradeName,
+            String therapeuticActionNames,
+            String categoryName,
+            String laboratoryName,
+            Boolean hasUnits,
+            Boolean isActive,
+            Pageable pageable) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -108,6 +118,16 @@ public class ProductServiceImpl implements ProductService {
             }
             if (therapeuticActionNames != null && !therapeuticActionNames.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.join("therapeuticActions").get("name")), "%" + therapeuticActionNames.toLowerCase() + "%"));
+            }
+            if (isActive != null) {
+                predicates.add(cb.equal(root.get("isActive"), isActive));
+            }
+            if (hasUnits != null) {
+                if (Boolean.TRUE.equals(hasUnits)) {
+                    predicates.add(cb.isNotEmpty(root.get("units")));
+                } else {
+                    predicates.add(cb.isEmpty(root.get("units")));
+                }
             }
 
             // Para evitar duplicados cuando hay múltiples acciones terapéuticas unidas
@@ -159,8 +179,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse toggleStatus(Long id) {
         Product entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        // status is managed via deleted_at or in product_units now (active was removed
-        // from Product)
+        entity.setActive(!entity.isActive());
         return mapper.toResponse(repository.save(entity));
     }
 

@@ -1,78 +1,107 @@
 package com.sergiocodev.app.mapper;
 
 import com.sergiocodev.app.dto.inventory.InventoryResponse;
+import com.sergiocodev.app.dto.productunit.ProductUnitResponse;
 import com.sergiocodev.app.model.Inventory;
 import com.sergiocodev.app.model.ProductLot;
 import com.sergiocodev.app.model.ProductUnit;
+import com.sergiocodev.app.repository.PurchaseItemRepository;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface InventoryMapper {
+public abstract class InventoryMapper {
 
-    @Mapping(target = "establishmentId", source = "establishment.id")
-    @Mapping(target = "establishmentName", source = "establishment.name")
-    @Mapping(target = "lotId", source = "lot.id")
-    @Mapping(target = "lotCode", source = "lot.lotCode")
-    @Mapping(target = "expiryDate", source = "lot.expiryDate")
-    @Mapping(target = "productName", source = "lot.product.tradeName")
-    @Mapping(target = "salesPrice", source = "lot", qualifiedByName = "mapSalesPrice")
-    @Mapping(target = "unitName", source = "lot", qualifiedByName = "mapUnitName")
-    @Mapping(target = "units", source = "lot", qualifiedByName = "mapUnits")
-    InventoryResponse toResponse(Inventory entity);
+    @Autowired
+    protected PurchaseItemRepository purchaseItemRepository;
 
-    @Named("mapSalesPrice")
-    default BigDecimal mapSalesPrice(ProductLot lot) {
-        if (lot != null && lot.getProduct() != null && lot.getProduct().getUnits() != null) {
-            return lot.getProduct().getUnits().stream()
-                    .filter(ProductUnit::isBaseUnit)
-                    .map(ProductUnit::getPrice)
-                    .findFirst()
-                    .orElse(
-                        lot.getProduct().getUnits().stream()
-                            .map(ProductUnit::getPrice)
-                            .findFirst()
-                            .orElse(null)
-                    );
+    public InventoryResponse toResponse(Inventory entity) {
+        if (entity == null) {
+            return null;
         }
-        return null;
+
+        List<ProductUnit> units = getUnitsForInventory(entity);
+
+        BigDecimal salesPrice = null;
+        String unitName = null;
+
+        if (!units.isEmpty()) {
+            ProductUnit preferredUnit = units.stream()
+                    .filter(ProductUnit::isBaseUnit)
+                    .findFirst()
+                    .orElse(units.get(0));
+
+            salesPrice = preferredUnit.getPrice();
+            if (preferredUnit.getUnitOfMeasure() != null) {
+                unitName = preferredUnit.getUnitOfMeasure().getName();
+            }
+        }
+
+        List<ProductUnitResponse> unitResponses = units.stream()
+                .map(u -> new ProductUnitResponse(
+                        u.getId(),
+                        u.getProduct().getId(),
+                        u.getUnitOfMeasure().getId(),
+                        u.getUnitOfMeasure().getName(),
+                        u.getFactor(),
+                        u.getBarcode(),
+                        u.getSunatCode(),
+                        u.getPrice(),
+                        u.isBaseUnit()
+                )).toList();
+
+        return new InventoryResponse(
+                entity.getId(),
+                entity.getEstablishment() != null ? entity.getEstablishment().getId() : null,
+                entity.getEstablishment() != null ? entity.getEstablishment().getName() : null,
+                entity.getLot() != null ? entity.getLot().getId() : null,
+                entity.getLot() != null ? entity.getLot().getLotCode() : null,
+                entity.getLot() != null && entity.getLot().getProduct() != null ? entity.getLot().getProduct().getTradeName() : null,
+                entity.getQuantity(),
+                entity.getMinStock(),
+                entity.getMaxStock(),
+                entity.getLocationShelf(),
+                entity.getCostPrice(),
+                salesPrice,
+                unitName,
+                unitResponses,
+                entity.getLastMovement(),
+                entity.getLot() != null ? entity.getLot().getExpiryDate() : null
+        );
     }
 
-    @Named("mapUnitName")
-    default String mapUnitName(ProductLot lot) {
-        if (lot != null && lot.getProduct() != null && lot.getProduct().getUnits() != null) {
-            return lot.getProduct().getUnits().stream()
-                    .filter(ProductUnit::isBaseUnit)
-                    .map(u -> u.getUnitOfMeasure().getName())
-                    .findFirst()
-                    .orElse(
-                        lot.getProduct().getUnits().stream()
-                            .map(u -> u.getUnitOfMeasure().getName())
-                            .findFirst()
-                            .orElse(null)
-                    );
+    protected List<ProductUnit> getUnitsForInventory(Inventory entity) {
+        if (entity == null || entity.getLot() == null || entity.getLot().getProduct() == null) {
+            return Collections.emptyList();
         }
-        return null;
-    }
+        ProductLot lot = entity.getLot();
+        List<ProductUnit> lotUnits = purchaseItemRepository.findUnitsByProductAndLotCode(
+                lot.getProduct().getId(),
+                lot.getLotCode()
+        );
 
-    @Named("mapUnits")
-    default java.util.List<com.sergiocodev.app.dto.productunit.ProductUnitResponse> mapUnits(ProductLot lot) {
-        if (lot != null && lot.getProduct() != null && lot.getProduct().getUnits() != null) {
-            return lot.getProduct().getUnits().stream()
-                    .map(u -> new com.sergiocodev.app.dto.productunit.ProductUnitResponse(
-                            u.getId(),
-                            u.getProduct().getId(),
-                            u.getUnitOfMeasure().getId(),
-                            u.getUnitOfMeasure().getName(),
-                            u.getFactor(),
-                            u.getBarcode(),
-                            u.getSunatCode(),
-                            u.getPrice(),
-                            u.isBaseUnit()
-                    )).toList();
+        if (lotUnits != null && !lotUnits.isEmpty()) {
+            int maxFactor = lotUnits.stream()
+                    .mapToInt(pu -> pu.getFactor() != null ? pu.getFactor() : 1)
+                    .max()
+                    .orElse(1);
+
+            if (lot.getProduct().getUnits() != null) {
+                return lot.getProduct().getUnits().stream()
+                        .filter(pu -> (pu.getFactor() != null ? pu.getFactor() : 1) <= maxFactor)
+                        .toList();
+            }
+            return lotUnits;
         }
-        return java.util.Collections.emptyList();
+
+        if (lot.getProduct().getUnits() != null) {
+            return lot.getProduct().getUnits();
+        }
+
+        return Collections.emptyList();
     }
 }

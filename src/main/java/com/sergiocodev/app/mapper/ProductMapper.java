@@ -30,6 +30,7 @@ public interface ProductMapper {
     @Mapping(target = "genericName", source = "genericName")
 
     @Mapping(target = "isGeneric", source = "generic")
+    @Mapping(target = "isActive", source = "active")
     @Mapping(target = "imageUrl", expression = "java(UrlHelper.toAbsoluteUrl(entity.getImageUrl()))")
     @Mapping(target = "therapeuticActionNames", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActions")
     @Mapping(target = "therapeuticActionIds", source = "therapeuticActions", qualifiedByName = "mapTherapeuticActionIds")
@@ -48,6 +49,7 @@ public interface ProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "therapeuticActions", ignore = true)
+    @Mapping(target = "active", ignore = true)
     Product toEntity(ProductRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -62,6 +64,7 @@ public interface ProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "therapeuticActions", ignore = true)
+    @Mapping(target = "active", ignore = true)
     void updateEntity(ProductRequest request, @MappingTarget Product entity);
 
     @Mapping(target = "activeIngredientId", source = "id.ingredientId")

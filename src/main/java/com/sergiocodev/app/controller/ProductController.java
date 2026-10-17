@@ -76,8 +76,13 @@ public class ProductController {
             @RequestParam(required = false) String therapeuticActionNames,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) String laboratoryName,
+            @RequestParam(required = false) Boolean hasUnits,
+            @RequestParam(required = false) Boolean isActive,
             Pageable pageable) {
-        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(code, digemidCode, sanitaryRegistration, tradeName, therapeuticActionNames, categoryName, laboratoryName, pageable)));
+        return ResponseEntity.ok(ResponseApi.success(service.findAllPaged(
+                code, digemidCode, sanitaryRegistration, tradeName,
+                therapeuticActionNames, categoryName, laboratoryName,
+                hasUnits, isActive, pageable)));
     }
 
     @GetMapping("/search")

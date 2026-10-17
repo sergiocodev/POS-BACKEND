@@ -20,6 +20,7 @@ public record ProductResponse(
         String pharmaceuticalFormName,
         boolean requiresPrescription,
         boolean isGeneric,
+        boolean isActive,
         List<ProductIngredientResponse> ingredients,
         List<String> therapeuticActionNames, // Mapped from Product.therapeuticActions
         List<Long> therapeuticActionIds,

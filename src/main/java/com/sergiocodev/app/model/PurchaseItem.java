@@ -17,14 +17,12 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @org.hibernate.annotations.SQLDelete(sql = "UPDATE purchase_items SET deleted_at = NOW() WHERE id = ?")
 @org.hibernate.annotations.SQLRestriction("deleted_at IS NULL")
 public class PurchaseItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

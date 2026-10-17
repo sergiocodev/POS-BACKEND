@@ -4,6 +4,7 @@ import com.sergiocodev.app.service.interfaces.SaleInventoryService;
 import com.sergiocodev.app.service.interfaces.StockMovementService;
 import com.sergiocodev.app.repository.InventoryRepository;
 import com.sergiocodev.app.repository.ProductUnitRepository;
+import com.sergiocodev.app.repository.PurchaseItemRepository;
 import com.sergiocodev.app.repository.StockMovementRepository;
 import com.sergiocodev.app.repository.UserRepository;
 import com.sergiocodev.app.model.Sale;
@@ -38,6 +39,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
     private final StockMovementRepository stockMovementRepository;
     private final ProductUnitRepository productUnitRepository;
     private final UserRepository userRepository;
+    private final PurchaseItemRepository purchaseItemRepository;
 
     @Override
     public void validateStock(Long establishmentId, Long lotId, BigDecimal quantity) {
@@ -107,6 +109,38 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
         }
     }
 
+    private List<ProductUnit> getUnitsForInventory(Inventory inventory) {
+        if (inventory == null || inventory.getLot() == null || inventory.getLot().getProduct() == null) {
+            return java.util.Collections.emptyList();
+        }
+        ProductLot lot = inventory.getLot();
+        Product product = lot.getProduct();
+        List<ProductUnit> lotUnits = purchaseItemRepository.findUnitsByProductAndLotCode(
+                product.getId(),
+                lot.getLotCode()
+        );
+
+        if (lotUnits != null && !lotUnits.isEmpty()) {
+            int maxFactor = lotUnits.stream()
+                    .mapToInt(pu -> pu.getFactor() != null ? pu.getFactor() : 1)
+                    .max()
+                    .orElse(1);
+
+            if (product.getUnits() != null) {
+                return product.getUnits().stream()
+                        .filter(pu -> (pu.getFactor() != null ? pu.getFactor() : 1) <= maxFactor)
+                        .toList();
+            }
+            return lotUnits;
+        }
+
+        if (product.getUnits() != null) {
+            return product.getUnits();
+        }
+
+        return java.util.Collections.emptyList();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<ProductForSaleResponse> listProductsForSale(Long establishmentId) {
@@ -132,7 +166,9 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     .collect(Collectors.toList())
                             : new java.util.ArrayList<>();
 
-                    return product.getUnits().stream()
+                    List<ProductUnit> units = getUnitsForInventory(inventory);
+
+                    return units.stream()
                             .map(pu -> new ProductForSaleResponse(
                                     inventory.getId(),
                                     product.getId(),
@@ -151,7 +187,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
-                                    pu.getUnitOfMeasure().getName(),
+                                    pu.getUnitOfMeasure() != null ? pu.getUnitOfMeasure().getName() : null,
                                     pu.getFactor(),
                                     product.getTaxType() != null ? product.getTaxType().getRate() : BigDecimal.ZERO,
                                     ingredients,
@@ -186,7 +222,9 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                     }
                     final String finalConcentration = concentration;
 
-                    return product.getUnits().stream()
+                    List<ProductUnit> units = getUnitsForInventory(inventory);
+
+                    return units.stream()
                             .map(pu -> new ProductSearchResponse(
                                     inventory.getId(),
                                     product.getId(),
@@ -215,7 +253,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                                     UrlHelper.toAbsoluteUrl(product.getImageUrl()),
                                     pu.getBarcode(),
                                     inventory.getLocationShelf(),
-                                    pu.getUnitOfMeasure().getName(),
+                                    pu.getUnitOfMeasure() != null ? pu.getUnitOfMeasure().getName() : null,
                                     pu.getFactor(),
                                     product.getTaxType() != null
                                             ? product.getTaxType().getRate()
@@ -243,13 +281,14 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
                         && (inv.getLot().getExpiryDate() == null
                                 || !inv.getLot().getExpiryDate()
                                         .isBefore(java.time.LocalDate.now()))
-                        && inv.getQuantity().compareTo(BigDecimal.ZERO) > 0)
+                        && inv.getQuantity().compareTo(BigDecimal.valueOf(pu.getFactor() != null ? pu.getFactor() : 1)) >= 0
+                        && getUnitsForInventory(inv).stream().anyMatch(u -> u.getId().equals(pu.getId())))
                 .sorted(java.util.Comparator.comparing(inv -> inv.getLot().getExpiryDate()))
                 .findFirst().orElse(null);
 
         if (inventory == null) {
             return new BarcodeScanResponse(
-                    product.getId(), pu.getId(), pu.getUnitOfMeasure().getName(), pu.getFactor(),
+                    product.getId(), pu.getId(), pu.getUnitOfMeasure() != null ? pu.getUnitOfMeasure().getName() : null, pu.getFactor(),
                     "Producto sin stock disponible",
                     barcode,
                     BigDecimal.ZERO,
@@ -261,7 +300,7 @@ public class SaleInventoryServiceImpl implements SaleInventoryService {
         return new BarcodeScanResponse(
                 product.getId(),
                 pu.getId(),
-                pu.getUnitOfMeasure().getName(),
+                pu.getUnitOfMeasure() != null ? pu.getUnitOfMeasure().getName() : null,
                 pu.getFactor(),
                 product.getTradeName(),
                 barcode,
