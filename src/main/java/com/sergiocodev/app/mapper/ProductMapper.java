@@ -17,13 +17,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.sergiocodev.app.util.UrlHelper;
 
-@Mapper(componentModel = "spring", imports = {UrlHelper.class})
+@Mapper(componentModel = "spring", imports = { UrlHelper.class })
 public interface ProductMapper {
 
+    @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "laboratoryId", source = "laboratory.id")
     @Mapping(target = "laboratoryName", source = "laboratory.name")
+    @Mapping(target = "presentationId", source = "presentation.id")
     @Mapping(target = "presentationDescription", source = "presentation.description")
+    @Mapping(target = "pharmaceuticalFormId", source = "pharmaceuticalForm.id")
     @Mapping(target = "pharmaceuticalFormName", source = "pharmaceuticalForm.name")
+    @Mapping(target = "taxTypeId", source = "taxType.id")
     @Mapping(target = "taxTypeName", source = "taxType.name")
     @Mapping(target = "taxTypeRate", source = "taxType.rate")
     @Mapping(target = "tradeName", source = "tradeName")
@@ -106,8 +111,7 @@ public interface ProductMapper {
                         u.getBarcode(),
                         u.getSunatCode(),
                         u.getPrice(),
-                        u.isBaseUnit()
-                ))
+                        u.isBaseUnit()))
                 .collect(Collectors.toList());
     }
 }
