@@ -5,5 +5,6 @@ public interface UserProjection {
     String getUsername();
     String getFullName();
     String getEmail();
+    String getCelular();
     String getProfilePicture();
 }

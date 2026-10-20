@@ -2,6 +2,7 @@ package com.sergiocodev.app.service.impl;
 
 import com.sergiocodev.app.dto.user.UserRequest;
 import com.sergiocodev.app.dto.user.UserResponse;
+import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.exception.UserAlreadyExistsException;
 import com.sergiocodev.app.exception.UserNotFoundException;
@@ -48,8 +49,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllPaged(String username, String email, String fullName, Pageable pageable) {
-        return userRepository.findAllActiveFiltered(username, email, fullName, pageable)
+    public Page<UserResponse> getAllPaged(String username, String email, String celular, String fullName, Pageable pageable) {
+        return userRepository.findAllActiveFiltered(username, email, celular, fullName, pageable)
                 .map(mapper::toResponse);
     }
 
@@ -72,16 +73,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse create(UserRequest request) {
+        if (request.password() == null || request.password().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
         if (userRepository.existsActiveByUsername(request.username())) {
             throw new UserAlreadyExistsException("Username already exists: " + request.username());
         }
-        if (userRepository.existsActiveByEmail(request.email())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.email());
+
+        String email = (request.email() != null && !request.email().trim().isEmpty()) ? request.email().trim() : null;
+        if (email != null && userRepository.existsActiveByEmail(email)) {
+            throw new UserAlreadyExistsException("Email already exists: " + email);
         }
+
+        String celular = (request.celular() != null && !request.celular().trim().isEmpty()) ? request.celular().trim() : null;
 
         User user = new User();
         user.setUsername(request.username());
-        user.setEmail(request.email());
+        user.setEmail(email);
+        user.setCelular(celular);
         user.setFullName(request.fullName());
         user.setProfilePicture(request.profilePicture());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
@@ -108,20 +117,28 @@ public class UserServiceImpl implements UserService {
                 && userRepository.existsActiveByUsername(request.username())) {
             throw new UserAlreadyExistsException("Username already exists: " + request.username());
         }
-        if (!user.getEmail().equals(request.email()) && userRepository.existsActiveByEmail(request.email())) {
-            throw new UserAlreadyExistsException("Email already exists: " + request.email());
+
+        String email = (request.email() != null && !request.email().trim().isEmpty()) ? request.email().trim() : null;
+        if (email != null) {
+            if ((user.getEmail() == null || !user.getEmail().equalsIgnoreCase(email))
+                    && userRepository.existsActiveByEmail(email)) {
+                throw new UserAlreadyExistsException("Email already exists: " + email);
+            }
         }
 
+        String celular = (request.celular() != null && !request.celular().trim().isEmpty()) ? request.celular().trim() : null;
+
         user.setUsername(request.username());
-        user.setEmail(request.email());
+        user.setEmail(email);
+        user.setCelular(celular);
         user.setFullName(request.fullName());
         user.setProfilePicture(request.profilePicture());
 
-        if (request.password() != null && !request.password().isEmpty()) {
+        if (request.password() != null && !request.password().isBlank()) {
             user.setPasswordHash(passwordEncoder.encode(request.password()));
         }
 
-        if (request.roleIds() != null) {
+        if (request.roleIds() != null && !request.roleIds().isEmpty()) {
             validateRoles(request.roleIds());
             user.setRoles(new HashSet<>(roleRepository.findAllById(request.roleIds())));
         }

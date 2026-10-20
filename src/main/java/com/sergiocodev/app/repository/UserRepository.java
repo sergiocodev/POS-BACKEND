@@ -22,10 +22,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
     Page<User> findAllActive(Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL AND (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND (:fullName IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :fullName, '%')))")
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.deletedAt IS NULL AND (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))) AND (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND (:celular IS NULL OR LOWER(u.celular) LIKE LOWER(CONCAT('%', :celular, '%'))) AND (:fullName IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :fullName, '%')))")
     Page<User> findAllActiveFiltered(
             @Param("username") String username,
             @Param("email") String email,
+            @Param("celular") String celular,
             @Param("fullName") String fullName,
             Pageable pageable);
 
@@ -47,7 +48,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param email El correo electrónico a buscar.
      * @return Usuario envuelto en Optional si está activo y existe.
      */
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.email IS NOT NULL AND u.email = :email AND u.deletedAt IS NULL")
     java.util.Optional<User> findActiveByEmail(String email);
 
     /**
@@ -59,7 +60,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Usuario si existe bajo alguno de estos identificadores y no está eliminado.
      */
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
-    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u WHERE (u.username = :username OR u.email = :email) AND u.deletedAt IS NULL")
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u WHERE (u.username = :username OR (u.email IS NOT NULL AND :email IS NOT NULL AND u.email = :email)) AND u.deletedAt IS NULL")
     java.util.Optional<User> findActiveByUsernameOrEmail(String username, String email);
 
     /**
@@ -86,7 +87,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Verifica si existe un usuario activo con el email dado
      */
-    @org.springframework.data.jpa.repository.Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
+    @org.springframework.data.jpa.repository.Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email IS NOT NULL AND u.email = :email AND u.deletedAt IS NULL")
     boolean existsActiveByEmail(@org.springframework.data.repository.query.Param("email") String email);
 
     /**

@@ -8,6 +8,7 @@ public record UserResponse(
         Long id,
         String username,
         String email,
+        String celular,
         String fullName,
         String profilePicture,
         Instant lastLogin,

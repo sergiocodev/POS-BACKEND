@@ -53,9 +53,10 @@ public class UserController {
     public ResponseEntity<ResponseApi<Page<UserResponse>>> getAllPaged(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) String celular,
             @RequestParam(required = false) String fullName,
             @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        Page<UserResponse> users = userService.getAllPaged(username, email, fullName, pageable);
+        Page<UserResponse> users = userService.getAllPaged(username, email, celular, fullName, pageable);
         return ResponseEntity.ok(ResponseApi.success(users));
     }
 
