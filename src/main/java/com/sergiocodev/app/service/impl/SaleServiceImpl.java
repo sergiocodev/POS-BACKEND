@@ -312,7 +312,8 @@ public class SaleServiceImpl implements SaleService {
         @Override
         @Transactional(readOnly = true)
         public SaleResponse getById(Long id) {
-                return repository.findById(id)
+                return repository.findWithItemsById(id)
+                                .or(() -> repository.findById(id))
                                 .map(mapper::toResponse)
                                 .map(this::addCompanyInfo)
                                 .orElseThrow(

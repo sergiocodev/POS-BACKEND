@@ -30,6 +30,8 @@ public interface SaleMapper {
     @Mapping(target = "increaseAmount", source = "increaseAmount")
     @Mapping(target = "increaseReason", source = "increaseReason")
     @Mapping(target = "amount", expression = "java(item.getUnitPrice().multiply(item.getQuantity()))")
+    @Mapping(target = "productUnitId", source = "productUnit.id")
+    @Mapping(target = "unitName", source = "productUnit.unitOfMeasure.name")
     SaleItemResponse toItemResponse(SaleItem item);
 
     SalePaymentResponse toPaymentResponse(SalePayment payment);

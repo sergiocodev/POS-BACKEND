@@ -13,5 +13,7 @@ public record SaleItemResponse(
                 BigDecimal discountAmount,
                 String discountReason,
                 BigDecimal increaseAmount,
-                String increaseReason) {
+                String increaseReason,
+                Long productUnitId,
+                String unitName) {
 }
