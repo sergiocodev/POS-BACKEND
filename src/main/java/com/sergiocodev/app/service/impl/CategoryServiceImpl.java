@@ -32,6 +32,16 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category category = categoryMapper.toEntity(request);
+        if (request.prefix() != null && !request.prefix().isBlank()) {
+            String cleanPrefix = request.prefix().trim().toUpperCase();
+            if (categoryRepository.existsByPrefix(cleanPrefix)) {
+                throw new DuplicateCategoryException("Category prefix already exists: " + cleanPrefix);
+            }
+            category.setPrefix(cleanPrefix);
+        } else {
+            category.setPrefix(generateUniquePrefix(request.name()));
+        }
+
         Category savedCategory = categoryRepository.save(category);
         return categoryMapper.toResponse(savedCategory);
     }
@@ -83,5 +93,46 @@ public class CategoryServiceImpl implements CategoryService {
             throw new CategoryNotFoundException("Category not found with ID: " + id);
         }
         categoryRepository.deleteById(id);
+    }
+
+    private String generateUniquePrefix(String categoryName) {
+        if (categoryName == null || categoryName.isBlank()) {
+            return "CAT";
+        }
+        String normalized = java.text.Normalizer.normalize(categoryName.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toUpperCase();
+
+        java.util.Set<String> stopWords = java.util.Set.of("DE", "DEL", "LA", "EL", "LOS", "LAS", "Y", "EN", "PARA", "POR", "O", "A", "CON");
+        String[] words = normalized.split("[^A-Z0-9]+");
+        StringBuilder initials = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isBlank() && !stopWords.contains(word)) {
+                initials.append(word.charAt(0));
+            }
+        }
+
+        String basePrefix;
+        if (initials.length() >= 2) {
+            basePrefix = initials.substring(0, Math.min(initials.length(), 4));
+        } else if (words.length > 0 && !words[0].isBlank()) {
+            String firstWord = words[0];
+            basePrefix = firstWord.substring(0, Math.min(firstWord.length(), 3));
+        } else {
+            basePrefix = "CAT";
+        }
+
+        if (!categoryRepository.existsByPrefix(basePrefix)) {
+            return basePrefix;
+        }
+
+        int counter = 2;
+        String candidate = basePrefix + counter;
+        while (categoryRepository.existsByPrefix(candidate)) {
+            counter++;
+            candidate = basePrefix + counter;
+        }
+        return candidate;
     }
 }

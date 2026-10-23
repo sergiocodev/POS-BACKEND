@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record ProductRequest(
-        @NotBlank(message = "Code is required") @Size(max = 50, message = "Code cannot exceed 50 characters") String code,
+        @Size(max = 50, message = "Code cannot exceed 50 characters") String code,
 
         @Size(max = 50, message = "DIGEMID code cannot exceed 50 characters") String digemidCode,
 

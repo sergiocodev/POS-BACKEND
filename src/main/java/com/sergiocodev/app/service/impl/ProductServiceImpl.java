@@ -5,6 +5,7 @@ import com.sergiocodev.app.dto.product.ProductLookupResponse;
 import com.sergiocodev.app.dto.product.ProductRequest;
 import com.sergiocodev.app.dto.product.ProductResponse;
 import com.sergiocodev.app.dto.productlot.ProductLotResponse;
+import com.sergiocodev.app.exception.BadRequestException;
 import com.sergiocodev.app.exception.ResourceNotFoundException;
 import com.sergiocodev.app.mapper.ProductMapper;
 import com.sergiocodev.app.model.*;
@@ -42,6 +43,16 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Product entity = mapper.toEntity(request);
+
+        String code = request.code() != null ? request.code().trim() : "";
+        if (code.isBlank()) {
+            code = generateNextCode(request.categoryId());
+        } else if (repository.existsByCode(code)) {
+            throw new BadRequestException("El código interno '" + code + "' ya se encuentra registrado.");
+        }
+        entity.setCode(code);
+
+        cleanOptionalFields(entity);
 
         mapBasicInfo(request, entity);
         mapTherapeuticActions(request, entity);
@@ -152,7 +163,18 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(Long id, ProductRequest request) {
         Product entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        String code = request.code() != null ? request.code().trim() : "";
+        if (code.isBlank()) {
+            throw new BadRequestException("El código interno es obligatorio.");
+        }
+        if (repository.existsByCodeAndIdNot(code, id)) {
+            throw new BadRequestException("El código interno '" + code + "' ya está en uso por otro producto.");
+        }
+
         mapper.updateEntity(request, entity);
+        entity.setCode(code);
+        cleanOptionalFields(entity);
 
         mapBasicInfo(request, entity);
         mapTherapeuticActions(request, entity);
@@ -237,5 +259,63 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse createNewProduct(ProductRequest request) {
         return create(request);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String generateNextCode(Long categoryId) {
+        if (categoryId == null) {
+            throw new BadRequestException("Debe seleccionar una categoría para generar el código interno.");
+        }
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + categoryId));
+
+        String prefix = category.getPrefix();
+        if (prefix == null || prefix.isBlank()) {
+            String base = category.getName().trim().replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+            prefix = base.substring(0, Math.min(base.length(), 4));
+            if (prefix.isBlank()) {
+                prefix = "PRD";
+            }
+        }
+        prefix = prefix.trim().toUpperCase();
+
+        Long maxNumber = repository.findMaxCodeNumberByPrefix(prefix);
+        long nextNumber = (maxNumber == null) ? 1L : maxNumber + 1L;
+
+        String nextCode = String.format("%s-%06d", prefix, nextNumber);
+        while (repository.existsByCode(nextCode)) {
+            nextNumber++;
+            nextCode = String.format("%s-%06d", prefix, nextNumber);
+        }
+
+        return nextCode;
+    }
+
+    private void cleanOptionalFields(Product entity) {
+        if (entity.getDigemidCode() != null && entity.getDigemidCode().trim().isEmpty()) {
+            entity.setDigemidCode(null);
+        } else if (entity.getDigemidCode() != null) {
+            entity.setDigemidCode(entity.getDigemidCode().trim());
+        }
+
+        if (entity.getSanitaryRegistration() != null && entity.getSanitaryRegistration().trim().isEmpty()) {
+            entity.setSanitaryRegistration(null);
+        } else if (entity.getSanitaryRegistration() != null) {
+            entity.setSanitaryRegistration(entity.getSanitaryRegistration().trim());
+        }
+
+        if (entity.getGenericName() != null && entity.getGenericName().trim().isEmpty()) {
+            entity.setGenericName(null);
+        } else if (entity.getGenericName() != null) {
+            entity.setGenericName(entity.getGenericName().trim());
+        }
+
+        if (entity.getDescription() != null && entity.getDescription().trim().isEmpty()) {
+            entity.setDescription(null);
+        } else if (entity.getDescription() != null) {
+            entity.setDescription(entity.getDescription().trim());
+        }
     }
 }

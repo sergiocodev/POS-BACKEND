@@ -53,6 +53,13 @@ public class ProductController {
                 .body(ResponseApi.success(service.createNewProduct(request), "Producto creado exitosamente"));
     }
 
+    @GetMapping("/next-code")
+    @Operation(summary = "Obtener siguiente código interno correlativo", description = "Genera el siguiente código según la abreviatura de la categoría seleccionada")
+    public ResponseEntity<ResponseApi<java.util.Map<String, String>>> getNextCode(@RequestParam Long categoryId) {
+        String code = service.generateNextCode(categoryId);
+        return ResponseEntity.ok(ResponseApi.success(java.util.Map.of("code", code)));
+    }
+
     @GetMapping("/lookup")
     @Operation(summary = "Listado ligero de productos para selectores y reportes", description = "Retorna una lista ligera de IDs, códigos y nombres para dropdowns")
     public ResponseEntity<ResponseApi<List<ProductLookupResponse>>> getLookup() {

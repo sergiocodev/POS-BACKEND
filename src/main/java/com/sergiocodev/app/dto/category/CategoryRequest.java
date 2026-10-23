@@ -4,5 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CategoryRequest(
-        @NotBlank(message = "Category name is required") @Size(min = 2, max = 150, message = "Category name must be between 2 and 150 characters") String name) {
+        @NotBlank(message = "Category name is required") @Size(min = 2, max = 150, message = "Category name must be between 2 and 150 characters") String name,
+        @Size(max = 10, message = "Prefix cannot exceed 10 characters") String prefix) {
+    public CategoryRequest(String name) {
+        this(name, null);
+    }
 }

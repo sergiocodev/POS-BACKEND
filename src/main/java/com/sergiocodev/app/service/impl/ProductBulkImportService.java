@@ -331,6 +331,15 @@ public class ProductBulkImportService {
                 .orElseGet(() -> {
                     Category c = new Category();
                     c.setName(name.trim());
+                    String base = name.trim().replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    String prefix = base.substring(0, Math.min(base.length(), 4));
+                    if (prefix.isBlank()) prefix = "CAT";
+                    int count = 1;
+                    String testPrefix = prefix;
+                    while (categoryRepository.existsByPrefix(testPrefix)) {
+                        testPrefix = prefix + count++;
+                    }
+                    c.setPrefix(testPrefix);
                     return categoryRepository.save(c);
                 });
     }

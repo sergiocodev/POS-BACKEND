@@ -13,6 +13,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
         Optional<Product> findByCode(String code);
 
+        boolean existsByCode(String code);
+
+        boolean existsByCodeAndIdNot(String code, Long id);
+
+        @Query(value = "SELECT MAX(CAST(SUBSTRING_INDEX(code, '-', -1) AS UNSIGNED)) FROM products WHERE code LIKE CONCAT(:prefix, '-%')", nativeQuery = true)
+        Long findMaxCodeNumberByPrefix(@org.springframework.data.repository.query.Param("prefix") String prefix);
+
         /**
          * Busca productos en el Punto de Venta (POS) coincidiendo por código corporativo, nombre comercial, o principio activo de los componentes.
          * Retorna un grafo de entidades que incluye categoría, marca, laboratorio e ingredientes para agilizar la carga perdiendo el problema N+1.

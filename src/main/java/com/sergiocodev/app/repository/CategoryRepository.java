@@ -30,6 +30,20 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      */
     boolean existsByName(String name);
 
+    /**
+     * Verifica si existe una categoría con el prefijo especificado.
+     * @param prefix Prefijo a verificar.
+     * @return true si existe.
+     */
+    boolean existsByPrefix(String prefix);
+
+    /**
+     * Busca una categoría por su prefijo.
+     * @param prefix Prefijo de la categoría.
+     * @return Optional con la categoría encontrada.
+     */
+    Optional<Category> findByPrefix(String prefix);
+
     @Query("SELECT c FROM Category c WHERE " +
            "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))")
     Page<Category> findAllPaged(

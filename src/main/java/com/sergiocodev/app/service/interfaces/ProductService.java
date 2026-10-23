@@ -40,4 +40,6 @@ public interface ProductService {
     ProductResponse toggleStatus(Long id);
 
     ProductResponse createNewProduct(ProductRequest request);
+
+    String generateNextCode(Long categoryId);
 }

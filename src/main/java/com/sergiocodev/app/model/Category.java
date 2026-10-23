@@ -26,6 +26,9 @@ public class Category {
     @Column(nullable = false, unique = true, length = 150)
     private String name;
 
+    @Column(length = 10, unique = true)
+    private String prefix;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }
